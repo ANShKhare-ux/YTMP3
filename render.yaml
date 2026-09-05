@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: sonicwave-api
+    runtime: docker
+    dockerfilePath: ./server/Dockerfile
+    dockerContext: ./server
+    plan: free
+    region: oregon
+    envVars:
+      - key: PORT
+        value: 10000

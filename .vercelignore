@@ -1,0 +1,5 @@
+server/downloads
+server/bin
+node_modules
+.git
+.agents
