@@ -5,6 +5,7 @@
   "scripts": {
     "setup": "npm --prefix server install && npm --prefix client install",
     "build": "npm --prefix client run build",
+    "start": "node server/index.js",
     "server": "npm --prefix server run dev",
     "client": "npm --prefix client run dev",
     "dev": "concurrently -n \"SERVER,CLIENT\" -c \"cyan,magenta\" \"npm run server\" \"npm run client\""

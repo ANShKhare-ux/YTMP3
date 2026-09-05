@@ -186,6 +186,18 @@ app.get('/api/history', (req, res) => {
   res.json({ success: true, history: getHistory() });
 });
 
+// Serve frontend static build in production
+const clientDist = path.join(__dirname, '../client/dist');
+if (fs.existsSync(clientDist)) {
+  app.use(express.static(clientDist));
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api')) {
+      return next();
+    }
+    res.sendFile(path.join(clientDist, 'index.html'));
+  });
+}
+
 // Initialize server
 async function startServer() {
   console.log('[server] Bootstrapping binaries...');

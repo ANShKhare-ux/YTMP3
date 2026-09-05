@@ -1,9 +1,9 @@
 services:
   - type: web
-    name: sonicwave-api
+    name: sonicwave
     runtime: docker
-    dockerfilePath: ./server/Dockerfile
-    dockerContext: ./server
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
     plan: free
     region: oregon
     envVars:
