@@ -53,12 +53,13 @@ npx vercel
 
 ---
 
-## Deploying the Backend (Free & Easy)
+## Live Deployment Status
 
-### Deploy on Render.com (1-Click Blueprint)
-1. Go to [render.com](https://render.com) and sign in with GitHub.
-2. Click **New +** &rarr; **Blueprint** (or **Web Service**).
-3. Connect your repository.
-4. Render will detect the included [render.yaml](file:///d:/Ansh/YTMP3/render.yaml) and [server/Dockerfile](file:///d:/Ansh/YTMP3/server/Dockerfile) with Python, FFmpeg, and yt-dlp pre-configured.
-5. Once deployed, copy your Render service URL (e.g., `https://sonicwave-api.onrender.com`).
-6. Paste this URL into your Vercel project's `VITE_API_URL` environment variable and redeploy Vercel.
+- **Frontend (Vercel)**: [https://ytmp-3-five.vercel.app](https://ytmp-3-five.vercel.app)
+- **Backend (Render)**: [https://sonicwave-gpui.onrender.com](https://sonicwave-gpui.onrender.com)
+
+> [!NOTE]
+> **Important Notes for Users & Testers:**
+> 1. **Correct URL**: Ensure you are visiting `https://ytmp-3-five.vercel.app` (not `ytmp-3.vercel.app`, which is an older unlinked domain).
+> 2. **Render Free Tier Spin-Up (Cold Starts)**: Free instances on Render automatically go to sleep after 15 minutes of inactivity. The first request after a period of inactivity may take **30–50 seconds** to wake up the backend. Once active, downloads and conversions are near-instant.
+> 3. **Clear Browser Cache**: If you visited the site before `VITE_API_URL` was connected, press `Ctrl + F5` (or `Cmd + Shift + R` on Mac) to refresh the cached JavaScript bundle.
