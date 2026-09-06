@@ -154,6 +154,13 @@ function getFfmpegPath() {
   return ffmpegPath;
 }
 
+function getFfmpegLocation() {
+  const localFfmpeg = path.join(BIN_DIR, isWin ? 'ffmpeg.exe' : 'ffmpeg');
+  if (fs.existsSync(localFfmpeg)) return BIN_DIR;
+  if (ffmpegPath && fs.existsSync(ffmpegPath)) return ffmpegPath;
+  return null;
+}
+
 function getBinDir() {
   return BIN_DIR;
 }
@@ -162,6 +169,7 @@ module.exports = {
   verifyBinaries,
   getYtDlpPath,
   getFfmpegPath,
+  getFfmpegLocation,
   getBinDir,
   YT_DLP_PATH,
   BIN_DIR

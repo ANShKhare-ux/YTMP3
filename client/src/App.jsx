@@ -20,6 +20,7 @@ import OptionsSelector from './components/OptionsSelector';
 import ProgressBar from './components/ProgressBar';
 import AudioPlayer from './components/AudioPlayer';
 import HistorySection from './components/HistorySection';
+import Logo from './components/Logo';
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
@@ -48,7 +49,13 @@ export default function App() {
   // Check backend health & binaries on mount
   useEffect(() => {
     fetch(`${API_BASE}/api/status`)
-      .then((res) => res.json())
+      .then((res) => {
+        const ct = res.headers.get('content-type') || '';
+        if (!res.ok || ct.includes('text/html')) {
+          throw new Error('Backend offline');
+        }
+        return res.json();
+      })
       .then((data) => {
         if (data && data.status) {
           setSystemStatus(data.status);
@@ -56,6 +63,7 @@ export default function App() {
       })
       .catch((err) => {
         console.warn('Backend status check warning:', err);
+        setSystemStatus({ ready: false, disconnected: true });
       });
   }, []);
 
@@ -99,6 +107,11 @@ export default function App() {
         body: JSON.stringify({ url: url.trim() })
       });
 
+      const contentType = res.headers.get('content-type') || '';
+      if (contentType.includes('text/html')) {
+        throw new Error('Backend server is unreachable or sleeping. Please wait 30 seconds for Render to wake up or check VITE_API_URL.');
+      }
+
       const json = await res.json();
       if (!res.ok || !json.success) {
         throw new Error(json.error || 'Failed to fetch video details.');
@@ -139,6 +152,11 @@ export default function App() {
           thumbnail: videoInfo ? videoInfo.thumbnail : ''
         })
       });
+
+      const contentType = res.headers.get('content-type') || '';
+      if (contentType.includes('text/html')) {
+        throw new Error('Backend server is unreachable or sleeping. Please wait 30 seconds for Render to wake up or check VITE_API_URL.');
+      }
 
       const json = await res.json();
       if (!res.ok || !json.success) {
@@ -232,15 +250,44 @@ export default function App() {
           if (data.job.status === 'completed' || data.job.status === 'failed') {
             clearInterval(interval);
             setIsConverting(false);
+
             if (data.job.status === 'completed') {
-              setActiveTrack({
+              try {
+                confetti({
+                  particleCount: 50,
+                  spread: 60,
+                  origin: { y: 0.7 }
+                });
+              } catch {}
+
+              const completedTrack = {
                 jobId: data.job.id,
-                title: data.job.title || videoInfo?.title,
-                artist: data.job.artist || videoInfo?.uploader,
-                thumbnail: data.job.thumbnail || videoInfo?.thumbnail,
+                title: data.job.title || videoInfo?.title || 'Converted Audio',
+                artist: data.job.artist || videoInfo?.uploader || 'YouTube Artist',
+                thumbnail: data.job.thumbnail || videoInfo?.thumbnail || '',
                 format: data.job.format,
                 quality: data.job.quality
+              };
+
+              setActiveTrack(completedTrack);
+
+              setHistory((prev) => {
+                const filtered = prev.filter((item) => item.id !== data.job.id);
+                return [
+                  {
+                    id: data.job.id,
+                    title: completedTrack.title,
+                    artist: completedTrack.artist,
+                    thumbnail: completedTrack.thumbnail,
+                    format: completedTrack.format,
+                    quality: completedTrack.quality,
+                    timestamp: Date.now()
+                  },
+                  ...filtered
+                ].slice(0, 15);
               });
+            } else if (data.job.status === 'failed') {
+              setError(data.job.error || 'Conversion failed. Please try again.');
             }
           }
         }
@@ -282,15 +329,9 @@ export default function App() {
       <aside className="spotify-sidebar" aria-label="Spotify Navigation Sidebar">
         {/* Navigation Card */}
         <div className="sidebar-nav-card">
-          <div className="spotify-brand-header">
-            <div className="spotify-brand-icon">
-              <Headphones size={18} strokeWidth={2.5} />
-            </div>
-            <div className="spotify-brand-text">
-              <span className="brand-name">SonicWave</span>
-              <span className="brand-tag">Studio Player</span>
-            </div>
-          </div>
+          <a href="#home" className="spotify-brand-link" aria-label="SonicWave Home">
+            <Logo size="md" variant="full" showTag={true} />
+          </a>
 
           <ul className="sidebar-nav-list">
             <li>
@@ -386,23 +427,28 @@ export default function App() {
       <main className="spotify-main-content">
         {/* Sticky Top Bar */}
         <header className="spotify-top-bar">
-          <div className="top-bar-nav-arrows">
-            <button
-              type="button"
-              className="nav-arrow-btn"
-              disabled
-              title="Back"
-            >
-              <ChevronLeft size={20} />
-            </button>
-            <button
-              type="button"
-              className="nav-arrow-btn"
-              disabled
-              title="Forward"
-            >
-              <ChevronRight size={20} />
-            </button>
+          <div className="top-bar-left">
+            <a href="#home" className="top-bar-brand-link" aria-label="SonicWave Home">
+              <Logo size="sm" variant="full" showTag={false} className="top-bar-logo" />
+            </a>
+            <div className="top-bar-nav-arrows">
+              <button
+                type="button"
+                className="nav-arrow-btn"
+                disabled
+                title="Back"
+              >
+                <ChevronLeft size={20} />
+              </button>
+              <button
+                type="button"
+                className="nav-arrow-btn"
+                disabled
+                title="Forward"
+              >
+                <ChevronRight size={20} />
+              </button>
+            </div>
           </div>
 
           <div className="top-bar-actions">
@@ -432,6 +478,15 @@ export default function App() {
         {/* Converter Workspace */}
         <div className="spotify-workspace">
           <section className="spotify-card" aria-label="Audio Converter Card">
+            {systemStatus?.disconnected && (
+              <div className="alert-box alert-warning" style={{ marginBottom: '16px' }}>
+                <AlertTriangle size={16} />
+                <span>
+                  <strong>Backend Starting or Disconnected:</strong> Free cloud servers sleep when idle and take ~45s to spin up. If on Vercel, ensure your Render backend URL is active.
+                </span>
+              </div>
+            )}
+
             <UrlInput
               url={url}
               setUrl={setUrl}

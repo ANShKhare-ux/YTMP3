@@ -1,5 +1,7 @@
 import React from 'react';
-import { DownloadCloud, Cpu, Tag, CheckCircle2, AlertCircle, Loader2, Video, Zap } from 'lucide-react';
+import { DownloadCloud, Cpu, Tag, CheckCircle2, AlertCircle, Loader2, Video, Zap, Download } from 'lucide-react';
+
+const API_BASE = import.meta.env.VITE_API_URL || '';
 
 export default function ProgressBar({ job }) {
   if (!job) return null;
@@ -91,6 +93,29 @@ export default function ProgressBar({ job }) {
           <span>Size: {job.totalSize || '--'}</span>
           <span>ETA: {job.eta || '--'}</span>
           {job.fragmentInfo && <span>Chunks: {job.fragmentInfo}</span>}
+        </div>
+      )}
+
+      {job.status === 'completed' && (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '12px' }}>
+          <a
+            href={`${API_BASE}/api/download/${job.id}`}
+            download
+            className="btn-spotify-green"
+            style={{
+              padding: '8px 20px',
+              fontSize: '12px',
+              letterSpacing: '0.08em',
+              textDecoration: 'none',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              boxShadow: '0 4px 14px rgba(30, 215, 96, 0.4)'
+            }}
+          >
+            <Download size={16} />
+            <span>SAVE {job.format?.toUpperCase() || 'AUDIO'} FILE</span>
+          </a>
         </div>
       )}
     </div>

@@ -2,6 +2,10 @@
   "name": "ytmp3-converter",
   "version": "1.0.0",
   "description": "YouTube to MP3 in-browser converter application",
+  "workspaces": [
+    "client",
+    "server"
+  ],
   "scripts": {
     "setup": "npm --prefix server install && npm --prefix client install",
     "build": "npm --prefix client run build",

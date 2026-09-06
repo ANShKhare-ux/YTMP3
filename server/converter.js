@@ -1,12 +1,31 @@
 const { spawn, execFile } = require('child_process');
 const path = require('path');
 const fs = require('fs');
-const { getYtDlpPath, getFfmpegPath, getBinDir } = require('./binManager');
+const { getYtDlpPath, getFfmpegPath, getFfmpegLocation, getBinDir } = require('./binManager');
 
 const DOWNLOADS_DIR = path.join(__dirname, 'downloads');
 if (!fs.existsSync(DOWNLOADS_DIR)) {
   fs.mkdirSync(DOWNLOADS_DIR, { recursive: true });
 }
+
+// Clean up files older than 2 hours every 30 minutes to prevent disk exhaustion
+function cleanOldDownloads() {
+  try {
+    const now = Date.now();
+    const maxAge = 2 * 60 * 60 * 1000;
+    const files = fs.readdirSync(DOWNLOADS_DIR);
+    for (const file of files) {
+      const fullPath = path.join(DOWNLOADS_DIR, file);
+      try {
+        const stats = fs.statSync(fullPath);
+        if (now - stats.mtimeMs > maxAge) {
+          fs.unlinkSync(fullPath);
+        }
+      } catch {}
+    }
+  } catch {}
+}
+setInterval(cleanOldDownloads, 30 * 60 * 1000);
 
 // In-memory active jobs tracker
 const jobs = new Map();
@@ -73,6 +92,17 @@ function normalizeUrl(rawUrl) {
 }
 
 /**
+ * Check if a cookies.txt file exists in the server or root directory
+ */
+function getCookiePath() {
+  const serverCookie = path.join(__dirname, 'cookies.txt');
+  const rootCookie = path.join(__dirname, '..', 'cookies.txt');
+  if (fs.existsSync(serverCookie)) return serverCookie;
+  if (fs.existsSync(rootCookie)) return rootCookie;
+  return null;
+}
+
+/**
  * Get Video/Audio Metadata via yt-dlp across all social platforms
  */
 function getVideoInfo(rawUrl) {
@@ -86,12 +116,16 @@ function getVideoInfo(rawUrl) {
 
     const isYouTube = url.includes('youtube.com') || url.includes('youtu.be');
     const ytDlp = getYtDlpPath();
+    const cookiePath = getCookiePath();
+    const cookieFlags = cookiePath ? ['--cookies', cookiePath] : [];
+
     const args = [
       '--dump-single-json',
       '--no-warnings',
       '--no-playlist',
       '--no-check-certificates',
-      ...(isYouTube ? ['--extractor-args', 'youtube:player_client=android,web'] : []),
+      ...(isYouTube && !cookiePath ? ['--extractor-args', 'youtube:player_client=android,web'] : []),
+      ...cookieFlags,
       '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
       '--js-runtimes', 'node',
       url
@@ -203,12 +237,19 @@ function startConversion({ url, format = 'mp3', quality = '320k', jobId, turbo =
 
   const isYouTube = url.includes('youtube.com') || url.includes('youtu.be');
 
+  const cookiePath = getCookiePath();
+  const cookieFlags = cookiePath ? ['--cookies', cookiePath] : [];
+
+  const ffmpegLocation = getFfmpegLocation();
+  const ffmpegFlags = ffmpegLocation ? ['--ffmpeg-location', ffmpegLocation] : [];
+
   // High-speed multi-threaded acceleration flags (16 parallel chunk streams, 16MB buffer)
   const speedFlags = [
     '-N', '16', // 16 concurrent fragments for DASH/HLS
     '--buffer-size', '16M',
     '--http-chunk-size', '10M',
-    ...(isYouTube ? ['--extractor-args', 'youtube:player_client=android,web'] : []),
+    ...(isYouTube && !cookiePath ? ['--extractor-args', 'youtube:player_client=android,web'] : []),
+    ...cookieFlags,
     '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
     '--js-runtimes', 'node',
     '--retries', '10',
@@ -239,7 +280,7 @@ function startConversion({ url, format = 'mp3', quality = '320k', jobId, turbo =
       '--no-playlist',
       '--embed-metadata',
       '--no-check-certificates',
-      '--ffmpeg-location', binDir,
+      ...ffmpegFlags,
       ...speedFlags,
       url
     ];
@@ -268,7 +309,7 @@ function startConversion({ url, format = 'mp3', quality = '320k', jobId, turbo =
       '--no-playlist',
       '--embed-metadata',
       '--no-check-certificates',
-      '--ffmpeg-location', binDir,
+      ...ffmpegFlags,
       ...speedFlags,
       url
     ];
@@ -369,12 +410,26 @@ function startConversion({ url, format = 'mp3', quality = '320k', jobId, turbo =
     } else {
       jobState.status = 'failed';
       let errorMsg = `Conversion failed (exit code ${code})`;
-      const match = stderrBuffer.match(/ERROR:\s*(?:\[[^\]]+\]\s*)?([^\r\n]+)/i);
-      if (match && match[1]) {
-        errorMsg = match[1].trim();
+      if (stderrBuffer.includes('Sign in to confirm your age')) {
+        errorMsg = 'This video is age-restricted and requires sign-in.';
+      } else if (stderrBuffer.includes('Sign in') || stderrBuffer.includes('bot')) {
+        errorMsg = 'YouTube flagged this video with bot/login verification. Try another video link or export cookies.txt.';
+      } else {
+        const match = stderrBuffer.match(/ERROR:\s*(?:\[[^\]]+\]\s*)?([^\r\n]+)/i);
+        if (match && match[1]) {
+          errorMsg = match[1].trim();
+        }
       }
       jobState.error = errorMsg;
       console.error(`[converter] Job ${jobId} failed: ${errorMsg}`);
+
+      // Clean up any incomplete partial files on error
+      try {
+        const partials = fs.readdirSync(DOWNLOADS_DIR).filter(f => f.startsWith(jobId));
+        for (const part of partials) {
+          fs.unlinkSync(path.join(DOWNLOADS_DIR, part));
+        }
+      } catch {}
     }
   });
 

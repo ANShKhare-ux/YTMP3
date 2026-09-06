@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
+  <defs>
+    <!-- Background Radial Gradient -->
+    <radialGradient id="swBgGrad" cx="50%" cy="50%" r="50%" fx="35%" fy="35%">
+      <stop offset="0%" stop-color="#1f2923" />
+      <stop offset="60%" stop-color="#121513" />
+      <stop offset="100%" stop-color="#0a0c0b" />
+    </radialGradient>
+
+    <!-- Sonic Neon Green to Cyan Gradient -->
+    <linearGradient id="swNeonGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00f5a0" />
+      <stop offset="45%" stop-color="#1ed760" />
+      <stop offset="100%" stop-color="#1db954" />
+    </linearGradient>
+
+    <!-- Glow Gradient for Wave Highlights -->
+    <linearGradient id="swWaveGrad" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#10b981" />
+      <stop offset="50%" stop-color="#1ed760" />
+      <stop offset="100%" stop-color="#6ee7b7" />
+    </linearGradient>
+
+    <!-- Ring Accent Gradient -->
+    <linearGradient id="swRingGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1ed760" stop-opacity="0.8" />
+      <stop offset="50%" stop-color="#00f5a0" stop-opacity="0.2" />
+      <stop offset="100%" stop-color="#1ed760" stop-opacity="0.8" />
+    </linearGradient>
+
+    <!-- Drop Shadow Filter for Standalone SVG -->
+    <filter id="swGlowFilter" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="3.5" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Outer Ambient Ring -->
+  <circle cx="50" cy="50" r="46" stroke="url(#swRingGrad)" stroke-width="1.5" stroke-dasharray="4 2" opacity="0.6" />
+
+  <!-- Base Squircle Surface -->
+  <rect x="8" y="8" width="84" height="84" rx="24" fill="url(#swBgGrad)" stroke="url(#swRingGrad)" stroke-width="2" />
+
+  <!-- Concentric Sound Radar Arcs (Left & Right Emitters) -->
+  <path d="M22 36 A 34 34 0 0 0 22 64" stroke="url(#swNeonGrad)" stroke-width="2.5" stroke-linecap="round" opacity="0.45" />
+  <path d="M78 36 A 34 34 0 0 1 78 64" stroke="url(#swNeonGrad)" stroke-width="2.5" stroke-linecap="round" opacity="0.45" />
+
+  <!-- Sonic Wave Equalizer Bars morphing into Play Crest -->
+  <!-- Bar 1 (Left low) -->
+  <rect x="29" y="42" width="4" height="16" rx="2" fill="url(#swWaveGrad)" />
+
+  <!-- Bar 2 (Mid-left rise) -->
+  <rect x="37" y="32" width="4" height="36" rx="2" fill="url(#swWaveGrad)" />
+
+  <!-- Central Dynamic Apex Play/Sonic Peak -->
+  <!-- Bar 3 (Center high) -->
+  <rect x="45" y="24" width="4" height="52" rx="2" fill="url(#swNeonGrad)" filter="url(#swGlowFilter)" />
+
+  <!-- Bar 4 (Mid-right energetic) -->
+  <rect x="53" y="35" width="4" height="30" rx="2" fill="url(#swWaveGrad)" />
+
+  <!-- Bar 5 (Right tail) -->
+  <rect x="61" y="43" width="4" height="14" rx="2" fill="url(#swWaveGrad)" />
+
+  <!-- Futuristic Forward Sound Velocity Arrow / Play Tri-Polygon overlay -->
+  <path d="M49 43 L63 50 L49 57 Z" fill="#000000" fill-opacity="0.3" />
+  <path d="M47 43 L61 50 L47 57 Z" fill="#ffffff" fill-opacity="0.9" filter="url(#swGlowFilter)" />
+
+  <!-- Center Core Pulsing Sparkle Dot -->
+  <circle cx="50" cy="50" r="2" fill="#ffffff" />
+</svg>
