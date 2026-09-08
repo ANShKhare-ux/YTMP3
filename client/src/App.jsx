@@ -12,7 +12,8 @@ import {
   Library,
   ChevronLeft,
   ChevronRight,
-  Headphones
+  Headphones,
+  Sparkles
 } from 'lucide-react';
 import UrlInput from './components/UrlInput';
 import VideoPreview from './components/VideoPreview';
@@ -21,10 +22,18 @@ import ProgressBar from './components/ProgressBar';
 import AudioPlayer from './components/AudioPlayer';
 import HistorySection from './components/HistorySection';
 import Logo from './components/Logo';
+import IntroVideo from './components/IntroVideo';
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
 export default function App() {
+  const [showIntro, setShowIntro] = useState(() => {
+    try {
+      return !sessionStorage.getItem('sonicwave_intro_viewed');
+    } catch {
+      return true;
+    }
+  });
   const [url, setUrl] = useState('');
   const [videoInfo, setVideoInfo] = useState(null);
   const [bitrate, setBitrate] = useState('320k');
@@ -35,6 +44,15 @@ export default function App() {
   const [currentJob, setCurrentJob] = useState(null);
   const [activeTrack, setActiveTrack] = useState(null);
   const [error, setError] = useState(null);
+
+  const handleCloseIntro = () => {
+    setShowIntro(false);
+    try {
+      sessionStorage.setItem('sonicwave_intro_viewed', 'true');
+    } catch (e) {
+      console.warn('Could not save intro state:', e);
+    }
+  };
 
   const [systemStatus, setSystemStatus] = useState({ ready: true });
   const [history, setHistory] = useState(() => {
@@ -452,6 +470,16 @@ export default function App() {
           </div>
 
           <div className="top-bar-actions">
+            <button
+              type="button"
+              className="top-bar-intro-btn"
+              onClick={() => setShowIntro(true)}
+              title="Watch SonicWave Intro Animation"
+            >
+              <Sparkles size={13} />
+              <span>Watch Intro</span>
+            </button>
+
             <div className="status-indicator-pill">
               <Zap size={12} fill="var(--spotify-green)" />
               <span>Universal 16x Multi-Stream Active</span>
@@ -565,6 +593,9 @@ export default function App() {
       {activeTrack && (
         <AudioPlayer track={activeTrack} />
       )}
+
+      {/* Cinematic Brand Intro Video Overlay */}
+      <IntroVideo isOpen={showIntro} onClose={handleCloseIntro} />
     </div>
   );
 }

@@ -1763,4 +1763,69 @@ button:active {
   }
 }
 
+/* ==========================================================================
+   SONICWAVE CINEMATIC INTRO VIDEO
+   ========================================================================== */
+
+.sonicwave-intro-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  background: #000000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+  cursor: pointer;
+  animation: introOverlayFadeIn 0.3s ease-out;
+}
+
+.sonicwave-intro-overlay.closing {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.intro-video-element {
+  width: 60vw;
+  height: 60vh;
+  max-width: 60vw;
+  max-height: 60vh;
+  object-fit: contain;
+  display: block;
+}
+
+/* Top bar watch intro button */
+.top-bar-intro-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: rgba(30, 215, 96, 0.12);
+  border: 1px solid rgba(30, 215, 96, 0.35);
+  color: #00f5a0;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.top-bar-intro-btn:hover {
+  background: rgba(30, 215, 96, 0.26);
+  border-color: #00f5a0;
+  color: #ffffff;
+  box-shadow: 0 0 16px rgba(30, 215, 96, 0.4);
+  transform: translateY(-1px);
+}
+
+@keyframes introOverlayFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+
+
+
 

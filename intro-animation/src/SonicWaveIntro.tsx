@@ -26,37 +26,38 @@ export const SonicWaveIntro: React.FC = () => {
   );
 
   // ---------------------------------------------------------------------------
-  // 2. Shockwave Acoustic Radial Rings (Frames 0 - 70)
+  // 2. Shockwave Acoustic Radial Rings (Frames 0 - 60)
+  // Calibrated to stay safely within 1080p canvas with no edge clipping
   // ---------------------------------------------------------------------------
-  const ring1Scale = interpolate(frame, [0, 50], [0.2, 3.4], {
+  const ring1Scale = interpolate(frame, [0, 42], [0.3, 2.1], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
     easing: Easing.bezier(0.16, 1, 0.3, 1),
     output: "perceptual-scale",
   });
-  const ring1Opacity = interpolate(frame, [0, 15, 50], [0, 0.75, 0], {
+  const ring1Opacity = interpolate(frame, [0, 14, 38], [0, 0.75, 0], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
 
-  const ring2Scale = interpolate(frame, [12, 62], [0.2, 3.8], {
+  const ring2Scale = interpolate(frame, [10, 50], [0.3, 2.4], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
     easing: Easing.bezier(0.16, 1, 0.3, 1),
     output: "perceptual-scale",
   });
-  const ring2Opacity = interpolate(frame, [12, 26, 62], [0, 0.6, 0], {
+  const ring2Opacity = interpolate(frame, [10, 24, 46], [0, 0.6, 0], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
 
-  const ring3Scale = interpolate(frame, [24, 75], [0.2, 4.2], {
+  const ring3Scale = interpolate(frame, [20, 60], [0.3, 2.65], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
     easing: Easing.bezier(0.16, 1, 0.3, 1),
     output: "perceptual-scale",
   });
-  const ring3Opacity = interpolate(frame, [24, 38, 75], [0, 0.45, 0], {
+  const ring3Opacity = interpolate(frame, [20, 34, 54], [0, 0.45, 0], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
@@ -184,12 +185,15 @@ export const SonicWaveIntro: React.FC = () => {
       style={{
         backgroundColor: "#080a09",
         color: "#ffffff",
+
         fontFamily:
           "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
+
         overflow: "hidden",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
+        scale: 0.44,
       }}
     >
       {/* Dynamic Ambient Background Flare */}
@@ -225,47 +229,6 @@ export const SonicWaveIntro: React.FC = () => {
         }}
       />
 
-      {/* Shockwave Acoustic Wave Rings */}
-      <div
-        style={{
-          position: "absolute",
-          width: 320,
-          height: 320,
-          borderRadius: "50%",
-          border: "2px solid #00f5a0",
-          scale: ring1Scale,
-          opacity: ring1Opacity,
-          filter: "drop-shadow(0 0 12px rgba(0, 245, 160, 0.8))",
-          pointerEvents: "none",
-        }}
-      />
-      <div
-        style={{
-          position: "absolute",
-          width: 320,
-          height: 320,
-          borderRadius: "50%",
-          border: "2px solid #1ed760",
-          scale: ring2Scale,
-          opacity: ring2Opacity,
-          filter: "drop-shadow(0 0 10px rgba(30, 215, 96, 0.6))",
-          pointerEvents: "none",
-        }}
-      />
-      <div
-        style={{
-          position: "absolute",
-          width: 320,
-          height: 320,
-          borderRadius: "50%",
-          border: "1.5px dashed #00f5a0",
-          scale: ring3Scale,
-          opacity: ring3Opacity,
-          filter: "drop-shadow(0 0 8px rgba(0, 245, 160, 0.5))",
-          pointerEvents: "none",
-        }}
-      />
-
       {/* Main Brand Assembly Container */}
       <div
         style={{
@@ -276,18 +239,77 @@ export const SonicWaveIntro: React.FC = () => {
           zIndex: 10,
         }}
       >
-        {/* Emblem Squircle */}
+        {/* Emblem Squircle Container */}
         <div
           style={{
             position: "relative",
             width: 170,
             height: 170,
-            scale: emblemScale,
-            opacity: emblemOpacity,
-            filter: `drop-shadow(0 14px 32px rgba(0, 0, 0, 0.8)) drop-shadow(0 0 ${emblemGlow}px rgba(30, 215, 96, 0.5))`,
             marginBottom: 36,
           }}
         >
+          {/* Shockwave Acoustic Wave Rings - Centered behind Emblem */}
+          <div
+            style={{
+              position: "absolute",
+              left: -35,
+              top: -35,
+              width: 240,
+              height: 240,
+              borderRadius: "50%",
+              border: "2px solid #00f5a0",
+              scale: ring1Scale,
+              opacity: ring1Opacity,
+              filter: "drop-shadow(0 0 10px rgba(0, 245, 160, 0.8))",
+              pointerEvents: "none",
+              zIndex: 0,
+            }}
+          />
+          <div
+            style={{
+              position: "absolute",
+              left: -35,
+              top: -35,
+              width: 240,
+              height: 240,
+              borderRadius: "50%",
+              border: "2px solid #1ed760",
+              scale: ring2Scale,
+              opacity: ring2Opacity,
+              filter: "drop-shadow(0 0 8px rgba(30, 215, 96, 0.6))",
+              pointerEvents: "none",
+              zIndex: 0,
+            }}
+          />
+          <div
+            style={{
+              position: "absolute",
+              left: -35,
+              top: -35,
+              width: 240,
+              height: 240,
+              borderRadius: "50%",
+              border: "1.5px dashed #00f5a0",
+              scale: ring3Scale,
+              opacity: ring3Opacity,
+              filter: "drop-shadow(0 0 6px rgba(0, 245, 160, 0.5))",
+              pointerEvents: "none",
+              zIndex: 0,
+            }}
+          />
+
+          {/* Emblem Squircle */}
+          <div
+            style={{
+              position: "relative",
+              width: "100%",
+              height: "100%",
+              scale: emblemScale,
+              opacity: emblemOpacity,
+              filter: `drop-shadow(0 14px 32px rgba(0, 0, 0, 0.8)) drop-shadow(0 0 ${emblemGlow}px rgba(30, 215, 96, 0.5))`,
+              zIndex: 1,
+            }}
+          >
           <svg
             viewBox="0 0 100 100"
             style={{ width: "100%", height: "100%", overflow: "visible" }}
@@ -436,8 +458,9 @@ export const SonicWaveIntro: React.FC = () => {
             <circle cx="50" cy="50" r="2.2" fill="#00f5a0" />
           </svg>
         </div>
+      </div>
 
-        {/* Brand Title: "SonicWave" */}
+      {/* Brand Title: "SonicWave" */}
         <div
           style={{
             position: "relative",
