@@ -46,27 +46,27 @@ export default function Logo({
         >
           <defs>
             <radialGradient id="swEmblemBg" cx="50%" cy="50%" r="50%" fx="35%" fy="30%">
-              <stop offset="0%" stop-color="#24342a" />
-              <stop offset="60%" stop-color="#141a16" />
-              <stop offset="100%" stop-color="#0a0d0b" />
+              <stop offset="0%" stopColor="#24342a" />
+              <stop offset="60%" stopColor="#141a16" />
+              <stop offset="100%" stopColor="#0a0d0b" />
             </radialGradient>
 
             <linearGradient id="swNeonGradComp" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stop-color="#00f5a0" />
-              <stop offset="50%" stop-color="#1ed760" />
-              <stop offset="100%" stop-color="#10b981" />
+              <stop offset="0%" stopColor="#00f5a0" />
+              <stop offset="50%" stopColor="#1ed760" />
+              <stop offset="100%" stopColor="#10b981" />
             </linearGradient>
 
             <linearGradient id="swWaveGradComp" x1="0%" y1="100%" x2="0%" y2="0%">
-              <stop offset="0%" stop-color="#0d9488" />
-              <stop offset="50%" stop-color="#1ed760" />
-              <stop offset="100%" stop-color="#6ee7b7" />
+              <stop offset="0%" stopColor="#0d9488" />
+              <stop offset="50%" stopColor="#1ed760" />
+              <stop offset="100%" stopColor="#6ee7b7" />
             </linearGradient>
 
             <linearGradient id="swBorderGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stop-color="#1ed760" stop-opacity="0.9" />
-              <stop offset="50%" stop-color="#00f5a0" stop-opacity="0.3" />
-              <stop offset="100%" stop-color="#1ed760" stop-opacity="0.8" />
+              <stop offset="0%" stopColor="#1ed760" stopOpacity="0.9" />
+              <stop offset="50%" stopColor="#00f5a0" stopOpacity="0.3" />
+              <stop offset="100%" stopColor="#1ed760" stopOpacity="0.8" />
             </linearGradient>
 
             <filter id="swInnerGlow" x="-20%" y="-20%" width="140%" height="140%">
