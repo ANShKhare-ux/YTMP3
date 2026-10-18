@@ -3,8 +3,8 @@ const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
-const { verifyBinaries } = require('./binManager');
-const { getVideoInfo, startConversion, getJob, getHistory, DOWNLOADS_DIR } = require('./converter');
+const { verifyBinaries, updateYtDlp } = require('./binManager');
+const { getVideoInfo, startConversion, cancelConversion, getJob, getHistory, DOWNLOADS_DIR } = require('./converter');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -68,6 +68,29 @@ app.post('/api/convert', (req, res) => {
       jobId,
       message: 'Conversion started'
     });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Cancel Conversion Job
+app.post('/api/cancel/:jobId', (req, res) => {
+  const { jobId } = req.params;
+  const success = cancelConversion(jobId);
+  res.json({
+    success,
+    message: success ? 'Conversion cancelled' : 'Job not found or already finished'
+  });
+});
+
+// Self-update yt-dlp binary
+app.post('/api/binaries/update', async (req, res) => {
+  try {
+    const result = await updateYtDlp();
+    if (result.success && result.version) {
+      systemStatus.ytDlpVersion = result.version;
+    }
+    res.json(result);
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
@@ -164,7 +187,7 @@ app.get('/api/stream/:jobId', (req, res) => {
   }
 });
 
-// Download Audio File
+// Download Audio/Video File with RFC 5987 Unicode Support
 app.get('/api/download/:jobId', (req, res) => {
   const { jobId } = req.params;
   const job = getJob(jobId);
@@ -174,9 +197,14 @@ app.get('/api/download/:jobId', (req, res) => {
   }
 
   const filename = job.fileName || `${job.title || 'audio'}.${job.format}`;
-  res.download(job.filePath, filename, (err) => {
-    if (err) {
+  const asciiFallback = filename.replace(/[^\x20-\x7E]/g, '_').replace(/["\r\n]/g, '_');
+  const utf8Encoded = encodeURIComponent(filename).replace(/['()]/g, escape);
+
+  res.setHeader('Content-Disposition', `attachment; filename="${asciiFallback}"; filename*=UTF-8''${utf8Encoded}`);
+  res.sendFile(path.resolve(job.filePath), (err) => {
+    if (err && !res.headersSent) {
       console.error('[server] Download error:', err.message);
+      res.status(500).send('Error downloading file.');
     }
   });
 });

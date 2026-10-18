@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import confetti from 'canvas-confetti';
 import {
   Music2,
@@ -44,6 +44,7 @@ export default function App() {
   const [currentJob, setCurrentJob] = useState(null);
   const [activeTrack, setActiveTrack] = useState(null);
   const [error, setError] = useState(null);
+  const eventSourceRef = useRef(null);
 
   const handleCloseIntro = () => {
     setShowIntro(false);
@@ -64,7 +65,7 @@ export default function App() {
     }
   });
 
-  // Check backend health & binaries on mount
+  // Check backend health, binaries, and hydrate persistent history on mount
   useEffect(() => {
     fetch(`${API_BASE}/api/status`)
       .then((res) => {
@@ -83,6 +84,23 @@ export default function App() {
         console.warn('Backend status check warning:', err);
         setSystemStatus({ ready: false, disconnected: true });
       });
+
+    // Hydrate persistent history from backend
+    fetch(`${API_BASE}/api/history`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && data.success && Array.isArray(data.history) && data.history.length > 0) {
+          setHistory((prev) => {
+            const map = new Map();
+            data.history.forEach((item) => map.set(item.id, item));
+            prev.forEach((item) => {
+              if (!map.has(item.id)) map.set(item.id, item);
+            });
+            return Array.from(map.values()).slice(0, 30);
+          });
+        }
+      })
+      .catch(() => {});
   }, []);
 
   // Save history to localStorage
@@ -192,7 +210,11 @@ export default function App() {
 
   // Listen to real-time progress via Server-Sent Events (SSE)
   const listenToProgress = (jobId) => {
+    if (eventSourceRef.current) {
+      eventSourceRef.current.close();
+    }
     const eventSource = new EventSource(`${API_BASE}/api/progress/${jobId}`);
+    eventSourceRef.current = eventSource;
 
     eventSource.onmessage = (event) => {
       try {
@@ -201,6 +223,7 @@ export default function App() {
 
         if (job.status === 'completed') {
           eventSource.close();
+          eventSourceRef.current = null;
           setIsConverting(false);
 
           // Confetti celebratory burst
@@ -239,10 +262,13 @@ export default function App() {
               ...filtered
             ].slice(0, 15);
           });
-        } else if (job.status === 'failed') {
+        } else if (job.status === 'failed' || job.status === 'cancelled') {
           eventSource.close();
+          eventSourceRef.current = null;
           setIsConverting(false);
-          setError(job.error || 'Conversion failed. Please try again.');
+          if (job.status === 'failed') {
+            setError(job.error || 'Conversion failed. Please try again.');
+          }
         }
       } catch (err) {
         console.error('SSE parse error:', err);
@@ -316,7 +342,76 @@ export default function App() {
     }, 1000);
   };
 
+  // Cancel an in-progress conversion
+  const handleCancelConversion = async () => {
+    if (!currentJob?.id) return;
+    try {
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close();
+        eventSourceRef.current = null;
+      }
+      await fetch(`${API_BASE}/api/cancel/${currentJob.id}`, { method: 'POST' });
+    } catch (e) {
+      console.warn('Cancel request error:', e);
+    } finally {
+      setIsConverting(false);
+      setCurrentJob(null);
+    }
+  };
+
+  // Queue navigation index
+  const currentTrackIndex = activeTrack
+    ? history.findIndex((item) => item.id === activeTrack.jobId)
+    : -1;
+
+  const handleNextTrack = () => {
+    if (currentTrackIndex !== -1 && currentTrackIndex < history.length - 1) {
+      const nextItem = history[currentTrackIndex + 1];
+      handleSelectHistoryTrack(nextItem);
+    }
+  };
+
+  const handlePrevTrack = () => {
+    if (currentTrackIndex > 0) {
+      const prevItem = history[currentTrackIndex - 1];
+      handleSelectHistoryTrack(prevItem);
+    }
+  };
+
+  // Re-convert a historical track
+  const handleReconvert = (mediaUrl) => {
+    if (!mediaUrl) return;
+    setUrl(mediaUrl);
+    setError(null);
+    setIsLoadingInfo(true);
+    setVideoInfo(null);
+    setCurrentJob(null);
+
+    fetch(`${API_BASE}/api/info`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url: mediaUrl.trim() })
+    })
+      .then((res) => res.json())
+      .then((json) => {
+        if (json.success && json.data) {
+          setVideoInfo(json.data);
+        } else {
+          throw new Error(json.error || 'Failed to fetch video details.');
+        }
+      })
+      .catch((err) => {
+        setError(err.message || 'Unable to load media details.');
+      })
+      .finally(() => {
+        setIsLoadingInfo(false);
+      });
+  };
+
   const handleClear = () => {
+    if (isConverting) {
+      handleCancelConversion();
+    }
     setUrl('');
     setVideoInfo(null);
     setCurrentJob(null);
@@ -453,16 +548,18 @@ export default function App() {
               <button
                 type="button"
                 className="nav-arrow-btn"
-                disabled
-                title="Back"
+                onClick={handlePrevTrack}
+                disabled={currentTrackIndex <= 0}
+                title="Previous Track in Library"
               >
                 <ChevronLeft size={20} />
               </button>
               <button
                 type="button"
                 className="nav-arrow-btn"
-                disabled
-                title="Forward"
+                onClick={handleNextTrack}
+                disabled={currentTrackIndex === -1 || currentTrackIndex >= history.length - 1}
+                title="Next Track in Library"
               >
                 <ChevronRight size={20} />
               </button>
@@ -566,7 +663,7 @@ export default function App() {
             )}
 
             {/* Conversion Progress Bar */}
-            {currentJob && <ProgressBar job={currentJob} />}
+            {currentJob && <ProgressBar job={currentJob} onCancel={handleCancelConversion} />}
           </section>
 
           {/* Recent Conversions Tracklist Table */}
@@ -576,6 +673,7 @@ export default function App() {
                 history={history}
                 onSelectTrack={handleSelectHistoryTrack}
                 onClearHistory={handleClearHistory}
+                onReconvert={handleReconvert}
               />
             </section>
           )}
@@ -591,7 +689,13 @@ export default function App() {
 
       {/* Docked Spotify Bottom Audio/Video Player */}
       {activeTrack && (
-        <AudioPlayer track={activeTrack} />
+        <AudioPlayer
+          track={activeTrack}
+          onNextTrack={handleNextTrack}
+          onPrevTrack={handlePrevTrack}
+          hasNext={currentTrackIndex !== -1 && currentTrackIndex < history.length - 1}
+          hasPrev={currentTrackIndex > 0}
+        />
       )}
 
       {/* Cinematic Brand Intro Video Overlay */}

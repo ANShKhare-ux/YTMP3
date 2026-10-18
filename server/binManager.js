@@ -165,8 +165,27 @@ function getBinDir() {
   return BIN_DIR;
 }
 
+/**
+ * Update yt-dlp binary via self-update
+ */
+function updateYtDlp() {
+  return new Promise((resolve) => {
+    try {
+      if (!fs.existsSync(YT_DLP_PATH)) {
+        return resolve({ success: false, message: 'yt-dlp binary not installed' });
+      }
+      const output = execSync(`"${YT_DLP_PATH}" -U`, { encoding: 'utf8', timeout: 45000 });
+      const version = execSync(`"${YT_DLP_PATH}" --version`, { encoding: 'utf8' }).trim();
+      resolve({ success: true, output: output.trim(), version });
+    } catch (err) {
+      resolve({ success: false, error: err.message });
+    }
+  });
+}
+
 module.exports = {
   verifyBinaries,
+  updateYtDlp,
   getYtDlpPath,
   getFfmpegPath,
   getFfmpegLocation,

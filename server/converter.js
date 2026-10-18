@@ -8,27 +8,101 @@ if (!fs.existsSync(DOWNLOADS_DIR)) {
   fs.mkdirSync(DOWNLOADS_DIR, { recursive: true });
 }
 
-// Clean up files older than 2 hours every 30 minutes to prevent disk exhaustion
+const DATA_DIR = path.join(__dirname, 'data');
+if (!fs.existsSync(DATA_DIR)) {
+  fs.mkdirSync(DATA_DIR, { recursive: true });
+}
+const HISTORY_FILE = path.join(DATA_DIR, 'history.json');
+
+// In-memory active jobs tracker
+const jobs = new Map();
+
+/**
+ * Load completed jobs from persistent history file into memory on startup
+ */
+function loadPersistentHistory() {
+  try {
+    if (fs.existsSync(HISTORY_FILE)) {
+      const data = JSON.parse(fs.readFileSync(HISTORY_FILE, 'utf8'));
+      if (Array.isArray(data)) {
+        for (const item of data) {
+          if (item && item.id) {
+            jobs.set(item.id, item);
+          }
+        }
+        console.log(`[converter] Loaded ${data.length} persistent history records.`);
+      }
+    }
+  } catch (err) {
+    console.warn('[converter] Failed to load persistent history:', err.message);
+  }
+}
+loadPersistentHistory();
+
+/**
+ * Append or update a completed job in persistent history
+ */
+function savePersistentHistory(job) {
+  try {
+    let list = [];
+    if (fs.existsSync(HISTORY_FILE)) {
+      try {
+        list = JSON.parse(fs.readFileSync(HISTORY_FILE, 'utf8'));
+      } catch {}
+    }
+    const cleanJob = {
+      id: job.id,
+      url: job.url,
+      format: job.format,
+      quality: job.quality,
+      isVideo: job.isVideo,
+      status: 'completed',
+      progress: 100,
+      title: job.title || 'Audio File',
+      artist: job.artist || 'Media Artist',
+      thumbnail: job.thumbnail || '',
+      duration: job.duration || 0,
+      filePath: job.filePath,
+      fileName: job.fileName,
+      createdAt: job.createdAt || Date.now()
+    };
+    list = [cleanJob, ...list.filter(item => item.id !== job.id)].slice(0, 50);
+    fs.writeFileSync(HISTORY_FILE, JSON.stringify(list, null, 2), 'utf8');
+  } catch (err) {
+    console.warn('[converter] Failed to save history to disk:', err.message);
+  }
+}
+
+// Clean up files older than 2 hours every 30 minutes to prevent disk exhaustion and memory leaks
 function cleanOldDownloads() {
   try {
     const now = Date.now();
     const maxAge = 2 * 60 * 60 * 1000;
-    const files = fs.readdirSync(DOWNLOADS_DIR);
-    for (const file of files) {
-      const fullPath = path.join(DOWNLOADS_DIR, file);
-      try {
-        const stats = fs.statSync(fullPath);
-        if (now - stats.mtimeMs > maxAge) {
-          fs.unlinkSync(fullPath);
+    if (fs.existsSync(DOWNLOADS_DIR)) {
+      const files = fs.readdirSync(DOWNLOADS_DIR);
+      for (const file of files) {
+        const fullPath = path.join(DOWNLOADS_DIR, file);
+        try {
+          const stats = fs.statSync(fullPath);
+          if (now - stats.mtimeMs > maxAge) {
+            fs.unlinkSync(fullPath);
+          }
+        } catch {}
+      }
+    }
+
+    // Evict old jobs from memory if their physical files are deleted
+    for (const [id, job] of jobs.entries()) {
+      if ((job.status === 'completed' || job.status === 'failed' || job.status === 'cancelled') &&
+          now - (job.createdAt || 0) > maxAge) {
+        if (!job.filePath || !fs.existsSync(job.filePath)) {
+          jobs.delete(id);
         }
-      } catch {}
+      }
     }
   } catch {}
 }
 setInterval(cleanOldDownloads, 30 * 60 * 1000);
-
-// In-memory active jobs tracker
-const jobs = new Map();
 
 /**
  * Format seconds into HH:MM:SS or MM:SS
@@ -128,6 +202,7 @@ function getVideoInfo(rawUrl) {
       ...cookieFlags,
       '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
       '--js-runtimes', 'node',
+      '--',
       url
     ];
 
@@ -204,6 +279,16 @@ function startConversion({ url, format = 'mp3', quality = '320k', jobId, turbo =
   const targetFormat = validFormats.includes(format.toLowerCase()) ? format.toLowerCase() : 'mp3';
   const isVideo = targetFormat === 'mp4';
 
+  // Sanitize and whitelist quality values
+  const validAudioQualities = ['320k', '256k', '192k', '128k', '0', '5', '9'];
+  const validVideoQualities = ['1080p', '720p', '480p', 'best'];
+  let targetQuality = quality;
+  if (isVideo) {
+    targetQuality = validVideoQualities.includes(quality) ? quality : '1080p';
+  } else {
+    targetQuality = validAudioQualities.includes(quality) ? quality : '320k';
+  }
+
   // Output filename template
   const outputTemplate = path.join(DOWNLOADS_DIR, `${jobId}.%(ext)s`);
 
@@ -211,7 +296,7 @@ function startConversion({ url, format = 'mp3', quality = '320k', jobId, turbo =
     id: jobId,
     url,
     format: targetFormat,
-    quality,
+    quality: targetQuality,
     isVideo,
     turbo: true,
     parallelStreams: 16,
@@ -279,9 +364,11 @@ function startConversion({ url, format = 'mp3', quality = '320k', jobId, turbo =
       '--newline',
       '--no-playlist',
       '--embed-metadata',
+      '--embed-thumbnail',
       '--no-check-certificates',
       ...ffmpegFlags,
       ...speedFlags,
+      '--',
       url
     ];
   } else {
@@ -302,15 +389,18 @@ function startConversion({ url, format = 'mp3', quality = '320k', jobId, turbo =
       '-f', audioFilter,
       '--extract-audio',
       '--audio-format', targetFormat,
-      '--audio-quality', quality,
+      '--audio-quality', targetQuality,
       '--postprocessor-args', postArgs,
       '--output', outputTemplate,
       '--newline',
       '--no-playlist',
       '--embed-metadata',
+      '--embed-thumbnail',
+      '--convert-thumbnails', 'jpg',
       '--no-check-certificates',
       ...ffmpegFlags,
       ...speedFlags,
+      '--',
       url
     ];
   }
@@ -392,6 +482,7 @@ function startConversion({ url, format = 'mp3', quality = '320k', jobId, turbo =
         jobState.progress = 100;
         jobState.filePath = expectedFile;
         jobState.fileName = `${(jobState.title || 'audio').replace(/[/\\?%*:|"<>]/g, '_')}.${targetFormat}`;
+        savePersistentHistory(jobState);
         console.log(`[converter] Job ${jobId} completed successfully!`);
       } else {
         // Look for any file with jobId prefix in downloads dir
@@ -401,6 +492,7 @@ function startConversion({ url, format = 'mp3', quality = '320k', jobId, turbo =
           jobState.progress = 100;
           jobState.filePath = path.join(DOWNLOADS_DIR, found);
           jobState.fileName = found;
+          savePersistentHistory(jobState);
           console.log(`[converter] Job ${jobId} finished with file ${found}`);
         } else {
           jobState.status = 'failed';
@@ -461,15 +553,47 @@ function getHistory() {
   for (const [id, job] of jobs.entries()) {
     if (job.status === 'completed') {
       const { process, ...clean } = job;
+      clean.isAvailable = clean.filePath ? fs.existsSync(clean.filePath) : false;
       list.push(clean);
     }
   }
-  return list.sort((a, b) => b.createdAt - a.createdAt);
+  return list.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+}
+
+/**
+ * Cancel an active conversion job
+ */
+function cancelConversion(jobId) {
+  const job = jobs.get(jobId);
+  if (!job) return false;
+  if (job.process && job.status !== 'completed' && job.status !== 'failed') {
+    try {
+      job.process.kill('SIGTERM');
+    } catch {}
+    job.status = 'cancelled';
+    job.error = 'Conversion was cancelled by user.';
+    console.log(`[converter] Job ${jobId} cancelled.`);
+
+    // Clean up partial downloads on cancellation
+    setTimeout(() => {
+      try {
+        if (fs.existsSync(DOWNLOADS_DIR)) {
+          const partials = fs.readdirSync(DOWNLOADS_DIR).filter(f => f.startsWith(jobId));
+          for (const part of partials) {
+            fs.unlinkSync(path.join(DOWNLOADS_DIR, part));
+          }
+        }
+      } catch {}
+    }, 400);
+    return true;
+  }
+  return false;
 }
 
 module.exports = {
   getVideoInfo,
   startConversion,
+  cancelConversion,
   getJob,
   getHistory,
   formatDuration,

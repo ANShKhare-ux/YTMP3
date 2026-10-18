@@ -1,9 +1,9 @@
 import React from 'react';
-import { History, Play, Download, Trash2, Music } from 'lucide-react';
+import { History, Play, Download, Trash2, Music, RotateCw, AlertTriangle } from 'lucide-react';
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
-export default function HistorySection({ history, onSelectTrack, onClearHistory }) {
+export default function HistorySection({ history, onSelectTrack, onClearHistory, onReconvert }) {
   if (!history || history.length === 0) return null;
 
   return (
@@ -36,80 +36,124 @@ export default function HistorySection({ history, onSelectTrack, onClearHistory 
       </div>
 
       <div className="spotify-history-table">
-        {history.map((item, idx) => (
-          <div
-            key={item.id}
-            className="spotify-track-row"
-            onClick={() => onSelectTrack(item)}
-            title="Click to play in Spotify player"
-          >
-            <div className="track-index-col">
-              <span>{idx + 1}</span>
-            </div>
+        {history.map((item, idx) => {
+          const isExpired = item.isAvailable === false;
+          return (
+            <div
+              key={item.id}
+              className={`spotify-track-row ${isExpired ? 'track-expired' : ''}`}
+              onClick={() => {
+                if (!isExpired) {
+                  onSelectTrack(item);
+                } else if (onReconvert && item.url) {
+                  onReconvert(item.url);
+                }
+              }}
+              title={isExpired ? 'File expired on local disk. Click to re-convert.' : 'Click to play in Spotify player'}
+              style={{ opacity: isExpired ? 0.65 : 1 }}
+            >
+              <div className="track-index-col">
+                <span>{idx + 1}</span>
+              </div>
 
-            <div className="track-main-col">
-              {item.thumbnail ? (
-                <img src={item.thumbnail} alt={item.title} className="track-table-thumb" />
-              ) : (
-                <div
-                  className="track-table-thumb"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    backgroundColor: 'var(--bg-pill)'
-                  }}
-                >
-                  <Music size={16} style={{ color: 'var(--spotify-green)' }} />
+              <div className="track-main-col">
+                {item.thumbnail ? (
+                  <img src={item.thumbnail} alt={item.title} className="track-table-thumb" />
+                ) : (
+                  <div
+                    className="track-table-thumb"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      backgroundColor: 'var(--bg-pill)'
+                    }}
+                  >
+                    <Music size={16} style={{ color: 'var(--spotify-green)' }} />
+                  </div>
+                )}
+
+                <div className="track-table-titles">
+                  <span className="track-table-title" title={item.title}>
+                    {item.title || 'Audio File'}
+                  </span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span className="track-table-artist">
+                      {item.artist || 'YouTube Artist'}
+                    </span>
+                    {isExpired && (
+                      <span
+                        style={{
+                          fontSize: '10px',
+                          color: 'var(--text-warning)',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 2,
+                          fontWeight: 700
+                        }}
+                      >
+                        <AlertTriangle size={10} />
+                        EXPIRED
+                      </span>
+                    )}
+                  </div>
                 </div>
-              )}
+              </div>
 
-              <div className="track-table-titles">
-                <span className="track-table-title" title={item.title}>
-                  {item.title || 'Audio File'}
-                </span>
-                <span className="track-table-artist">
-                  {item.artist || 'YouTube Artist'}
+              <div className="track-badge-col">
+                <span className="badge-tag-small" style={{ letterSpacing: '0.04em' }}>
+                  {item.format?.toUpperCase()}
                 </span>
               </div>
-            </div>
 
-            <div className="track-badge-col">
-              <span className="badge-tag-small" style={{ letterSpacing: '0.04em' }}>
-                {item.format?.toUpperCase()}
-              </span>
-            </div>
+              <div className="track-badge-col">
+                <span style={{ fontSize: '12px', color: 'var(--text-subdued)', fontFamily: 'var(--font-mono)' }}>
+                  {item.quality}
+                </span>
+              </div>
 
-            <div className="track-badge-col">
-              <span style={{ fontSize: '12px', color: 'var(--text-subdued)', fontFamily: 'var(--font-mono)' }}>
-                {item.quality}
-              </span>
-            </div>
+              <div className="track-actions-col" onClick={(e) => e.stopPropagation()}>
+                {isExpired ? (
+                  item.url && onReconvert && (
+                    <button
+                      type="button"
+                      className="btn-icon"
+                      onClick={() => onReconvert(item.url)}
+                      title="Re-fetch & Re-convert track"
+                      style={{ padding: '6px', color: 'var(--spotify-green)' }}
+                    >
+                      <RotateCw size={15} />
+                    </button>
+                  )
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      className="btn-icon"
+                      onClick={() => onSelectTrack(item)}
+                      title="Play in player"
+                      style={{ padding: '6px' }}
+                    >
+                      <Play size={16} fill="var(--text-white)" />
+                    </button>
 
-            <div className="track-actions-col" onClick={(e) => e.stopPropagation()}>
-              <button
-                type="button"
-                className="btn-icon"
-                onClick={() => onSelectTrack(item)}
-                title="Play in player"
-                style={{ padding: '6px' }}
-              >
-                <Play size={16} fill="var(--text-white)" />
-              </button>
-
-              <a
-                href={`${API_BASE}/api/download/${item.id}`}
-                download
-                className="btn-icon"
-                title={`Download ${item.format?.toUpperCase()}`}
-                style={{ padding: '6px', textDecoration: 'none' }}
-              >
-                <Download size={16} style={{ color: 'var(--spotify-green)' }} />
-              </a>
+                    <a
+                      href={`${API_BASE}/api/download/${item.id}`}
+                      download
+                      className="btn-icon"
+                      title={`Download ${item.format?.toUpperCase()}`}
+                      style={{ padding: '6px', textDecoration: 'none' }}
+                    >
+                      <Download size={16} style={{ color: 'var(--spotify-green)' }} />
+                    </a>
+                  </>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
 }
+

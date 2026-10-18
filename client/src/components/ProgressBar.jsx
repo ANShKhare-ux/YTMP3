@@ -1,12 +1,13 @@
 import React from 'react';
-import { DownloadCloud, Cpu, Tag, CheckCircle2, AlertCircle, Loader2, Video, Zap, Download } from 'lucide-react';
+import { DownloadCloud, Cpu, Tag, CheckCircle2, AlertCircle, Loader2, Video, Zap, Download, XCircle } from 'lucide-react';
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
-export default function ProgressBar({ job }) {
+export default function ProgressBar({ job, onCancel }) {
   if (!job) return null;
 
   const isVideo = job.format === 'mp4';
+  const isCancellable = ['starting', 'downloading', 'converting', 'tagging'].includes(job.status);
 
   const getStatusDetails = () => {
     switch (job.status) {
@@ -70,6 +71,28 @@ export default function ProgressBar({ job }) {
           <span>{label}</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {isCancellable && onCancel && (
+            <button
+              type="button"
+              className="btn-icon"
+              onClick={onCancel}
+              title="Cancel Conversion"
+              style={{
+                color: 'var(--text-negative)',
+                fontSize: '11px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+                padding: '3px 8px',
+                borderRadius: 'var(--radius-pill)',
+                backgroundColor: 'rgba(243, 114, 127, 0.1)',
+                border: '1px solid rgba(243, 114, 127, 0.25)'
+              }}
+            >
+              <XCircle size={13} />
+              <span>Cancel</span>
+            </button>
+          )}
           <span className="turbo-pill-active" style={{ fontSize: '10px', padding: '2px 8px' }}>
             <Zap size={10} />
             <span>16X TURBO</span>
