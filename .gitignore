@@ -19,7 +19,6 @@ server/downloads/
 .env
 .env.local
 .env.*.local
-.vercel/
 
 # Logs & OS artifacts
 npm-debug.log*
@@ -28,6 +27,3 @@ yarn-error.log*
 .system_generated/
 .DS_Store
 Thumbs.db
-
-.vercel
-.env*

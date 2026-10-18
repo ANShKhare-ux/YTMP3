@@ -127,7 +127,7 @@ export default function App() {
 
       const contentType = res.headers.get('content-type') || '';
       if (contentType.includes('text/html')) {
-        throw new Error('Backend server is unreachable or sleeping. Please wait 30 seconds for Render to wake up or check VITE_API_URL.');
+        throw new Error('Backend server is unreachable. Please verify that the local server is running on http://localhost:3001.');
       }
 
       const json = await res.json();
@@ -173,7 +173,7 @@ export default function App() {
 
       const contentType = res.headers.get('content-type') || '';
       if (contentType.includes('text/html')) {
-        throw new Error('Backend server is unreachable or sleeping. Please wait 30 seconds for Render to wake up or check VITE_API_URL.');
+        throw new Error('Backend server is unreachable. Please verify that the local server is running on http://localhost:3001.');
       }
 
       const json = await res.json();
@@ -510,7 +510,7 @@ export default function App() {
               <div className="alert-box alert-warning" style={{ marginBottom: '16px' }}>
                 <AlertTriangle size={16} />
                 <span>
-                  <strong>Backend Starting or Disconnected:</strong> Free cloud servers sleep when idle and take ~45s to spin up. If on Vercel, ensure your Render backend URL is active.
+                  <strong>Backend Offline:</strong> Cannot connect to local server on port 3001. Please run <code>npm run dev</code> or <code>start.bat</code> to launch the backend.
                 </span>
               </div>
             )}
