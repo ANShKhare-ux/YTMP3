@@ -120,6 +120,7 @@ export function AnimatedFooter({
   revealOnScroll = true,
   revealed,
   className = '',
+  children,
 }) {
   const rootRef = useRef(null);
   const leftWrapRef = useRef(null);
@@ -384,8 +385,9 @@ export function AnimatedFooter({
   const offEdge = startsHidden ? 125 : 0;
 
   return (
-    <div
+    <footer
       ref={rootRef}
+      role="contentinfo"
       className={`v-animated-footer-root ${className}`}
       style={{
         backgroundColor: background,
@@ -393,8 +395,15 @@ export function AnimatedFooter({
         containerType: 'inline-size',
       }}
     >
+      {/* Upper content: branding, columns, metadata, and status bar */}
+      {children && (
+        <div className="v-af-content-layer">
+          {children}
+        </div>
+      )}
+
       {/* ASCII interactive hands */}
-      <div className="v-af-hands-stage">
+      <div className="v-af-hands-stage" aria-hidden="true">
         <div
           ref={leftWrapRef}
           className="v-af-hand-wrap v-af-hand-left"
@@ -412,27 +421,25 @@ export function AnimatedFooter({
       </div>
 
       {/* Large display headings unmasked on reveal */}
-      <div className="v-af-headings-box">
+      <div className="v-af-headings-box" aria-hidden="true">
         {headingLines.map((word, wi) => (
-          <h2
+          <div
             key={`${word}-${wi}`}
-            aria-label={word}
             className="v-af-heading-word"
           >
             {Array.from(word).map((ch, ci) => (
               <span
                 key={ci}
                 data-af-char
-                aria-hidden="true"
                 className="v-af-char"
               >
                 {ch === ' ' ? '\u00A0' : ch}
               </span>
             ))}
-          </h2>
+          </div>
         ))}
       </div>
-    </div>
+    </footer>
   );
 }
 

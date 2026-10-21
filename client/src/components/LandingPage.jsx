@@ -914,67 +914,87 @@ export default function LandingPage({
       </section>
 
       {/* =========================================================================
-          FOOTER (DESIGN-cursor.md: background #010102, hairline top rule, ink-subtle)
+          SYNCHRONIZED UNIFIED FOOTER (VengeanceUI AnimatedFooter + Cursor Design)
           ========================================================================= */}
-      <footer className="cursor-footer">
-        <div className="cursor-container cursor-footer-grid">
-          <div className="cursor-footer-brand-col">
-            <div className="cursor-footer-brand">
-              <CursorBrandLogo size={20} />
-              <span className="cursor-footer-title">SonicWave</span>
+      <AnimatedFooter
+        headingLines={['SonicWave']}
+        background="#010102"
+        textColor="#ffffff"
+        charColor="rgba(94, 105, 209, 0.42)"
+        hoverColor="#5e69d1"
+        hoverCharColor="#ffffff"
+        revealOnScroll={true}
+      >
+        <div className="v-footer-grid">
+          {/* Brand & Desktop App Column */}
+          <div className="v-footer-brand-col">
+            <div className="v-footer-brand-title">
+              <CursorBrandLogo size={22} />
+              <span>SonicWave</span>
+              <span className="v-footer-badge">v1.0.0</span>
             </div>
-            <p className="cursor-footer-desc">
-              High-fidelity media extraction software for Windows with 16-stream parallel turbo acceleration and native local execution.
+            <p className="v-footer-desc">
+              High-fidelity media extraction software for Windows with 16-stream parallel turbo acceleration, native local execution, and embedded FFmpeg.
             </p>
+            <button
+              type="button"
+              className="v-footer-download-btn"
+              onClick={handleDownloadClick}
+              aria-label="Download SonicWave for Windows"
+            >
+              <WindowsIcon size={14} />
+              <span>Download for Windows (64-bit)</span>
+            </button>
           </div>
 
-          <div className="cursor-footer-links-col">
-            <span className="cursor-footer-heading">Product</span>
-            <a href="#features">Features</a>
-            <a href="#how-it-works">Installation</a>
-            <a href="#platforms">Supported Platforms</a>
-            <a href="#comparison">Speed Benchmark</a>
-            <a href="#specs">Specifications</a>
-            <a href="#faq">FAQ</a>
+          {/* Product Navigation */}
+          <div className="v-footer-col">
+            <span className="v-footer-col-title">Product</span>
+            <a href="#features" className="v-footer-link">Features</a>
+            <a href="#how-it-works" className="v-footer-link">Installation</a>
+            <a href="#platforms" className="v-footer-link">Supported Sites</a>
+            <a href="#comparison" className="v-footer-link">Speed Benchmark</a>
+            <a href="#specs" className="v-footer-link">Specifications</a>
+            <a href="#faq" className="v-footer-link">FAQ</a>
           </div>
 
-          <div className="cursor-footer-links-col">
-            <span className="cursor-footer-heading">Architecture</span>
-            <span>yt-dlp Engine</span>
-            <span>FFmpeg 7.0 Multiplexer</span>
-            <span>Node.js Backend</span>
-            <span>React 19 &amp; Vite</span>
+          {/* Engine & Architecture */}
+          <div className="v-footer-col">
+            <span className="v-footer-col-title">Engine</span>
+            <span className="v-footer-text-item">yt-dlp 16-Stream</span>
+            <span className="v-footer-text-item">FFmpeg 7.0 Multiplexer</span>
+            <span className="v-footer-text-item">Node.js Local Runtime</span>
+            <span className="v-footer-text-item">React 19 &amp; Vite</span>
+            <span className="v-footer-text-item">ID3 High-Res Art</span>
           </div>
 
-          <div className="cursor-footer-links-col">
-            <span className="cursor-footer-heading">Legal</span>
-            <p className="cursor-footer-disclaimer">
-              SonicWave is intended for personal archiving, educational research, and fair-use media downloading. Respect the intellectual property rights and terms of service of content platforms.
+          {/* Trust & Legal */}
+          <div className="v-footer-col">
+            <span className="v-footer-col-title">Trust &amp; Legal</span>
+            <p className="v-footer-disclaimer-text">
+              SonicWave executes 100% locally on your PC with zero telemetry. Intended for personal archiving, educational research, and fair-use downloading.
             </p>
           </div>
         </div>
 
-        <div className="cursor-footer-bottom">
-          <div className="cursor-container cursor-footer-bottom-inner">
-            <span>&copy; {new Date().getFullYear()} SonicWave. Windows 64-bit edition.</span>
-            <div className="cursor-status-badge">
-              <span className="cursor-status-dot-sm" />
-              <span>Engine Status: Online &amp; Stable</span>
-            </div>
+        {/* Separator & Metadata Bar */}
+        <div className="v-footer-bottom-strip">
+          <span>&copy; {new Date().getFullYear()} SonicWave &bull; Windows 64-bit Edition</span>
+
+          <div className="v-footer-status-indicator">
+            <span className="v-footer-status-dot" />
+            <span>Engine: Online &amp; Stable</span>
+          </div>
+
+          <div className="v-footer-kbd-hint">
+            <span>Press</span>
+            <kbd className="v-footer-kbd">⌘K</kbd>
+            <span>or</span>
+            <kbd className="v-footer-kbd">Ctrl+K</kbd>
+            <span>anywhere</span>
           </div>
         </div>
-
-        {/* Cinematic ASCII Interactive Reveal Footer (VengeanceUI) */}
-        <AnimatedFooter
-          headingLines={['SonicWave']}
-          background="#010102"
-          textColor="#ffffff"
-          charColor="rgba(94, 105, 209, 0.42)"
-          hoverColor="#5e69d1"
-          hoverCharColor="#ffffff"
-          revealOnScroll={true}
-        />
-      </footer>
+      </AnimatedFooter>
 
       {/* =========================================================================
           WINDOWS DOWNLOAD MODAL
