@@ -12,7 +12,8 @@
     "start": "node server/index.js",
     "server": "npm --prefix server run dev",
     "client": "npm --prefix client run dev",
-    "dev": "concurrently -n \"SERVER,CLIENT\" -c \"cyan,magenta\" \"npm run server\" \"npm run client\""
+    "dev": "concurrently -n \"SERVER,CLIENT\" -c \"cyan,magenta\" \"npm run server\" \"npm run client\"",
+    "package": "node scripts/package-desktop.mjs"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"

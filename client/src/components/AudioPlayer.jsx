@@ -324,9 +324,10 @@ export default function AudioPlayer({
               onClick={onPrevTrack}
               disabled={!hasPrev}
               title="Previous Track"
+              aria-label="Previous Track"
               style={{ opacity: hasPrev ? 1 : 0.35, cursor: hasPrev ? 'pointer' : 'default' }}
             >
-              <SkipBack size={18} />
+              <SkipBack size={18} aria-hidden="true" />
             </button>
 
             {/* Play / Pause (Space) */}
@@ -336,12 +337,13 @@ export default function AudioPlayer({
               className="btn-circular-play"
               onClick={togglePlay}
               title={isPlaying ? 'Pause (Space)' : 'Play (Space)'}
+              aria-label={isPlaying ? 'Pause playback' : 'Start playback'}
               style={{ width: '38px', height: '38px' }}
             >
               {isPlaying ? (
-                <Pause size={18} fill="#000000" />
+                <Pause size={18} fill="#000000" aria-hidden="true" />
               ) : (
-                <Play size={18} fill="#000000" style={{ marginLeft: 2 }} />
+                <Play size={18} fill="#000000" style={{ marginLeft: 2 }} aria-hidden="true" />
               )}
             </button>
 
@@ -352,9 +354,10 @@ export default function AudioPlayer({
               onClick={onNextTrack}
               disabled={!hasNext}
               title="Next Track"
+              aria-label="Next Track"
               style={{ opacity: hasNext ? 1 : 0.35, cursor: hasNext ? 'pointer' : 'default' }}
             >
-              <SkipForward size={18} />
+              <SkipForward size={18} aria-hidden="true" />
             </button>
 
             {/* Playback Speed Pill */}
@@ -363,6 +366,7 @@ export default function AudioPlayer({
               className="btn-dark-pill"
               onClick={cyclePlaybackRate}
               title="Toggle Playback Speed (0.75x, 1x, 1.25x, 1.5x, 2x)"
+              aria-label={`Playback speed: currently ${playbackRate}x`}
               style={{ padding: '3px 8px', fontSize: '11px', fontWeight: 700, letterSpacing: '0.5px' }}
             >
               {playbackRate}x
@@ -379,7 +383,7 @@ export default function AudioPlayer({
               step="0.1"
               value={currentTime}
               onChange={handleSeek}
-              aria-label="Seek track"
+              aria-label="Seek track position"
             />
             <span className="player-timestamp">{formatTime(duration)}</span>
           </div>
@@ -393,8 +397,9 @@ export default function AudioPlayer({
               className="btn-icon"
               onClick={toggleFullscreen}
               title="Fullscreen Video (F)"
+              aria-label="Toggle Fullscreen Video"
             >
-              <Maximize size={16} />
+              <Maximize size={16} aria-hidden="true" />
             </button>
           )}
 
@@ -404,8 +409,9 @@ export default function AudioPlayer({
               className="btn-icon"
               onClick={toggleMute}
               title={isMuted ? 'Unmute (M)' : 'Mute (M)'}
+              aria-label={isMuted || volume === 0 ? 'Unmute audio' : 'Mute audio'}
             >
-              {isMuted || volume === 0 ? <VolumeX size={16} /> : <Volume2 size={16} />}
+              {isMuted || volume === 0 ? <VolumeX size={16} aria-hidden="true" /> : <Volume2 size={16} aria-hidden="true" />}
             </button>
             <input
               type="range"

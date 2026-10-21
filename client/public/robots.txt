@@ -1,0 +1,5 @@
+# SonicWave Robots.txt
+User-agent: *
+Allow: /
+
+Sitemap: https://sonicwave.app/sitemap.xml

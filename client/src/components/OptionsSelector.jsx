@@ -72,7 +72,7 @@ export default function OptionsSelector({
             <div>
               <strong style={{ color: 'var(--text-white)' }}>Ultra-Long Media Detected ({videoInfo.durationFormatted}):</strong>
               <p style={{ marginTop: '2px', color: 'var(--text-subdued)' }}>
-                16-connection parallel chunk downloading is active. To finish 100+ hours in <strong>less than 5 minutes</strong>, selecting <strong>M4A (AAC)</strong> or <strong>MP4</strong> copies native streams directly with zero CPU transcoding lag!
+                16-connection parallel chunk downloading is active. For ultra-fast extraction on long media, selecting <strong>M4A (AAC)</strong> or <strong>MP4</strong> copies native streams directly with zero CPU transcoding delay!
               </p>
             </div>
           </div>

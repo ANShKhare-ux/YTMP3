@@ -12,8 +12,7 @@ import {
   Library,
   ChevronLeft,
   ChevronRight,
-  Headphones,
-  Sparkles
+  Headphones
 } from 'lucide-react';
 import UrlInput from './components/UrlInput';
 import VideoPreview from './components/VideoPreview';
@@ -22,18 +21,15 @@ import ProgressBar from './components/ProgressBar';
 import AudioPlayer from './components/AudioPlayer';
 import HistorySection from './components/HistorySection';
 import Logo from './components/Logo';
-import IntroVideo from './components/IntroVideo';
+import CommandPalette from './components/CommandPalette';
+import PricingModal from './components/PricingModal';
+import LandingPage from './components/LandingPage';
+import { Crown, Command as CommandIcon } from 'lucide-react';
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
 export default function App() {
-  const [showIntro, setShowIntro] = useState(() => {
-    try {
-      return !sessionStorage.getItem('sonicwave_intro_viewed');
-    } catch {
-      return true;
-    }
-  });
+  const [currentView, setCurrentView] = useState(() => (window.location.hash === '#app' ? 'app' : 'landing'));
   const [url, setUrl] = useState('');
   const [videoInfo, setVideoInfo] = useState(null);
   const [bitrate, setBitrate] = useState('320k');
@@ -44,16 +40,42 @@ export default function App() {
   const [currentJob, setCurrentJob] = useState(null);
   const [activeTrack, setActiveTrack] = useState(null);
   const [error, setError] = useState(null);
+  const [isCmdOpen, setIsCmdOpen] = useState(false);
+  const [isPricingOpen, setIsPricingOpen] = useState(false);
   const eventSourceRef = useRef(null);
 
-  const handleCloseIntro = () => {
-    setShowIntro(false);
-    try {
-      sessionStorage.setItem('sonicwave_intro_viewed', 'true');
-    } catch (e) {
-      console.warn('Could not save intro state:', e);
-    }
+  // Sync hash routing (#landing vs #app)
+  useEffect(() => {
+    const handleHashChange = () => {
+      setCurrentView(window.location.hash === '#app' ? 'app' : 'landing');
+    };
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
+
+  const handleOpenLocalStudio = () => {
+    setCurrentView('app');
+    window.location.hash = '#app';
   };
+
+  const handleBackToLanding = () => {
+    setCurrentView('landing');
+    window.location.hash = '#landing';
+  };
+
+
+
+  // Global Command Palette shortcut (⌘K / Ctrl+K)
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setIsCmdOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const [systemStatus, setSystemStatus] = useState({ ready: true });
   const [history, setHistory] = useState(() => {
@@ -436,34 +458,108 @@ export default function App() {
     } catch {}
   };
 
+  // Render Landing Page if currentView is 'landing'
+  if (currentView === 'landing') {
+    return (
+      <div className={`cursor-landing-wrapper ${activeTrack ? 'has-bottom-player' : ''}`}>
+        <LandingPage
+          onOpenCmd={() => setIsCmdOpen(true)}
+          onOpenPricing={() => setIsPricingOpen(true)}
+          onOpenLocalStudio={handleOpenLocalStudio}
+        />
+
+        {/* Docked Spotify Bottom Audio/Video Player */}
+        {activeTrack && (
+          <AudioPlayer
+            track={activeTrack}
+            onNextTrack={handleNextTrack}
+            onPrevTrack={handlePrevTrack}
+            hasNext={currentTrackIndex !== -1 && currentTrackIndex < history.length - 1}
+            hasPrev={currentTrackIndex > 0}
+          />
+        )}
+
+        {/* Global Command Palette (Linear / Raycast Style) */}
+        <CommandPalette
+          isOpen={isCmdOpen}
+          onClose={() => setIsCmdOpen(false)}
+          onSelectFormat={(newFormat, newBitrate) => {
+            setFormat(newFormat);
+            setBitrate(newBitrate);
+          }}
+          onFocusInput={() => {
+            handleOpenLocalStudio();
+            setTimeout(() => {
+              const input = document.getElementById('yt-url-input');
+              if (input) input.focus();
+            }, 100);
+          }}
+          onTogglePlay={() => {
+            const playBtn = document.getElementById('play-pause-btn');
+            if (playBtn) playBtn.click();
+          }}
+          isPlaying={!!activeTrack}
+          onClearHistory={handleClearHistory}
+          onUpdateEngine={() => {
+            fetch(`${API_BASE}/api/binaries/update`, { method: 'POST' })
+              .then((res) => res.json())
+              .then((data) => {
+                alert(data.success ? `yt-dlp binary updated successfully to ${data.version}!` : `Binary update: ${data.output || data.message || data.error}`);
+              })
+              .catch((err) => alert(`Update request error: ${err.message}`));
+          }}
+          onOpenPricing={() => setIsPricingOpen(true)}
+          onNavigateStudio={handleOpenLocalStudio}
+          onNavigateLanding={handleBackToLanding}
+          currentView={currentView}
+        />
+
+        {/* Studio Capabilities Modal */}
+        <PricingModal
+          isOpen={isPricingOpen}
+          onClose={() => setIsPricingOpen(false)}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className={`spotify-app-layout ${activeTrack ? 'has-bottom-player' : ''}`}>
       {/* Left Sidebar */}
       <aside className="spotify-sidebar" aria-label="Spotify Navigation Sidebar">
         {/* Navigation Card */}
         <div className="sidebar-nav-card">
-          <a href="#home" className="spotify-brand-link" aria-label="SonicWave Home">
+          <a
+            href="#landing"
+            className="spotify-brand-link"
+            aria-label="SonicWave Product Page"
+            onClick={(e) => {
+              e.preventDefault();
+              handleBackToLanding();
+            }}
+          >
             <Logo size="md" variant="full" showTag={true} />
           </a>
 
           <ul className="sidebar-nav-list">
             <li>
-              <a href="#home" className="sidebar-nav-item active">
+              <a
+                href="#landing"
+                className="sidebar-nav-item"
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleBackToLanding();
+                }}
+                title="Return to Windows Product Landing Page"
+              >
                 <Home size={22} />
-                <span>Home</span>
+                <span>Product Page</span>
               </a>
             </li>
             <li>
-              <a
-                href="#yt-url-input"
-                className="sidebar-nav-item"
-                onClick={() => {
-                  const input = document.getElementById('yt-url-input');
-                  if (input) input.focus();
-                }}
-              >
+              <a href="#app" className="sidebar-nav-item active">
                 <Search size={22} />
-                <span>Search & Convert</span>
+                <span>Converter Studio</span>
               </a>
             </li>
           </ul>
@@ -569,13 +665,38 @@ export default function App() {
           <div className="top-bar-actions">
             <button
               type="button"
-              className="top-bar-intro-btn"
-              onClick={() => setShowIntro(true)}
-              title="Watch SonicWave Intro Animation"
+              className="top-bar-action-pill"
+              onClick={handleBackToLanding}
+              title="Return to Windows Product Landing Page"
+              style={{ background: 'rgba(255, 255, 255, 0.08)', borderColor: 'rgba(255, 255, 255, 0.2)', color: '#ffffff' }}
             >
-              <Sparkles size={13} />
-              <span>Watch Intro</span>
+              <Home size={12} />
+              <span>Windows Product Page</span>
             </button>
+
+            <button
+              type="button"
+              className="top-bar-action-pill"
+              onClick={() => setIsCmdOpen(true)}
+              title="Open Command Palette (⌘K / Ctrl+K)"
+              style={{ background: 'rgba(255, 255, 255, 0.06)', borderColor: 'rgba(255, 255, 255, 0.15)', color: '#ffffff' }}
+            >
+              <CommandIcon size={12} />
+              <span>⌘K Quick Menu</span>
+            </button>
+
+            <button
+              type="button"
+              className="top-bar-action-pill"
+              onClick={() => setIsPricingOpen(true)}
+              title="View Studio Capabilities & Plans"
+              style={{ background: 'rgba(255, 215, 0, 0.1)', borderColor: 'rgba(255, 215, 0, 0.3)', color: '#ffd700' }}
+            >
+              <Crown size={12} />
+              <span>Studio Pro</span>
+            </button>
+
+
 
             <div className="status-indicator-pill">
               <Zap size={12} fill="var(--spotify-green)" />
@@ -618,6 +739,7 @@ export default function App() {
               onSubmit={handleFetchInfo}
               isLoading={isLoadingInfo}
               onClear={handleClear}
+              onOpenCommandPalette={() => setIsCmdOpen(true)}
             />
 
             {error && (
@@ -698,8 +820,45 @@ export default function App() {
         />
       )}
 
-      {/* Cinematic Brand Intro Video Overlay */}
-      <IntroVideo isOpen={showIntro} onClose={handleCloseIntro} />
+
+
+      {/* SaaS Command Palette (Linear / Raycast Style) */}
+      <CommandPalette
+        isOpen={isCmdOpen}
+        onClose={() => setIsCmdOpen(false)}
+        onSelectFormat={(newFormat, newBitrate) => {
+          setFormat(newFormat);
+          setBitrate(newBitrate);
+        }}
+        onFocusInput={() => {
+          const input = document.getElementById('yt-url-input');
+          if (input) input.focus();
+        }}
+        onTogglePlay={() => {
+          const playBtn = document.getElementById('play-pause-btn');
+          if (playBtn) playBtn.click();
+        }}
+        isPlaying={!!activeTrack}
+        onClearHistory={handleClearHistory}
+        onUpdateEngine={() => {
+          fetch(`${API_BASE}/api/binaries/update`, { method: 'POST' })
+            .then((res) => res.json())
+            .then((data) => {
+              alert(data.success ? `yt-dlp binary updated successfully to ${data.version}!` : `Binary update: ${data.output || data.message || data.error}`);
+            })
+            .catch((err) => alert(`Update request error: ${err.message}`));
+        }}
+        onOpenPricing={() => setIsPricingOpen(true)}
+        onNavigateStudio={handleOpenLocalStudio}
+        onNavigateLanding={handleBackToLanding}
+        currentView={currentView}
+      />
+
+      {/* SaaS Studio Capabilities & Tier Comparison Modal */}
+      <PricingModal
+        isOpen={isPricingOpen}
+        onClose={() => setIsPricingOpen(false)}
+      />
     </div>
   );
 }
