@@ -26,6 +26,9 @@ import {
   FolderArchive,
   ArrowRight
 } from 'lucide-react';
+import FlipText from './ui/FlipText';
+import FaqAccordion from './ui/FaqAccordion';
+import AnimatedFooter from './ui/AnimatedFooter';
 
 // Windows 4-Square SVG Icon
 function WindowsIcon({ size = 16, className = '' }) {
@@ -262,7 +265,9 @@ export default function LandingPage({
 
           <h1 className="cursor-display-xl">
             High-speed media downloader &amp;<br />
-            <span className="cursor-gradient-accent">offline studio player for Windows</span>
+            <FlipText className="cursor-gradient-accent" duration={2.4}>
+              offline media player for Windows
+            </FlipText>
           </h1>
 
           <p className="cursor-body-lg">
@@ -854,7 +859,7 @@ export default function LandingPage({
       </section>
 
       {/* =========================================================================
-          FAQ ACCORDION (DESIGN-cursor.md: surface-1, hairline border, clean toggle)
+          FAQ ACCORDION (VengeanceUI Style with Cursor & Spotify Theme)
           ========================================================================= */}
       <section className="cursor-section cursor-section-alt" id="faq">
         <div className="cursor-container-narrow">
@@ -866,38 +871,12 @@ export default function LandingPage({
             </p>
           </div>
 
-          <div className="cursor-faq-list">
-            {FAQS.map((faq, idx) => {
-              const isOpen = openFaqIndex === idx;
-              const buttonId = `faq-btn-${idx}`;
-              const panelId = `faq-panel-${idx}`;
-              return (
-                <div key={idx} className={`cursor-faq-item ${isOpen ? 'open' : ''}`}>
-                  <button
-                    type="button"
-                    id={buttonId}
-                    className="cursor-faq-toggle"
-                    onClick={() => setOpenFaqIndex(isOpen ? -1 : idx)}
-                    aria-expanded={isOpen}
-                    aria-controls={panelId}
-                  >
-                    <span>{faq.q}</span>
-                    <ChevronDown size={16} className="cursor-faq-arrow" aria-hidden="true" />
-                  </button>
-                  {isOpen && (
-                    <div
-                      id={panelId}
-                      className="cursor-faq-content"
-                      role="region"
-                      aria-labelledby={buttonId}
-                    >
-                      <p>{faq.a}</p>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+          <FaqAccordion
+            items={FAQS.map((faq) => ({
+              question: faq.q,
+              answer: faq.a,
+            }))}
+          />
         </div>
       </section>
 
@@ -984,6 +963,17 @@ export default function LandingPage({
             </div>
           </div>
         </div>
+
+        {/* Cinematic ASCII Interactive Reveal Footer (VengeanceUI) */}
+        <AnimatedFooter
+          headingLines={['SonicWave']}
+          background="#010102"
+          textColor="#ffffff"
+          charColor="rgba(94, 105, 209, 0.42)"
+          hoverColor="#5e69d1"
+          hoverCharColor="#ffffff"
+          revealOnScroll={true}
+        />
       </footer>
 
       {/* =========================================================================

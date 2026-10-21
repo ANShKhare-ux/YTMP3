@@ -3707,3 +3707,316 @@ button:active {
   }
 }
 
+/* =========================================================================
+   FlipText (VengeanceUI)
+   ========================================================================= */
+.flip-text-wrapper {
+  perspective: 1000px;
+  vertical-align: baseline;
+}
+
+.flip-char {
+  color: inherit;
+  -webkit-text-fill-color: transparent;
+  height: 1.2em;
+  line-height: 1.2em;
+  vertical-align: middle;
+  animation: flip var(--flip-duration, 2.4s) var(--flip-delay, 0s) var(--flip-iteration, infinite) ease;
+}
+
+.flip-char::before,
+.flip-char::after {
+  color: inherit;
+  -webkit-text-fill-color: currentColor;
+  content: attr(data-char);
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  height: 100%;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backface-visibility: hidden;
+  animation: fade var(--flip-duration, 2.4s) var(--flip-delay, 0s) var(--flip-iteration, infinite) ease;
+}
+
+/* Front Face */
+.flip-char::after {
+  transform: translate(-50%, -50%) translateZ(0.6em);
+}
+
+/* Bottom Face */
+.flip-char::before {
+  transform: translate(-50%, -50%) rotateX(-90deg) translateZ(0.6em);
+  opacity: 0;
+  --opacity: 1;
+}
+
+@keyframes flip {
+  0% {
+    transform: rotateX(0deg);
+  }
+  25%,
+  100% {
+    transform: rotateX(90deg);
+  }
+}
+
+@keyframes fade {
+  0% {
+    opacity: 1;
+  }
+  30%,
+  100% {
+    opacity: var(--opacity, 0);
+  }
+}
+
+/* =========================================================================
+   FaqAccordion (VengeanceUI with SonicWave Design Tokens)
+   ========================================================================= */
+.v-faq-container {
+  width: 100%;
+  max-width: 840px;
+  margin: 0 auto;
+  position: relative;
+}
+
+.v-faq-list {
+  width: 100%;
+  margin: 0 auto;
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.v-faq-item {
+  width: 100%;
+  position: relative;
+  transition: all 0.25s ease-in;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.v-faq-item:last-child {
+  border-bottom: none;
+}
+
+.v-faq-button {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100%;
+  min-height: 62px;
+  padding: 1.15rem 1rem 1.15rem 3.6rem;
+  position: relative;
+  margin: 0;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  border-left: 6px solid rgba(255, 255, 255, 0.14);
+  transition: all 0.2s ease;
+  text-align: left;
+  outline: none;
+  font-size: 1.05rem;
+  color: var(--cursor-ink-muted, #8a8f98);
+  font-family: inherit;
+}
+
+@media (min-width: 768px) {
+  .v-faq-button {
+    border-left-width: 8px;
+    padding-left: 4rem;
+    font-size: 1.12rem;
+  }
+}
+
+.v-faq-button:hover {
+  border-left-color: var(--cursor-brand, #5e69d1);
+  color: #ffffff;
+  background: rgba(94, 105, 209, 0.05);
+}
+
+.v-faq-button.is-active {
+  border-left-color: var(--cursor-brand, #5e69d1);
+  background: rgba(94, 105, 209, 0.08);
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.v-faq-sign {
+  position: absolute;
+  left: 1.25rem;
+  top: 50%;
+  transform: translateY(-50%);
+  transition: all 0.2s ease;
+  line-height: 1;
+  font-size: 26px;
+  font-weight: 300;
+  color: var(--cursor-ink-subtle, #62666d);
+  user-select: none;
+}
+
+@media (min-width: 768px) {
+  .v-faq-sign {
+    left: 1.5rem;
+    font-size: 28px;
+  }
+}
+
+.v-faq-button.is-active .v-faq-sign {
+  font-size: 34px;
+  color: var(--cursor-brand, #5e69d1);
+}
+
+.v-faq-question {
+  padding-right: 2.75rem;
+  line-height: 1.45;
+}
+
+.v-faq-chevron {
+  position: absolute;
+  right: 1.5rem;
+  display: block;
+  width: 8px;
+  height: 8px;
+  border-top: 2px solid var(--cursor-ink-subtle, #62666d);
+  border-right: 2px solid var(--cursor-ink-subtle, #62666d);
+  transform: rotate(135deg);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease;
+}
+
+.v-faq-button.is-active .v-faq-chevron {
+  transform: rotate(-45deg);
+  border-color: var(--cursor-brand, #5e69d1);
+}
+
+.v-faq-collapse {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  width: 100%;
+  border-left: 6px solid transparent;
+  background: transparent;
+}
+
+@media (min-width: 768px) {
+  .v-faq-collapse {
+    border-left-width: 8px;
+  }
+}
+
+.v-faq-collapse.is-active {
+  grid-template-rows: 1fr;
+  border-left-color: var(--cursor-brand, #5e69d1);
+  background: rgba(94, 105, 209, 0.04);
+}
+
+.v-faq-content-inner {
+  overflow: hidden;
+}
+
+.v-faq-answer {
+  padding: 0.25rem 1.5rem 1.4rem 3.6rem;
+  font-size: 0.95rem;
+  line-height: 1.65;
+  color: var(--cursor-ink-muted, #a1a7b4);
+}
+
+@media (min-width: 768px) {
+  .v-faq-answer {
+    padding-left: 4rem;
+    font-size: 1rem;
+  }
+}
+
+/* =========================================================================
+   AnimatedFooter (VengeanceUI with SonicWave Obsidian & Indigo Tokens)
+   ========================================================================= */
+.v-animated-footer-root {
+  position: relative;
+  width: 100%;
+  height: 440px;
+  min-height: 380px;
+  max-height: 540px;
+  overflow: hidden;
+  background: #010102;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 30px 60px rgba(0, 0, 0, 0.7);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+@media (max-width: 768px) {
+  .v-animated-footer-root {
+    height: 320px;
+    min-height: 280px;
+  }
+}
+
+.v-af-hands-stage {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.v-af-hand-wrap {
+  position: relative;
+  width: 42%;
+  min-width: 200px;
+  max-width: 440px;
+  will-change: transform;
+  pointer-events: auto;
+}
+
+.v-af-canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 10px 30px rgba(94, 105, 209, 0.25));
+}
+
+.v-af-headings-box {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 1rem;
+  padding: 1.5rem 1rem 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.v-af-heading-word {
+  overflow: hidden;
+  font-family: 'Plus Jakarta Sans', var(--font-sans), sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 0.9;
+  padding-bottom: 0.1em;
+  margin-bottom: -0.05em;
+  font-size: clamp(3.5rem, 15vw, 12rem);
+  color: #ffffff;
+  text-shadow: 0 0 50px rgba(94, 105, 209, 0.35);
+  user-select: none;
+}
+
+.v-af-char {
+  display: inline-block;
+  will-change: transform;
+  background: linear-gradient(180deg, #ffffff 40%, rgba(255, 255, 255, 0.45) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+

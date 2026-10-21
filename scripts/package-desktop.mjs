@@ -91,18 +91,7 @@ fs.copyFileSync(path.join(rootDir, 'client', 'src', 'index.css'), path.join(stag
 // Use AppDesktop.jsx as the desktop App.jsx (NO LandingPage!)
 fs.copyFileSync(path.join(rootDir, 'client', 'src', 'AppDesktop.jsx'), path.join(stagingDir, 'client', 'src', 'App.jsx'));
 
-// Copy all components EXCEPT LandingPage.jsx and AppDesktop.jsx
-const componentsDir = path.join(rootDir, 'client', 'src', 'components');
-const componentFiles = fs.readdirSync(componentsDir);
-for (const file of componentFiles) {
-  if (file === 'LandingPage.jsx') {
-    console.log(`[EXCLUDE] Excluded ${file} from desktop software package.`);
-    continue;
-  }
-  fs.copyFileSync(path.join(componentsDir, file), path.join(stagingDir, 'client', 'src', 'components', file));
-}
-
-// Copy prebuilt desktop dist files into staging
+// Helper to copy directories recursively
 function copyDirSync(src, dest) {
   fs.mkdirSync(dest, { recursive: true });
   const entries = fs.readdirSync(src, { withFileTypes: true });
@@ -118,6 +107,25 @@ function copyDirSync(src, dest) {
     }
   }
 }
+
+// Copy all components EXCEPT LandingPage.jsx and AppDesktop.jsx
+const componentsDir = path.join(rootDir, 'client', 'src', 'components');
+const componentEntries = fs.readdirSync(componentsDir, { withFileTypes: true });
+for (const entry of componentEntries) {
+  if (entry.name === 'LandingPage.jsx' || entry.name === 'AppDesktop.jsx') {
+    console.log(`[EXCLUDE] Excluded ${entry.name} from desktop software package.`);
+    continue;
+  }
+  const srcPath = path.join(componentsDir, entry.name);
+  const destPath = path.join(stagingDir, 'client', 'src', 'components', entry.name);
+  if (entry.isDirectory()) {
+    copyDirSync(srcPath, destPath);
+  } else {
+    fs.copyFileSync(srcPath, destPath);
+  }
+}
+
+// Copy prebuilt desktop dist files into staging
 copyDirSync(path.join(rootDir, 'client', 'dist'), path.join(stagingDir, 'client', 'dist'));
 
 // 6. Compress staging folder into zip using pwsh Compress-Archive
