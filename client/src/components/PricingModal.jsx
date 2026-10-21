@@ -35,7 +35,7 @@ export default function PricingModal({ isOpen, onClose }) {
       onClick={onClose}
       role="dialog"
       aria-modal="true"
-      aria-label="SonicWave Studio Plans and Capabilities"
+      aria-label="SonicWave Edition Plans and Capabilities"
     >
       <div
         className="pricing-modal-window"
@@ -53,7 +53,7 @@ export default function PricingModal({ isOpen, onClose }) {
                 LOCAL LICENSE: ACTIVE
               </span>
             </div>
-            <h2 className="pricing-title">SonicWave Studio Edition</h2>
+            <h2 className="pricing-title">SonicWave Windows Edition</h2>
             <p className="pricing-subtitle">
               Transparent feature comparison: Standard cloud web converters vs. your unlocked multi-threaded local engine.
             </p>
@@ -142,7 +142,7 @@ export default function PricingModal({ isOpen, onClose }) {
             </button>
           </div>
 
-          {/* Card 2: SonicWave Studio Pro (Active) */}
+          {/* Card 2: SonicWave Windows Pro (Active) */}
           <div className="pricing-card pro-tier">
             <div className="pricing-pro-badge">
               <Sparkles size={12} />
@@ -150,7 +150,7 @@ export default function PricingModal({ isOpen, onClose }) {
             </div>
 
             <div className="pricing-card-top">
-              <span className="tier-name" style={{ color: 'var(--spotify-green)' }}>SonicWave Studio Pro</span>
+              <span className="tier-name" style={{ color: 'var(--spotify-green)' }}>SonicWave Windows Pro</span>
               <div className="tier-price-box">
                 <span className="tier-amount" style={{ fontSize: '32px' }}>UNLOCKED</span>
                 <span className="tier-period">Lifetime Local</span>
@@ -195,7 +195,7 @@ export default function PricingModal({ isOpen, onClose }) {
               onClick={onClose}
               style={{ width: '100%', marginTop: 'auto', justifyContent: 'center' }}
             >
-              <span>Keep using Studio Pro</span>
+              <span>Continue with Windows Edition</span>
               <ArrowRight size={15} />
             </button>
           </div>

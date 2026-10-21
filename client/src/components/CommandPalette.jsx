@@ -44,11 +44,11 @@ export default function CommandPalette({
   }, [isOpen]);
 
   const allActions = [
-    ...(onNavigateLanding ? [{
+    ...(onNavigateLanding && onNavigateStudio ? [{
       id: 'nav-view-toggle',
       category: 'Navigation',
-      title: currentView === 'landing' ? 'Open Local Converter Studio' : 'Go to Windows Product Landing Page',
-      subtitle: currentView === 'landing' ? 'Open the local desktop converter studio' : 'Explore features, 16x speed comparison, and system specs',
+      title: currentView === 'landing' ? 'Open Local Converter' : 'Go to Windows Product Landing Page',
+      subtitle: currentView === 'landing' ? 'Open the local converter' : 'Explore features, 16x speed comparison, and system specs',
       icon: <Sparkles size={16} style={{ color: 'var(--spotify-green)' }} />,
       action: () => {
         if (currentView === 'landing') {
@@ -240,7 +240,7 @@ export default function CommandPalette({
             <span>&bull;</span>
             <span><strong>ESC</strong> to dismiss</span>
           </div>
-          <span style={{ color: 'var(--spotify-green)', fontWeight: 600 }}>SonicWave Studio</span>
+          <span style={{ color: 'var(--spotify-green)', fontWeight: 600 }}>SonicWave</span>
         </div>
       </div>
     </div>

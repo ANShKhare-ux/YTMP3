@@ -136,8 +136,7 @@ const FAQS = [
 
 export default function LandingPage({
   onOpenCmd,
-  onOpenPricing,
-  onOpenLocalStudio
+  onOpenPricing
 }) {
   const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
   const [selectedDemoTrack, setSelectedDemoTrack] = useState(DEMO_TRACKS[0]);
@@ -235,19 +234,6 @@ export default function LandingPage({
               <CommandIcon size={13} aria-hidden="true" />
               <span>⌘K</span>
             </button>
-
-            {onOpenLocalStudio && (
-              <button
-                type="button"
-                className="cursor-button-secondary"
-                onClick={onOpenLocalStudio}
-                title="Open Converter Studio (Local Server)"
-                aria-label="Open Local Converter Studio"
-              >
-                <Terminal size={13} aria-hidden="true" />
-                <span>Local studio</span>
-              </button>
-            )}
 
             <button
               type="button"
@@ -1057,32 +1043,13 @@ export default function LandingPage({
                     <strong>Extract the ZIP archive</strong> to any folder (e.g. <code>C:\SonicWave</code> or your Desktop).
                   </li>
                   <li>
-                    <strong>Double-click <code>start.bat</code></strong> &mdash; the launcher initializes the background server, auto-provisions <code>yt-dlp.exe</code> &amp; <code>ffmpeg.exe</code>, and opens the studio UI.
+                    <strong>Double-click <code>start.bat</code></strong> &mdash; the launcher initializes the background server, auto-provisions <code>yt-dlp.exe</code> &amp; <code>ffmpeg.exe</code>, and launches the converter app.
                   </li>
                   <li>
                     <strong>Paste any media URL</strong> to convert to 320 kbps MP3 or 1080p MP4.
                   </li>
                 </ol>
               </div>
-
-              {onOpenLocalStudio && (
-                <div className="cursor-modal-local-shortcut">
-                  <div>
-                    <strong>Already running the local server?</strong>
-                    <p>Open your active converter studio workspace right now.</p>
-                  </div>
-                  <button
-                    type="button"
-                    className="cursor-button-secondary"
-                    onClick={() => {
-                      setIsDownloadModalOpen(false);
-                      onOpenLocalStudio();
-                    }}
-                  >
-                    <span>Launch converter &rarr;</span>
-                  </button>
-                </div>
-              )}
             </div>
 
             <div className="cursor-modal-footer">

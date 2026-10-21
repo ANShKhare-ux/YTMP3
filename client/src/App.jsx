@@ -465,7 +465,6 @@ export default function App() {
         <LandingPage
           onOpenCmd={() => setIsCmdOpen(true)}
           onOpenPricing={() => setIsPricingOpen(true)}
-          onOpenLocalStudio={handleOpenLocalStudio}
         />
 
         {/* Docked Spotify Bottom Audio/Video Player */}
@@ -488,11 +487,8 @@ export default function App() {
             setBitrate(newBitrate);
           }}
           onFocusInput={() => {
-            handleOpenLocalStudio();
-            setTimeout(() => {
-              const input = document.getElementById('yt-url-input');
-              if (input) input.focus();
-            }, 100);
+            const btn = document.getElementById('nav-download-btn') || document.getElementById('hero-download-btn');
+            if (btn) btn.click();
           }}
           onTogglePlay={() => {
             const playBtn = document.getElementById('play-pause-btn');
@@ -509,8 +505,6 @@ export default function App() {
               .catch((err) => alert(`Update request error: ${err.message}`));
           }}
           onOpenPricing={() => setIsPricingOpen(true)}
-          onNavigateStudio={handleOpenLocalStudio}
-          onNavigateLanding={handleBackToLanding}
           currentView={currentView}
         />
 
