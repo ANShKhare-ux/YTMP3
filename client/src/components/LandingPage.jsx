@@ -470,14 +470,64 @@ export default function LandingPage({
       }
     );
 
-    // 7. Section 2: 3-Step Setup Sequence ScrollTrigger
+    // 7. Section 2: 3-Step Setup Sequence ScrollTrigger & Micro-Animations
+    // Header Reveal & 30-Second Counter
+    const counterObj = { val: 0 };
+    gsap.to(counterObj, {
+      val: 30,
+      duration: 1.4,
+      ease: "power2.out",
+      scrollTrigger: {
+        trigger: "#how-it-works",
+        start: "top 80%",
+        toggleActions: "play none none none"
+      },
+      onUpdate: () => {
+        const counterEl = document.querySelector(".cursor-accent-counter");
+        if (counterEl) counterEl.textContent = Math.round(counterObj.val);
+      }
+    });
+
+    gsap.fromTo(".cursor-install-header > *",
+      { y: 25, opacity: 0 },
+      {
+        y: 0,
+        opacity: 1,
+        stagger: 0.08,
+        duration: 0.65,
+        ease: "appleSpring",
+        scrollTrigger: {
+          trigger: ".cursor-install-header",
+          start: "top 85%",
+          toggleActions: "play none none none"
+        }
+      }
+    );
+
+    // Connecting Rail Tracer Beam (DrawSVGPlugin)
+    gsap.fromTo(".cursor-rail-draw-path",
+      { drawSVG: "0%" },
+      {
+        drawSVG: "100%",
+        duration: 1.4,
+        ease: "power2.inOut",
+        scrollTrigger: {
+          trigger: ".cursor-steps-wrapper",
+          start: "top 82%",
+          toggleActions: "play none none none"
+        }
+      }
+    );
+
+    // Step Cards 3D Entrance Cascade
     gsap.fromTo(".cursor-step-card",
-      { y: 45, opacity: 0, scale: 0.96 },
+      { y: 50, opacity: 0, scale: 0.94, rotateX: 6, transformPerspective: 1000 },
       {
         y: 0,
         opacity: 1,
         scale: 1,
-        stagger: 0.16,
+        rotateX: 0,
+        stagger: 0.14,
         duration: 0.85,
         ease: "appleSpring",
         scrollTrigger: {
@@ -487,6 +537,92 @@ export default function LandingPage({
         }
       }
     );
+
+    // Index Badges Pop-in (punchSpring)
+    gsap.fromTo(".cursor-step-index",
+      { scale: 0.3, opacity: 0 },
+      {
+        scale: 1,
+        opacity: 1,
+        stagger: 0.14,
+        duration: 0.6,
+        ease: "punchSpring",
+        scrollTrigger: {
+          trigger: ".cursor-steps-grid",
+          start: "top 85%",
+          toggleActions: "play none none none"
+        }
+      }
+    );
+
+    // Continuous Icon Micro-Floating Tweens
+    gsap.to(".step-icon-download", {
+      y: 3,
+      duration: 0.9,
+      repeat: -1,
+      yoyo: true,
+      ease: "power1.inOut"
+    });
+
+    gsap.to(".step-icon-terminal", {
+      rotate: 6,
+      duration: 1.2,
+      repeat: -1,
+      yoyo: true,
+      ease: "power1.inOut"
+    });
+
+    gsap.to(".step-icon-music", {
+      scale: 1.1,
+      duration: 0.8,
+      repeat: -1,
+      yoyo: true,
+      ease: "power2.inOut"
+    });
+
+    // 3D Gyro Tilt & Mouse Cursor Spotlight on each Step Card (Observer & quickTo)
+    const stepCards = gsap.utils.toArray(".cursor-step-card");
+    stepCards.forEach((card) => {
+      const setRotX = gsap.quickTo(card, "rotateX", { duration: 0.35, ease: "power2.out" });
+      const setRotY = gsap.quickTo(card, "rotateY", { duration: 0.35, ease: "power2.out" });
+
+      const onCardMouseMove = (e) => {
+        const rect = card.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        card.style.setProperty("--mouse-x", `${x}px`);
+        card.style.setProperty("--mouse-y", `${y}px`);
+
+        const centerX = rect.width / 2;
+        const centerY = rect.height / 2;
+        setRotY(((x - centerX) / centerX) * 4.5);
+        setRotX(-((y - centerY) / centerY) * 4.5);
+      };
+
+      const onCardMouseLeave = () => {
+        setRotX(0);
+        setRotY(0);
+      };
+
+      card.addEventListener("mousemove", onCardMouseMove);
+      card.addEventListener("mouseleave", onCardMouseLeave);
+    });
+
+    // ScrambleText on Card 2 hover
+    const startBatSnippet = document.querySelector(".cursor-step-card[data-step='2'] .cursor-mono-snippet");
+    const startBatCode = document.querySelector(".cursor-step-card[data-step='2'] code");
+    if (startBatSnippet && startBatCode) {
+      startBatSnippet.addEventListener("mouseenter", () => {
+        gsap.to(startBatCode, {
+          duration: 0.6,
+          scrambleText: {
+            text: ".\\start.bat — auto-bootstraps",
+            chars: "01X#_-/*",
+            speed: 0.45
+          }
+        });
+      });
+    }
 
     // 8. Section 3: Feature Architecture Cards ScrollTrigger
     gsap.fromTo(".cursor-feature-card",
@@ -996,50 +1132,107 @@ export default function LandingPage({
       </section>
 
       {/* =========================================================================
-          3-STEP WINDOWS SETUP (DESIGN-cursor.md: surface-1, 12px rounded, hairline)
+          3-STEP WINDOWS SETUP (DESIGN-cursor.md: surface-1, 14px rounded, hairline)
           ========================================================================= */}
       <section className="cursor-section cursor-section-alt" id="how-it-works">
         <div className="cursor-container">
-          <div className="cursor-section-header">
+          <div className="cursor-section-header cursor-install-header">
             <span className="cursor-eyebrow">INSTALLATION</span>
-            <h2 className="cursor-display-lg">Up and running in 30 seconds.</h2>
+            <h2 className="cursor-display-lg">
+              Up and running in <span className="cursor-accent-counter">30</span> <span className="cursor-gradient-accent">seconds.</span>
+            </h2>
             <p className="cursor-subhead">
               No manual Python installations. No environment variable configuration.
               Download, extract, and convert.
             </p>
           </div>
 
-          <div className="cursor-steps-grid">
-            <div className="cursor-step-card">
-              <div className="cursor-step-index">01</div>
-              <h3 className="cursor-card-title">Download &amp; extract</h3>
-              <p className="cursor-card-body">
-                Download the lightweight SonicWave Windows ZIP package and extract it to any directory on your computer.
-              </p>
-              <div className="cursor-mono-snippet">
-                <code>SonicWave-v1.0.0-Windows.zip</code>
-              </div>
+          <div className="cursor-steps-wrapper">
+            {/* Timeline Tracer Rail (DrawSVGPlugin) */}
+            <div className="cursor-steps-timeline-rail" aria-hidden="true">
+              <svg className="cursor-steps-rail-svg" viewBox="0 0 1000 4" fill="none" preserveAspectRatio="none">
+                <line x1="0" y1="2" x2="1000" y2="2" stroke="rgba(255,255,255,0.06)" strokeWidth="2" strokeDasharray="6 6" />
+                <line className="cursor-rail-draw-path" x1="0" y1="2" x2="1000" y2="2" stroke="url(#stepGradient)" strokeWidth="3" strokeLinecap="round" />
+                <defs>
+                  <linearGradient id="stepGradient" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stopColor="#5e6ad2" />
+                    <stop offset="50%" stopColor="#828fff" />
+                    <stop offset="100%" stopColor="#a5b4fc" />
+                  </linearGradient>
+                </defs>
+              </svg>
             </div>
 
-            <div className="cursor-step-card">
-              <div className="cursor-step-index">02</div>
-              <h3 className="cursor-card-title">Launch start.bat</h3>
-              <p className="cursor-card-body">
-                Double-click <strong>start.bat</strong>. The launcher boots the local server, provisions yt-dlp &amp; FFmpeg executables, and launches the desktop interface.
-              </p>
-              <div className="cursor-mono-snippet">
-                <code>.\start.bat &mdash; auto-bootstraps</code>
+            <div className="cursor-steps-grid">
+              {/* Step 1 */}
+              <div className="cursor-step-card" data-step="1">
+                <div className="cursor-step-header">
+                  <div className="cursor-step-index">01</div>
+                  <div className="cursor-step-icon-badge">
+                    <Download size={15} className="step-icon-download" aria-hidden="true" />
+                  </div>
+                </div>
+                <h3 className="cursor-card-title">Download &amp; extract</h3>
+                <p className="cursor-card-body">
+                  Download the lightweight SonicWave Windows ZIP package and extract it to any directory on your computer.
+                </p>
+                <div className="cursor-mono-snippet" title="Windows portable zip archive">
+                  <div className="cursor-snippet-left">
+                    <FolderArchive size={13} className="cursor-snippet-icon" aria-hidden="true" />
+                    <code>SonicWave-v1.0.0-Windows.zip</code>
+                  </div>
+                  <span className="cursor-snippet-tag">148 KB</span>
+                </div>
               </div>
-            </div>
 
-            <div className="cursor-step-card">
-              <div className="cursor-step-index">03</div>
-              <h3 className="cursor-card-title">Convert and stream</h3>
-              <p className="cursor-card-body">
-                Paste any social media URL. Convert to 320 kbps MP3 or 1080p MP4 with 16-stream parallel acceleration, stream in-browser, and save directly to disk.
-              </p>
-              <div className="cursor-mono-snippet">
-                <code>MP3 &bull; MP4 &bull; WAV &bull; FLAC &bull; M4A</code>
+              {/* Step 2 */}
+              <div className="cursor-step-card" data-step="2">
+                <div className="cursor-step-header">
+                  <div className="cursor-step-index">02</div>
+                  <div className="cursor-step-icon-badge">
+                    <Terminal size={15} className="step-icon-terminal" aria-hidden="true" />
+                  </div>
+                </div>
+                <h3 className="cursor-card-title">Launch start.bat</h3>
+                <p className="cursor-card-body">
+                  Double-click <strong>start.bat</strong>. The launcher boots the local server, provisions yt-dlp &amp; FFmpeg executables, and launches the desktop interface.
+                </p>
+                <div className="cursor-mono-snippet" title="Self-bootstrapping script">
+                  <div className="cursor-snippet-left">
+                    <Terminal size={13} className="cursor-snippet-icon" aria-hidden="true" />
+                    <code>.\start.bat &mdash; auto-bootstraps</code>
+                    <span className="cursor-cursor-blink">_</span>
+                  </div>
+                  <span className="cursor-snippet-tag status-live">READY</span>
+                </div>
+              </div>
+
+              {/* Step 3 */}
+              <div className="cursor-step-card" data-step="3">
+                <div className="cursor-step-header">
+                  <div className="cursor-step-index">03</div>
+                  <div className="cursor-step-icon-badge">
+                    <Music2 size={15} className="step-icon-music" aria-hidden="true" />
+                  </div>
+                </div>
+                <h3 className="cursor-card-title">Convert and stream</h3>
+                <p className="cursor-card-body">
+                  Paste any social media URL. Convert to 320 kbps MP3 or 1080p MP4 with 16-stream parallel acceleration, stream in-browser, and save directly to disk.
+                </p>
+                <div className="cursor-mono-snippet" title="Supported audio and video codecs">
+                  <div className="cursor-snippet-formats">
+                    <span className="format-chip active">MP3</span>
+                    <span className="format-chip">MP4</span>
+                    <span className="format-chip">WAV</span>
+                    <span className="format-chip">FLAC</span>
+                    <span className="format-chip">M4A</span>
+                  </div>
+                  <div className="cursor-snippet-eq" aria-hidden="true">
+                    <span className="seq-bar b1" />
+                    <span className="seq-bar b2" />
+                    <span className="seq-bar b3" />
+                  </div>
+                </div>
               </div>
             </div>
           </div>
