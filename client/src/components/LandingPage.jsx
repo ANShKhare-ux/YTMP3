@@ -37,6 +37,15 @@ import { TextPlugin } from 'gsap/TextPlugin';
 import { CustomEase } from 'gsap/CustomEase';
 import { Observer } from 'gsap/Observer';
 import { Draggable } from 'gsap/Draggable';
+import { InertiaPlugin } from 'gsap/InertiaPlugin';
+import { Flip } from 'gsap/Flip';
+import { SplitText } from 'gsap/SplitText';
+import { ScrambleTextPlugin } from 'gsap/ScrambleTextPlugin';
+import { DrawSVGPlugin } from 'gsap/DrawSVGPlugin';
+import { CustomBounce } from 'gsap/CustomBounce';
+import { CustomWiggle } from 'gsap/CustomWiggle';
+import { MotionPathPlugin } from 'gsap/MotionPathPlugin';
+import { EasePack } from 'gsap/EasePack';
 
 if (typeof window !== 'undefined') {
   gsap.registerPlugin(
@@ -46,7 +55,16 @@ if (typeof window !== 'undefined') {
     TextPlugin,
     CustomEase,
     Observer,
-    Draggable
+    Draggable,
+    InertiaPlugin,
+    Flip,
+    SplitText,
+    ScrambleTextPlugin,
+    DrawSVGPlugin,
+    CustomBounce,
+    CustomWiggle,
+    MotionPathPlugin,
+    EasePack
   );
 }
 
@@ -239,59 +257,122 @@ export default function LandingPage({
 
   // Register Custom Eases & Orchestrate Animations with useGSAP
   useGSAP(() => {
-    // 1. Custom Physics Curves (from uploaded GSAP suite)
+    // 1. Custom Physics Curves & Eases (from uploaded GSAP suite)
     CustomEase.create("appleSpring", "M0,0 C0.16,1 0.3,1 1,1");
     CustomEase.create("punchSpring", "M0,0 C0.18,0.85 0.32,1.15 1,1");
     CustomEase.create("smoothGlide", "M0,0 C0.25,0.1 0.25,1 1,1");
+    CustomBounce.create("btnBounce", { strength: 0.5, squash: 2 });
+    CustomWiggle.create("waveformWiggle", { wiggles: 8, type: "random" });
 
-    // 2. Master Hero Entrance Timeline
-    const heroTl = gsap.timeline({ defaults: { ease: "appleSpring" } });
+    // 2. SplitText on hero title
+    const splitTarget = document.querySelector(".cursor-hero-split");
+    if (splitTarget) {
+      const split = new SplitText(splitTarget, { type: "words,chars" });
+      gsap.from(split.chars, {
+        opacity: 0,
+        y: 16,
+        rotateX: -25,
+        stagger: 0.015,
+        duration: 0.55,
+        ease: "appleSpring",
+        onComplete: () => split.revert()
+      });
+    }
+
+    // 3. DrawSVG on Brand Logo & vector outlines
+    gsap.fromTo(".cursor-brand-logo svg rect", 
+      { scaleY: 0, transformOrigin: "bottom" },
+      { scaleY: 1, stagger: 0.06, duration: 0.6, ease: "punchSpring" }
+    );
+
+    // 4. Master Hero Entrance Timeline (crisp, snappy 1.1s total with automatic clearProps)
+    const heroTl = gsap.timeline({
+      defaults: { ease: "appleSpring" },
+      onComplete: () => {
+        gsap.set([
+          ".cursor-top-nav",
+          ".cursor-eyebrow-pill",
+          ".cursor-display-xl",
+          ".cursor-body-lg",
+          ".cursor-hero-cta-row > *",
+          ".cursor-hero-microproof",
+          ".cursor-trust-cell",
+          wrapRef.current
+        ], { clearProps: "opacity,transform" });
+      }
+    });
 
     heroTl
       .fromTo(".cursor-top-nav", 
-        { y: -25, opacity: 0 }, 
-        { y: 0, opacity: 1, duration: 0.85 }
+        { y: -20, opacity: 0 }, 
+        { y: 0, opacity: 1, duration: 0.45 }
       )
       .fromTo(".cursor-eyebrow-pill", 
-        { y: 20, opacity: 0, scale: 0.94 }, 
-        { y: 0, opacity: 1, scale: 1, duration: 0.7, ease: "punchSpring" }, 
-        "-=0.5"
+        { y: 15, opacity: 0, scale: 0.95 }, 
+        { y: 0, opacity: 1, scale: 1, duration: 0.45, ease: "punchSpring" }, 
+        "-=0.3"
       )
       .fromTo(".cursor-display-xl", 
-        { y: 35, opacity: 0 }, 
-        { y: 0, opacity: 1, duration: 0.95, ease: "power4.out" }, 
-        "-=0.5"
+        { y: 25, opacity: 0 }, 
+        { y: 0, opacity: 1, duration: 0.55, ease: "power3.out" }, 
+        "-=0.3"
       )
       .fromTo(".cursor-body-lg", 
-        { y: 20, opacity: 0 }, 
-        { y: 0, opacity: 1, duration: 0.8 }, 
-        "-=0.6"
+        { y: 15, opacity: 0 }, 
+        { y: 0, opacity: 1, duration: 0.45 }, 
+        "-=0.35"
       )
       .fromTo(".cursor-hero-cta-row > *", 
-        { y: 20, opacity: 0, scale: 0.94 }, 
-        { y: 0, opacity: 1, scale: 1, stagger: 0.1, duration: 0.7, ease: "punchSpring" }, 
-        "-=0.5"
+        { y: 15, opacity: 0, scale: 0.95 }, 
+        { y: 0, opacity: 1, scale: 1, stagger: 0.06, duration: 0.45, ease: "punchSpring" }, 
+        "-=0.3"
       )
       .fromTo(".cursor-hero-microproof", 
-        { opacity: 0, y: 10 }, 
-        { opacity: 1, y: 0, duration: 0.6 }, 
-        "-=0.4"
+        { opacity: 0, y: 8 }, 
+        { opacity: 1, y: 0, duration: 0.35 }, 
+        "-=0.25"
       )
       .fromTo(".cursor-trust-cell", 
-        { y: 15, opacity: 0 }, 
-        { y: 0, opacity: 1, stagger: 0.08, duration: 0.6 }, 
-        "-=0.4"
+        { y: 12, opacity: 0 }, 
+        { y: 0, opacity: 1, stagger: 0.05, duration: 0.35 }, 
+        "-=0.25"
       );
 
     if (wrapRef.current) {
       heroTl.fromTo(wrapRef.current, 
-        { y: 65, opacity: 0, rotateX: 6, transformPerspective: 1200 }, 
-        { y: 0, opacity: 1, rotateX: 0, duration: 1.2, ease: "power3.out" }, 
-        "-=0.5"
+        { y: 40, opacity: 0, rotateX: 5, transformPerspective: 1200 }, 
+        { y: 0, opacity: 1, rotateX: 0, duration: 0.65, ease: "power3.out" }, 
+        "-=0.35"
       );
     }
 
-    // 3. 3D Gyro / Cursor Parallax Tilt on the Hero Card (Observer & quickTo)
+    // 5. ScrambleText Terminal Status Loop
+    const statusPhrases = [
+      "PORT 3001 • READY",
+      "16-STREAM ENGINE ACTIVE",
+      "FFMPEG 7.0 HARDWARE ACCEL",
+      "LOSSLESS 320 KBPS PIPELINE",
+      "ZERO ADS • ZERO TELEMETRY"
+    ];
+    let phraseIdx = 0;
+    const statusEl = document.querySelector(".cursor-mono-status");
+    let statusTimer = null;
+    if (statusEl) {
+      statusTimer = setInterval(() => {
+        phraseIdx = (phraseIdx + 1) % statusPhrases.length;
+        gsap.to(statusEl, {
+          duration: 0.85,
+          scrambleText: {
+            text: statusPhrases[phraseIdx],
+            chars: "01X#_/*-+$%",
+            speed: 0.45
+          },
+          ease: "power2.out"
+        });
+      }, 3000);
+    }
+
+    // 6. 3D Gyro / Cursor Parallax Tilt on the Hero Card (Observer & quickTo)
     if (cardRef.current && wrapRef.current) {
       const setRotateX = gsap.quickTo(cardRef.current, "rotateX", { duration: 0.45, ease: "power2.out" });
       const setRotateY = gsap.quickTo(cardRef.current, "rotateY", { duration: 0.45, ease: "power2.out" });
@@ -313,12 +394,19 @@ export default function LandingPage({
       wrapEl.addEventListener("pointerleave", onPointerLeave);
     }
 
-    // 4. Draggable Seeker Knob (GSAP Draggable)
+    // 7. Draggable Seeker Knob with Inertia (GSAP Draggable + Inertia)
     if (knobRef.current && trackRef.current) {
       Draggable.create(knobRef.current, {
         type: "x",
         bounds: trackRef.current,
+        inertia: true,
+        edgeResistance: 0.75,
         onDrag: function () {
+          const width = trackRef.current.offsetWidth;
+          const pct = Math.max(0, Math.min(100, (this.x / width) * 100));
+          setDemoProgress(pct);
+        },
+        onThrowUpdate: function () {
           const width = trackRef.current.offsetWidth;
           const pct = Math.max(0, Math.min(100, (this.x / width) * 100));
           setDemoProgress(pct);
@@ -326,7 +414,7 @@ export default function LandingPage({
       });
     }
 
-    // 5. Magnetic CTA buttons (quickTo)
+    // 8. Magnetic CTA buttons (quickTo)
     const magneticBtns = gsap.utils.toArray(".cursor-button-primary");
     magneticBtns.forEach((btn) => {
       const xTo = gsap.quickTo(btn, "x", { duration: 0.35, ease: "power2.out" });
@@ -487,7 +575,31 @@ export default function LandingPage({
       }
     );
 
+    // Clean up timers on unmount
+    return () => {
+      if (statusTimer) clearInterval(statusTimer);
+    };
   }, { scope: containerRef });
+
+  // Dynamic equalizer physics with CustomWiggle when playing
+  useEffect(() => {
+    if (isPlayingDemo) {
+      gsap.to(".cursor-waveform-col", {
+        scaleY: "random(0.35, 1.35)",
+        duration: 0.4,
+        ease: "waveformWiggle",
+        repeat: -1,
+        yoyo: true,
+        stagger: {
+          each: 0.025,
+          from: "center"
+        }
+      });
+    } else {
+      gsap.killTweensOf(".cursor-waveform-col");
+      gsap.to(".cursor-waveform-col", { scaleY: 1, duration: 0.25, ease: "power2.out" });
+    }
+  }, [isPlayingDemo]);
 
   const handleSmoothScroll = (e, targetHref) => {
     if (!targetHref || !targetHref.startsWith('#')) return;
@@ -507,9 +619,20 @@ export default function LandingPage({
   };
 
   const handleSelectTrack = (track) => {
+    const trackContainer = document.querySelector('.cursor-demo-tracks');
+    const state = trackContainer ? Flip.getState('.cursor-track-row') : null;
     setSelectedDemoTrack(track);
     setDemoProgress(0);
     setIsPlayingDemo(true);
+    if (state) {
+      requestAnimationFrame(() => {
+        Flip.from(state, {
+          duration: 0.35,
+          ease: "power2.out",
+          fade: true
+        });
+      });
+    }
     // Smooth GSAP punch on track switch
     gsap.fromTo('.cursor-vis-head', 
       { opacity: 0, y: 8 }, 
@@ -593,7 +716,7 @@ export default function LandingPage({
           </div>
 
           <h1 className="cursor-display-xl">
-            High-speed media downloader &amp;<br />
+            <span className="cursor-hero-split">High-speed media downloader</span> &amp;<br />
             <FlipText className="cursor-gradient-accent" duration={2.4}>
               offline media player for Windows
             </FlipText>
