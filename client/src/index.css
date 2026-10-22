@@ -3724,63 +3724,37 @@ button:active {
 .flip-text-wrapper {
   perspective: 1000px;
   vertical-align: baseline;
+  display: inline-block;
 }
 
 .flip-char {
+  display: inline-block;
   color: inherit;
-  -webkit-text-fill-color: transparent;
-  height: 1.2em;
-  line-height: 1.2em;
-  vertical-align: middle;
-  animation: flip var(--flip-duration, 2.4s) var(--flip-delay, 0s) var(--flip-iteration, infinite) ease;
+  background: inherit;
+  -webkit-background-clip: inherit;
+  -webkit-text-fill-color: inherit;
+  transform-style: preserve-3d;
+  will-change: transform, opacity;
+  animation: flip-3d-glide var(--flip-duration, 3.2s) var(--flip-delay, 0s) var(--flip-iteration, infinite) cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .flip-char::before,
 .flip-char::after {
-  color: inherit;
-  -webkit-text-fill-color: currentColor;
-  content: attr(data-char);
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  height: 100%;
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  backface-visibility: hidden;
-  animation: fade var(--flip-duration, 2.4s) var(--flip-delay, 0s) var(--flip-iteration, infinite) ease;
+  display: none !important;
 }
 
-/* Front Face */
-.flip-char::after {
-  transform: translate(-50%, -50%) translateZ(0.6em);
-}
-
-/* Bottom Face */
-.flip-char::before {
-  transform: translate(-50%, -50%) rotateX(-90deg) translateZ(0.6em);
-  opacity: 0;
-  --opacity: 1;
-}
-
-@keyframes flip {
+@keyframes flip-3d-glide {
   0% {
-    transform: rotateX(0deg);
+    transform: perspective(800px) rotateX(-85deg);
+    opacity: 0;
   }
-  25%,
-  100% {
-    transform: rotateX(90deg);
-  }
-}
-
-@keyframes fade {
-  0% {
+  15%, 85% {
+    transform: perspective(800px) rotateX(0deg);
     opacity: 1;
   }
-  30%,
   100% {
-    opacity: var(--opacity, 0);
+    transform: perspective(800px) rotateX(85deg);
+    opacity: 0;
   }
 }
 
