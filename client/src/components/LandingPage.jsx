@@ -29,6 +29,26 @@ import {
 import FlipText from './ui/FlipText';
 import FaqAccordion from './ui/FaqAccordion';
 import HalftoneWordmarkFooter from './ui/halftone-wordmark-footer';
+import { gsap } from 'gsap';
+import { useGSAP } from '@gsap/react';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { ScrollToPlugin } from 'gsap/ScrollToPlugin';
+import { TextPlugin } from 'gsap/TextPlugin';
+import { CustomEase } from 'gsap/CustomEase';
+import { Observer } from 'gsap/Observer';
+import { Draggable } from 'gsap/Draggable';
+
+if (typeof window !== 'undefined') {
+  gsap.registerPlugin(
+    useGSAP,
+    ScrollTrigger,
+    ScrollToPlugin,
+    TextPlugin,
+    CustomEase,
+    Observer,
+    Draggable
+  );
+}
 
 // Windows 4-Square SVG Icon
 function WindowsIcon({ size = 16, className = '' }) {
@@ -181,6 +201,13 @@ export default function LandingPage({
   const [openFaqIndex, setOpenFaqIndex] = useState(0);
   const progressTimerRef = useRef(null);
 
+  // GSAP Animation Scoping & Interactive Element Refs
+  const containerRef = useRef(null);
+  const cardRef = useRef(null);
+  const wrapRef = useRef(null);
+  const knobRef = useRef(null);
+  const trackRef = useRef(null);
+
   // Close modal on Escape key press
   useEffect(() => {
     if (!isDownloadModalOpen) return;
@@ -210,6 +237,271 @@ export default function LandingPage({
     };
   }, [isPlayingDemo]);
 
+  // Register Custom Eases & Orchestrate Animations with useGSAP
+  useGSAP(() => {
+    // 1. Custom Physics Curves (from uploaded GSAP suite)
+    CustomEase.create("appleSpring", "M0,0 C0.16,1 0.3,1 1,1");
+    CustomEase.create("punchSpring", "M0,0 C0.18,0.85 0.32,1.15 1,1");
+    CustomEase.create("smoothGlide", "M0,0 C0.25,0.1 0.25,1 1,1");
+
+    // 2. Master Hero Entrance Timeline
+    const heroTl = gsap.timeline({ defaults: { ease: "appleSpring" } });
+
+    heroTl
+      .fromTo(".cursor-top-nav", 
+        { y: -25, opacity: 0 }, 
+        { y: 0, opacity: 1, duration: 0.85 }
+      )
+      .fromTo(".cursor-eyebrow-pill", 
+        { y: 20, opacity: 0, scale: 0.94 }, 
+        { y: 0, opacity: 1, scale: 1, duration: 0.7, ease: "punchSpring" }, 
+        "-=0.5"
+      )
+      .fromTo(".cursor-display-xl", 
+        { y: 35, opacity: 0 }, 
+        { y: 0, opacity: 1, duration: 0.95, ease: "power4.out" }, 
+        "-=0.5"
+      )
+      .fromTo(".cursor-body-lg", 
+        { y: 20, opacity: 0 }, 
+        { y: 0, opacity: 1, duration: 0.8 }, 
+        "-=0.6"
+      )
+      .fromTo(".cursor-hero-cta-row > *", 
+        { y: 20, opacity: 0, scale: 0.94 }, 
+        { y: 0, opacity: 1, scale: 1, stagger: 0.1, duration: 0.7, ease: "punchSpring" }, 
+        "-=0.5"
+      )
+      .fromTo(".cursor-hero-microproof", 
+        { opacity: 0, y: 10 }, 
+        { opacity: 1, y: 0, duration: 0.6 }, 
+        "-=0.4"
+      )
+      .fromTo(".cursor-trust-cell", 
+        { y: 15, opacity: 0 }, 
+        { y: 0, opacity: 1, stagger: 0.08, duration: 0.6 }, 
+        "-=0.4"
+      );
+
+    if (wrapRef.current) {
+      heroTl.fromTo(wrapRef.current, 
+        { y: 65, opacity: 0, rotateX: 6, transformPerspective: 1200 }, 
+        { y: 0, opacity: 1, rotateX: 0, duration: 1.2, ease: "power3.out" }, 
+        "-=0.5"
+      );
+    }
+
+    // 3. 3D Gyro / Cursor Parallax Tilt on the Hero Card (Observer & quickTo)
+    if (cardRef.current && wrapRef.current) {
+      const setRotateX = gsap.quickTo(cardRef.current, "rotateX", { duration: 0.45, ease: "power2.out" });
+      const setRotateY = gsap.quickTo(cardRef.current, "rotateY", { duration: 0.45, ease: "power2.out" });
+
+      const onPointerMove = (e) => {
+        const rect = wrapRef.current.getBoundingClientRect();
+        const x = e.clientX - rect.left - rect.width / 2;
+        const y = e.clientY - rect.top - rect.height / 2;
+        setRotateY((x / (rect.width / 2)) * 4.5);
+        setRotateX(-(y / (rect.height / 2)) * 4.5);
+      };
+
+      const onPointerLeave = () => {
+        gsap.to(cardRef.current, { rotateX: 0, rotateY: 0, duration: 0.8, ease: "power3.out" });
+      };
+
+      const wrapEl = wrapRef.current;
+      wrapEl.addEventListener("pointermove", onPointerMove);
+      wrapEl.addEventListener("pointerleave", onPointerLeave);
+    }
+
+    // 4. Draggable Seeker Knob (GSAP Draggable)
+    if (knobRef.current && trackRef.current) {
+      Draggable.create(knobRef.current, {
+        type: "x",
+        bounds: trackRef.current,
+        onDrag: function () {
+          const width = trackRef.current.offsetWidth;
+          const pct = Math.max(0, Math.min(100, (this.x / width) * 100));
+          setDemoProgress(pct);
+        }
+      });
+    }
+
+    // 5. Magnetic CTA buttons (quickTo)
+    const magneticBtns = gsap.utils.toArray(".cursor-button-primary");
+    magneticBtns.forEach((btn) => {
+      const xTo = gsap.quickTo(btn, "x", { duration: 0.35, ease: "power2.out" });
+      const yTo = gsap.quickTo(btn, "y", { duration: 0.35, ease: "power2.out" });
+
+      const onMouseMove = (e) => {
+        const rect = btn.getBoundingClientRect();
+        const x = e.clientX - rect.left - rect.width / 2;
+        const y = e.clientY - rect.top - rect.height / 2;
+        xTo(x * 0.22);
+        yTo(y * 0.22);
+      };
+
+      const onMouseLeave = () => {
+        xTo(0);
+        yTo(0);
+      };
+
+      btn.addEventListener("mousemove", onMouseMove);
+      btn.addEventListener("mouseleave", onMouseLeave);
+    });
+
+    // 6. Section 1: Platforms Ecosystem Grid ScrollTrigger
+    gsap.fromTo(".cursor-platform-tile",
+      { y: 35, opacity: 0, scale: 0.95 },
+      {
+        y: 0,
+        opacity: 1,
+        scale: 1,
+        stagger: 0.04,
+        duration: 0.65,
+        ease: "appleSpring",
+        scrollTrigger: {
+          trigger: ".cursor-platforms-grid",
+          start: "top 85%",
+          toggleActions: "play none none none"
+        }
+      }
+    );
+
+    gsap.fromTo(".cursor-callout-panel",
+      { y: 25, opacity: 0 },
+      {
+        y: 0,
+        opacity: 1,
+        duration: 0.7,
+        ease: "power3.out",
+        scrollTrigger: {
+          trigger: ".cursor-callout-panel",
+          start: "top 90%",
+          toggleActions: "play none none none"
+        }
+      }
+    );
+
+    // 7. Section 2: 3-Step Setup Sequence ScrollTrigger
+    gsap.fromTo(".cursor-step-card",
+      { y: 45, opacity: 0, scale: 0.96 },
+      {
+        y: 0,
+        opacity: 1,
+        scale: 1,
+        stagger: 0.16,
+        duration: 0.85,
+        ease: "appleSpring",
+        scrollTrigger: {
+          trigger: ".cursor-steps-grid",
+          start: "top 85%",
+          toggleActions: "play none none none"
+        }
+      }
+    );
+
+    // 8. Section 3: Feature Architecture Cards ScrollTrigger
+    gsap.fromTo(".cursor-feature-card",
+      { y: 40, opacity: 0, scale: 0.96 },
+      {
+        y: 0,
+        opacity: 1,
+        scale: 1,
+        stagger: 0.08,
+        duration: 0.75,
+        ease: "appleSpring",
+        scrollTrigger: {
+          trigger: ".cursor-features-grid",
+          start: "top 85%",
+          toggleActions: "play none none none"
+        }
+      }
+    );
+
+    // 9. Section 4: Benchmark Comparison Table Row Cascade
+    gsap.fromTo(".cursor-comparison-table tbody tr",
+      { x: -25, opacity: 0 },
+      {
+        x: 0,
+        opacity: 1,
+        stagger: 0.08,
+        duration: 0.65,
+        ease: "power3.out",
+        scrollTrigger: {
+          trigger: ".cursor-comparison-table",
+          start: "top 85%",
+          toggleActions: "play none none none"
+        }
+      }
+    );
+
+    // 10. Section 5: Hardware Specifications Grid ScrollTrigger
+    gsap.fromTo(".cursor-spec-card",
+      { y: 30, opacity: 0, scale: 0.95 },
+      {
+        y: 0,
+        opacity: 1,
+        scale: 1,
+        stagger: 0.07,
+        duration: 0.65,
+        ease: "appleSpring",
+        scrollTrigger: {
+          trigger: ".cursor-specs-grid",
+          start: "top 85%",
+          toggleActions: "play none none none"
+        }
+      }
+    );
+
+    // 11. Section 6: FAQ Accordion items
+    gsap.fromTo(".v-faq-item",
+      { y: 25, opacity: 0 },
+      {
+        y: 0,
+        opacity: 1,
+        stagger: 0.07,
+        duration: 0.6,
+        ease: "power3.out",
+        scrollTrigger: {
+          trigger: ".v-faq-list",
+          start: "top 85%",
+          toggleActions: "play none none none"
+        }
+      }
+    );
+
+    // 12. Section 7: Bottom CTA Banner Entrance
+    gsap.fromTo(".cursor-cta-panel",
+      { y: 50, opacity: 0, scale: 0.94 },
+      {
+        y: 0,
+        opacity: 1,
+        scale: 1,
+        duration: 0.9,
+        ease: "appleSpring",
+        scrollTrigger: {
+          trigger: ".cursor-cta-panel",
+          start: "top 85%",
+          toggleActions: "play none none none"
+        }
+      }
+    );
+
+  }, { scope: containerRef });
+
+  const handleSmoothScroll = (e, targetHref) => {
+    if (!targetHref || !targetHref.startsWith('#')) return;
+    e.preventDefault();
+    const targetEl = document.querySelector(targetHref);
+    if (targetEl) {
+      gsap.to(window, {
+        duration: 1.1,
+        scrollTo: { y: targetEl, offsetY: 70 },
+        ease: "power3.inOut",
+      });
+    }
+  };
+
   const handleTogglePlayDemo = () => {
     setIsPlayingDemo((prev) => !prev);
   };
@@ -218,6 +510,11 @@ export default function LandingPage({
     setSelectedDemoTrack(track);
     setDemoProgress(0);
     setIsPlayingDemo(true);
+    // Smooth GSAP punch on track switch
+    gsap.fromTo('.cursor-vis-head', 
+      { opacity: 0, y: 8 }, 
+      { opacity: 1, y: 0, duration: 0.35, ease: 'power2.out' }
+    );
   };
 
   const formatSeconds = (sec) => {
@@ -232,7 +529,7 @@ export default function LandingPage({
   };
 
   return (
-    <div className="cursor-canvas-root">
+    <div className="cursor-canvas-root" ref={containerRef}>
       {/* Keyboard Accessibility: Skip to Main Content Link */}
       <a href="#hero" className="cursor-skip-link">
         Skip to main content
@@ -250,12 +547,12 @@ export default function LandingPage({
           </div>
 
           <nav className="cursor-nav-links" aria-label="Main Navigation">
-            <a href="#features" className="cursor-nav-link">Features</a>
-            <a href="#how-it-works" className="cursor-nav-link">How it works</a>
-            <a href="#platforms" className="cursor-nav-link">Platforms</a>
-            <a href="#comparison" className="cursor-nav-link">Comparison</a>
-            <a href="#specs" className="cursor-nav-link">Specs</a>
-            <a href="#faq" className="cursor-nav-link">FAQ</a>
+            <a href="#features" className="cursor-nav-link" onClick={(e) => handleSmoothScroll(e, '#features')}>Features</a>
+            <a href="#how-it-works" className="cursor-nav-link" onClick={(e) => handleSmoothScroll(e, '#how-it-works')}>How it works</a>
+            <a href="#platforms" className="cursor-nav-link" onClick={(e) => handleSmoothScroll(e, '#platforms')}>Platforms</a>
+            <a href="#comparison" className="cursor-nav-link" onClick={(e) => handleSmoothScroll(e, '#comparison')}>Comparison</a>
+            <a href="#specs" className="cursor-nav-link" onClick={(e) => handleSmoothScroll(e, '#specs')}>Specs</a>
+            <a href="#faq" className="cursor-nav-link" onClick={(e) => handleSmoothScroll(e, '#faq')}>FAQ</a>
           </nav>
 
           <div className="cursor-nav-actions">
@@ -324,6 +621,7 @@ export default function LandingPage({
             <a
               href="#how-it-works"
               className="cursor-button-secondary cursor-btn-lg"
+              onClick={(e) => handleSmoothScroll(e, '#how-it-works')}
               aria-label="View 3-step installation guide"
             >
               <Terminal size={14} aria-hidden="true" />
@@ -364,8 +662,8 @@ export default function LandingPage({
             PRODUCT UI SCREENSHOT / INTERACTIVE APP WINDOW
             (DESIGN-cursor.md: surface-1 #0f1011, rounded.xl 16px, hairline #23252a)
             ========================================================================= */}
-        <div className="cursor-product-panel-wrap">
-          <div className="cursor-product-screenshot-card" aria-label="SonicWave Desktop Software Preview">
+        <div className="cursor-product-panel-wrap" ref={wrapRef}>
+          <div className="cursor-product-screenshot-card" ref={cardRef} aria-label="SonicWave Desktop Software Preview">
             {/* Window title bar */}
             <div className="cursor-window-bar">
               <div className="cursor-window-left">
@@ -466,6 +764,7 @@ export default function LandingPage({
                     </span>
                     <div
                       className="cursor-track-bar"
+                      ref={trackRef}
                       role="slider"
                       tabIndex={0}
                       aria-label="Demo audio scrubber"
@@ -496,7 +795,7 @@ export default function LandingPage({
                       }}
                     >
                       <div className="cursor-track-bar-fill" style={{ width: `${demoProgress}%` }} />
-                      <div className="cursor-track-knob" style={{ left: `${demoProgress}%` }} />
+                      <div className="cursor-track-knob" ref={knobRef} style={{ left: `${demoProgress}%` }} />
                     </div>
                     <span className="cursor-mono-time">{formatSeconds(selectedDemoTrack.duration)}</span>
                   </div>

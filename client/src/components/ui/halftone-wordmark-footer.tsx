@@ -13,6 +13,13 @@
 // is fetched: the faces come from the host page or the fallback stacks.
 
 import * as React from "react"
+import { gsap } from "gsap"
+import { ScrollToPlugin } from "gsap/ScrollToPlugin"
+import { ScrollTrigger } from "gsap/ScrollTrigger"
+
+if (typeof window !== "undefined") {
+  gsap.registerPlugin(ScrollToPlugin, ScrollTrigger)
+}
 
 export interface HalftonePalette {
   /** The footer background. */
@@ -436,9 +443,24 @@ export default function HalftoneWordmarkFooter({
       })
     }
 
+    // GSAP ScrollTrigger auto-ripple when footer enters viewport
+    let st: any = null
+    if (typeof window !== "undefined") {
+      st = ScrollTrigger.create({
+        trigger: root,
+        start: "top 85%",
+        once: true,
+        onEnter: () => {
+          ring = { x: w / 2, y: h * 0.72, t: performance.now() }
+          wake()
+        }
+      })
+    }
+
     return () => {
       alive = false
       cancelAnimationFrame(raf)
+      if (st) st.kill()
       ro.disconnect()
       io.disconnect()
       root.removeEventListener("pointermove", onMove)
@@ -448,7 +470,19 @@ export default function HalftoneWordmarkFooter({
   }, [key])
 
   const toTop = () => {
-    window.scrollTo({ top: 0, behavior: "smooth" })
+    if (typeof window !== "undefined") {
+      gsap.to(window, { duration: 1.2, scrollTo: { y: 0 }, ease: "power3.inOut" })
+    }
+  }
+
+  const handleLinkClick = (e: React.MouseEvent<HTMLAnchorElement>, href?: string) => {
+    if (href && href.startsWith("#") && typeof window !== "undefined") {
+      e.preventDefault()
+      const target = document.querySelector(href)
+      if (target) {
+        gsap.to(window, { duration: 1.1, scrollTo: { y: target, offsetY: 70 }, ease: "power3.inOut" })
+      }
+    }
   }
 
   return (
@@ -478,7 +512,9 @@ export default function HalftoneWordmarkFooter({
             <ul>
               {col.links.map((l) => (
                 <li key={l.label}>
-                  <a href={l.href || "#"}>{l.label}</a>
+                  <a href={l.href || "#"} onClick={(e) => handleLinkClick(e, l.href)}>
+                    {l.label}
+                  </a>
                 </li>
               ))}
             </ul>
