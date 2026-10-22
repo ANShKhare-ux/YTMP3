@@ -2439,18 +2439,18 @@ button:active {
 }
 
 .cursor-display-xl {
-  font-size: 64px;
+  font-size: clamp(34px, 4.2vw, 56px);
   font-weight: 600;
-  line-height: 1.08;
-  letter-spacing: -2.8px;
+  line-height: 1.14;
+  letter-spacing: -2px;
   color: var(--cursor-ink);
-  max-width: 900px;
+  max-width: 1060px;
   margin: 0 auto 20px;
 }
 
 .cursor-display-xl .cursor-gradient-accent {
   color: var(--cursor-primary-hover);
-  display: block;
+  display: inline-block;
 }
 
 .cursor-body-lg {
@@ -3725,6 +3725,12 @@ button:active {
   perspective: 1000px;
   vertical-align: baseline;
   display: inline-block;
+  white-space: normal;
+}
+
+.flip-text-wrapper .word {
+  display: inline-block;
+  white-space: nowrap;
 }
 
 .flip-char {
