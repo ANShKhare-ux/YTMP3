@@ -28,7 +28,7 @@ import {
 } from 'lucide-react';
 import FlipText from './ui/FlipText';
 import FaqAccordion from './ui/FaqAccordion';
-import AnimatedFooter from './ui/AnimatedFooter';
+import HalftoneWordmarkFooter from './ui/halftone-wordmark-footer';
 
 // Windows 4-Square SVG Icon
 function WindowsIcon({ size = 16, className = '' }) {
@@ -135,6 +135,38 @@ const FAQS = [
     q: 'How are extraction rules updated when upstream video platforms change?',
     a: 'SonicWave includes a 1-click binary updater. Press Ctrl+K in the app and select "Update Engine (yt-dlp)" to pull the latest extraction definitions directly from the official upstream repository in seconds.'
   }
+];
+
+const FOOTER_COLUMNS = [
+  {
+    title: 'Product',
+    links: [
+      { label: 'Features', href: '#features' },
+      { label: 'Installation', href: '#how-it-works' },
+      { label: 'Platforms', href: '#platforms' },
+      { label: 'Speed 16x', href: '#comparison' },
+      { label: 'Specs', href: '#specs' },
+      { label: 'FAQ', href: '#faq' },
+    ],
+  },
+  {
+    title: 'Engine',
+    links: [
+      { label: 'yt-dlp 16-Stream' },
+      { label: 'FFmpeg 7.0 Mux' },
+      { label: 'Node.js Local' },
+      { label: 'React 19 & Vite' },
+      { label: 'ID3 High-Res Art' },
+    ],
+  },
+  {
+    title: 'Download',
+    links: [
+      { label: 'Windows (.zip)', href: '/SonicWave-v1.0.0-Windows.zip' },
+      { label: 'Zero Telemetry' },
+      { label: 'Personal Archiving' },
+    ],
+  },
 ];
 
 export default function LandingPage({
@@ -914,87 +946,25 @@ export default function LandingPage({
       </section>
 
       {/* =========================================================================
-          SYNCHRONIZED UNIFIED FOOTER (VengeanceUI AnimatedFooter + Cursor Design)
+          HALFTONE WORDMARK FOOTER (Interactive Spring Dots & Shock Ring)
           ========================================================================= */}
-      <AnimatedFooter
-        headingLines={['SonicWave']}
-        background="#010102"
-        textColor="#ffffff"
-        charColor="rgba(94, 105, 209, 0.42)"
-        hoverColor="#5e69d1"
-        hoverCharColor="#ffffff"
-        revealOnScroll={true}
-      >
-        <div className="v-footer-grid">
-          {/* Brand & Desktop App Column */}
-          <div className="v-footer-brand-col">
-            <div className="v-footer-brand-title">
-              <CursorBrandLogo size={22} />
-              <span>SonicWave</span>
-              <span className="v-footer-badge">v1.0.0</span>
-            </div>
-            <p className="v-footer-desc">
-              High-fidelity media extraction software for Windows with 16-stream parallel turbo acceleration, native local execution, and embedded FFmpeg.
-            </p>
-            <button
-              type="button"
-              className="v-footer-download-btn"
-              onClick={handleDownloadClick}
-              aria-label="Download SonicWave for Windows"
-            >
-              <WindowsIcon size={14} />
-              <span>Download for Windows (64-bit)</span>
-            </button>
-          </div>
-
-          {/* Product Navigation */}
-          <div className="v-footer-col">
-            <span className="v-footer-col-title">Product</span>
-            <a href="#features" className="v-footer-link">Features</a>
-            <a href="#how-it-works" className="v-footer-link">Installation</a>
-            <a href="#platforms" className="v-footer-link">Supported Sites</a>
-            <a href="#comparison" className="v-footer-link">Speed Benchmark</a>
-            <a href="#specs" className="v-footer-link">Specifications</a>
-            <a href="#faq" className="v-footer-link">FAQ</a>
-          </div>
-
-          {/* Engine & Architecture */}
-          <div className="v-footer-col">
-            <span className="v-footer-col-title">Engine</span>
-            <span className="v-footer-text-item">yt-dlp 16-Stream</span>
-            <span className="v-footer-text-item">FFmpeg 7.0 Multiplexer</span>
-            <span className="v-footer-text-item">Node.js Local Runtime</span>
-            <span className="v-footer-text-item">React 19 &amp; Vite</span>
-            <span className="v-footer-text-item">ID3 High-Res Art</span>
-          </div>
-
-          {/* Trust & Legal */}
-          <div className="v-footer-col">
-            <span className="v-footer-col-title">Trust &amp; Legal</span>
-            <p className="v-footer-disclaimer-text">
-              SonicWave executes 100% locally on your PC with zero telemetry. Intended for personal archiving, educational research, and fair-use downloading.
-            </p>
-          </div>
-        </div>
-
-        {/* Separator & Metadata Bar */}
-        <div className="v-footer-bottom-strip">
-          <span>&copy; {new Date().getFullYear()} SonicWave &bull; Windows 64-bit Edition</span>
-
-          <div className="v-footer-status-indicator">
-            <span className="v-footer-status-dot" />
-            <span>Engine: Online &amp; Stable</span>
-          </div>
-
-          <div className="v-footer-kbd-hint">
-            <span>Press</span>
-            <kbd className="v-footer-kbd">⌘K</kbd>
-            <span>or</span>
-            <kbd className="v-footer-kbd">Ctrl+K</kbd>
-            <span>anywhere</span>
-          </div>
-        </div>
-      </AnimatedFooter>
+      <HalftoneWordmarkFooter
+        wordmark="sonicwave"
+        label="SonicWave Media"
+        meta="©2026 · Windows 64-bit · 16x Turbo"
+        columns={FOOTER_COLUMNS}
+        backToTop={true}
+        height="560px"
+        crop={0.2}
+        dotGap={6}
+        radius={85}
+        grain={0.4}
+        palette={{
+          background: '#010102',
+          ink: '#f0f3f6',
+          warm: '#5e69d1',
+        }}
+      />
 
       {/* =========================================================================
           WINDOWS DOWNLOAD MODAL
