@@ -22,11 +22,11 @@ import {
   Command as CommandIcon,
   Crown,
   X,
+  Menu,
   FileCode,
   FolderArchive,
   ArrowRight
 } from 'lucide-react';
-import FlipText from './ui/FlipText';
 import FaqAccordion from './ui/FaqAccordion';
 import HalftoneWordmarkFooter from './ui/halftone-wordmark-footer';
 import { gsap } from 'gsap';
@@ -212,6 +212,7 @@ export default function LandingPage({
   onOpenPricing
 }) {
   const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [selectedDemoTrack, setSelectedDemoTrack] = useState(DEMO_TRACKS[0]);
   const [isPlayingDemo, setIsPlayingDemo] = useState(false);
   const [demoProgress, setDemoProgress] = useState(32);
@@ -257,6 +258,22 @@ export default function LandingPage({
 
   // Register Custom Eases & Orchestrate Animations with useGSAP
   useGSAP(() => {
+    // Accessibility: Honor reduced motion preference immediately
+    const prefersReducedMotion = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReducedMotion) {
+      gsap.set([
+        ".cursor-top-nav",
+        ".cursor-eyebrow-pill",
+        ".cursor-display-xl",
+        ".cursor-body-lg",
+        ".cursor-hero-cta-row > *",
+        ".cursor-hero-microproof",
+        ".cursor-trust-cell",
+        wrapRef.current
+      ], { clearProps: "all" });
+      return;
+    }
+
     // 1. Custom Physics Curves & Eases (from uploaded GSAP suite)
     CustomEase.create("appleSpring", "M0,0 C0.16,1 0.3,1 1,1");
     CustomEase.create("punchSpring", "M0,0 C0.18,0.85 0.32,1.15 1,1");
@@ -817,7 +834,7 @@ export default function LandingPage({
           <div className="cursor-nav-actions">
             <button
               type="button"
-              className="cursor-button-secondary"
+              className="cursor-button-secondary cursor-nav-cmd-btn"
               onClick={onOpenCmd}
               title="Open Command Menu (⌘K / Ctrl+K)"
               aria-label="Open Command Menu"
@@ -828,16 +845,58 @@ export default function LandingPage({
 
             <button
               type="button"
-              className="cursor-button-primary"
+              className="cursor-button-primary cursor-nav-download-btn"
               onClick={handleDownloadClick}
               id="nav-download-btn"
               aria-label="Download SonicWave for Windows"
             >
               <WindowsIcon size={14} />
-              <span>Download for Windows</span>
+              <span className="cursor-nav-download-text">Download for Windows</span>
+            </button>
+
+            <button
+              type="button"
+              className="cursor-nav-mobile-toggle"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              aria-expanded={isMobileMenuOpen}
+              aria-label={isMobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
+            >
+              {isMobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
             </button>
           </div>
         </div>
+
+        {/* Mobile Navigation Dropdown Drawer */}
+        {isMobileMenuOpen && (
+          <div className="cursor-mobile-menu-drawer" role="dialog" aria-label="Mobile Navigation">
+            <nav className="cursor-mobile-nav-links" aria-label="Mobile Navigation Links">
+              <a href="#features" className="cursor-mobile-nav-link" onClick={(e) => { setIsMobileMenuOpen(false); handleSmoothScroll(e, '#features'); }}>Features</a>
+              <a href="#how-it-works" className="cursor-mobile-nav-link" onClick={(e) => { setIsMobileMenuOpen(false); handleSmoothScroll(e, '#how-it-works'); }}>How it works</a>
+              <a href="#platforms" className="cursor-mobile-nav-link" onClick={(e) => { setIsMobileMenuOpen(false); handleSmoothScroll(e, '#platforms'); }}>Platforms</a>
+              <a href="#comparison" className="cursor-mobile-nav-link" onClick={(e) => { setIsMobileMenuOpen(false); handleSmoothScroll(e, '#comparison'); }}>Comparison</a>
+              <a href="#specs" className="cursor-mobile-nav-link" onClick={(e) => { setIsMobileMenuOpen(false); handleSmoothScroll(e, '#specs'); }}>Specs</a>
+              <a href="#faq" className="cursor-mobile-nav-link" onClick={(e) => { setIsMobileMenuOpen(false); handleSmoothScroll(e, '#faq'); }}>FAQ</a>
+            </nav>
+            <div className="cursor-mobile-menu-actions">
+              <button
+                type="button"
+                className="cursor-button-primary cursor-mobile-download-btn"
+                onClick={(e) => { setIsMobileMenuOpen(false); handleDownloadClick(e); }}
+              >
+                <WindowsIcon size={16} />
+                <span>Download for Windows (.zip)</span>
+              </button>
+              <button
+                type="button"
+                className="cursor-button-secondary cursor-mobile-cmd-btn"
+                onClick={() => { setIsMobileMenuOpen(false); onOpenCmd(); }}
+              >
+                <CommandIcon size={14} />
+                <span>Command Palette (⌘K)</span>
+              </button>
+            </div>
+          </div>
+        )}
       </header>
 
       {/* =========================================================================
@@ -853,9 +912,7 @@ export default function LandingPage({
 
           <h1 className="cursor-display-xl">
             <span className="cursor-hero-split">High-speed media downloader</span> &amp;<br />
-            <FlipText className="cursor-gradient-accent" duration={2.4}>
-              offline media player for Windows
-            </FlipText>
+            <span className="cursor-gradient-accent">offline audio player for Windows</span>
           </h1>
 
           <p className="cursor-body-lg">
