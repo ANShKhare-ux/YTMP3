@@ -1,4 +1,3 @@
-import React from 'react';
 import { User, Eye, Zap, Clock } from 'lucide-react';
 
 export default function VideoPreview({ video }) {
