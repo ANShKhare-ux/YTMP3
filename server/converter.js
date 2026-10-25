@@ -66,7 +66,16 @@ function savePersistentHistory(job) {
       fileName: job.fileName,
       createdAt: job.createdAt || Date.now()
     };
-    list = [cleanJob, ...list.filter(item => item.id !== job.id)].slice(0, 50);
+
+    const existingIndex = list.findIndex(item => item.id === job.id);
+    if (existingIndex !== -1) {
+      list.splice(existingIndex, 1);
+    }
+    list.unshift(cleanJob);
+    if (list.length > 50) {
+      list.length = 50;
+    }
+
     fs.writeFileSync(HISTORY_FILE, JSON.stringify(list, null, 2), 'utf8');
   } catch (err) {
     console.warn('[converter] Failed to save history to disk:', err.message);
