@@ -129,11 +129,19 @@ app.get('/api/progress/:jobId', (req, res) => {
 });
 
 // Polling fallback endpoint for progress
-app.get('/api/job/:jobId', (req, res) => {
+app.get('/api/job/:jobId', async (req, res) => {
   const { jobId } = req.params;
   const job = getJob(jobId);
   if (!job) {
     return res.status(404).json({ success: false, error: 'Job not found' });
+  }
+  if (job.status === 'completed' && job.filePath) {
+    try {
+      const stat = await fs.promises.stat(job.filePath);
+      return res.json({ success: true, job: { ...job, fileSize: stat.size } });
+    } catch (err) {
+      console.warn(`[status] Failed to stat file for job ${jobId}:`, err.message);
+    }
   }
   res.json({ success: true, job });
 });
