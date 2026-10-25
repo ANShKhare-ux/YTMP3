@@ -129,26 +129,44 @@ app.get('/api/progress/:jobId', (req, res) => {
 });
 
 // Polling fallback endpoint for progress
-app.get('/api/job/:jobId', (req, res) => {
+app.get('/api/job/:jobId', async (req, res) => {
   const { jobId } = req.params;
   const job = getJob(jobId);
   if (!job) {
     return res.status(404).json({ success: false, error: 'Job not found' });
   }
+
+  if (job.filePath) {
+    try {
+      await fs.promises.access(job.filePath, fs.constants.F_OK);
+      job.isAvailable = true;
+    } catch {
+      job.isAvailable = false;
+    }
+  } else {
+    job.isAvailable = false;
+  }
+
   res.json({ success: true, job });
 });
 
 // Stream audio for in-browser playback
-app.get('/api/stream/:jobId', (req, res) => {
+app.get('/api/stream/:jobId', async (req, res) => {
   const { jobId } = req.params;
   const job = getJob(jobId);
 
-  if (!job || !job.filePath || !fs.existsSync(job.filePath)) {
+  if (!job || !job.filePath) {
+    return res.status(404).send('Audio file not found or still processing.');
+  }
+
+  try {
+    await fs.promises.access(job.filePath, fs.constants.F_OK);
+  } catch {
     return res.status(404).send('Audio file not found or still processing.');
   }
 
   const filePath = job.filePath;
-  const stat = fs.statSync(filePath);
+  const stat = await fs.promises.stat(filePath);
   const fileSize = stat.size;
   const range = req.headers.range;
 
@@ -188,11 +206,17 @@ app.get('/api/stream/:jobId', (req, res) => {
 });
 
 // Download Audio/Video File with RFC 5987 Unicode Support
-app.get('/api/download/:jobId', (req, res) => {
+app.get('/api/download/:jobId', async (req, res) => {
   const { jobId } = req.params;
   const job = getJob(jobId);
 
-  if (!job || !job.filePath || !fs.existsSync(job.filePath)) {
+  if (!job || !job.filePath) {
+    return res.status(404).send('File not found or still processing.');
+  }
+
+  try {
+    await fs.promises.access(job.filePath, fs.constants.F_OK);
+  } catch {
     return res.status(404).send('File not found or still processing.');
   }
 
