@@ -19,7 +19,7 @@ import {
   Sparkles,
   HardDrive,
   ExternalLink,
-  Command as CommandIcon,
+  Command,
   Crown,
   X,
   Menu,
@@ -839,7 +839,7 @@ export default function LandingPage({
               title="Open Command Menu (⌘K / Ctrl+K)"
               aria-label="Open Command Menu"
             >
-              <CommandIcon size={13} aria-hidden="true" />
+              <Command size={13} aria-hidden="true" />
               <span>⌘K</span>
             </button>
 
@@ -891,7 +891,7 @@ export default function LandingPage({
                 className="cursor-button-secondary cursor-mobile-cmd-btn"
                 onClick={() => { setIsMobileMenuOpen(false); onOpenCmd(); }}
               >
-                <CommandIcon size={14} />
+                <Command size={14} />
                 <span>Command Palette (⌘K)</span>
               </button>
             </div>
