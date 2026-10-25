@@ -108,7 +108,7 @@ setInterval(cleanOldDownloads, 30 * 60 * 1000);
  * Format seconds into HH:MM:SS or MM:SS
  */
 function formatDuration(seconds) {
-  if (!seconds || isNaN(seconds)) return '0:00';
+  if (!seconds || isNaN(seconds)) return '00:00';
   const sec = Math.floor(seconds % 60);
   const min = Math.floor((seconds / 60) % 60);
   const hrs = Math.floor(seconds / 3600);
@@ -116,7 +116,7 @@ function formatDuration(seconds) {
   if (hrs > 0) {
     return `${hrs}:${pad(min)}:${pad(sec)}`;
   }
-  return `${min}:${pad(sec)}`;
+  return `${pad(min)}:${pad(sec)}`;
 }
 
 /**
