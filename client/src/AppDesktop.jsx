@@ -12,6 +12,8 @@ import {
   Library,
   ChevronLeft,
   ChevronRight,
+  Command,
+  Crown,
   Headphones
 } from 'lucide-react';
 import UrlInput from './components/UrlInput';
@@ -23,7 +25,7 @@ import HistorySection from './components/HistorySection';
 import Logo from './components/Logo';
 import CommandPalette from './components/CommandPalette';
 import PricingModal from './components/PricingModal';
-import { Crown, Command as CommandIcon } from 'lucide-react';
+
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
@@ -573,7 +575,7 @@ export default function App() {
               title="Open Command Palette (⌘K / Ctrl+K)"
               style={{ background: 'rgba(255, 255, 255, 0.06)', borderColor: 'rgba(255, 255, 255, 0.15)', color: '#ffffff' }}
             >
-              <CommandIcon size={12} />
+              <Command size={12} />
               <span>⌘K Quick Menu</span>
             </button>
 
