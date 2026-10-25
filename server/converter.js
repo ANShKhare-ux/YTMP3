@@ -127,7 +127,7 @@ function detectPlatform(url) {
   if (lower.includes('youtube.com') || lower.includes('youtu.be')) return 'YouTube';
   if (lower.includes('instagram.com') || lower.includes('instagr.am')) return 'Instagram';
   if (lower.includes('tiktok.com')) return 'TikTok';
-  if (lower.includes('twitter.com') || lower.includes('x.com') || lower.includes('t.co')) return 'Twitter / X';
+  if (lower.includes('twitter.com') || lower.includes('x.com') || lower.includes('t.co/')) return 'Twitter / X';
   if (lower.includes('facebook.com') || lower.includes('fb.watch') || lower.includes('fb.com')) return 'Facebook';
   if (lower.includes('reddit.com') || lower.includes('redd.it')) return 'Reddit';
   if (lower.includes('soundcloud.com')) return 'SoundCloud';
@@ -597,5 +597,7 @@ module.exports = {
   getJob,
   getHistory,
   formatDuration,
-  DOWNLOADS_DIR
+  DOWNLOADS_DIR,
+  detectPlatform,
+  normalizeUrl
 };
