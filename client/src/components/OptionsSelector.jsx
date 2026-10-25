@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sliders, Music, Video, Sparkles, Monitor, Zap, Info, ShieldCheck } from 'lucide-react';
+import { Sliders, Music, Video, Sparkles, Monitor, Zap, Info } from 'lucide-react';
 
 const BITRATES = [
   { value: '320k', label: '320 kbps', badge: 'Ultra HQ', desc: 'Studio grade sound' },
