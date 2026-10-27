@@ -27,7 +27,8 @@ import {
   FolderArchive,
   ArrowRight,
   Sun,
-  Moon
+  Moon,
+  ChevronUp
 } from 'lucide-react';
 import FaqAccordion from './ui/FaqAccordion';
 import HalftoneWordmarkFooter from './ui/halftone-wordmark-footer';
@@ -275,7 +276,56 @@ export default function LandingPage({
     };
   }, [isPlayingDemo]);
 
-  // Register Custom Eases & Orchestrate Animations with useGSAP
+  const [showScrollTop, setShowScrollTop] = useState(false);
+
+  // Smooth inertial wheel scroll & scroll-to-top visibility tracking
+  useEffect(() => {
+    let scrollTarget = window.scrollY;
+
+    const handleWheel = (e) => {
+      // Don't intercept if ctrl/meta is pressed (browser zoom) or modal is open
+      if (e.ctrlKey || e.metaKey || isDownloadModalOpen) return;
+
+      // Allow natural scroll inside internal scrollable elements (e.g. modals, overflow boxes)
+      let el = e.target;
+      while (el && el !== document.body && el !== document.documentElement) {
+        const overflowY = window.getComputedStyle(el).overflowY;
+        if ((overflowY === 'auto' || overflowY === 'scroll') && el.scrollHeight > el.clientHeight) {
+          return;
+        }
+        el = el.parentElement;
+      }
+
+      e.preventDefault();
+      const maxScroll = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+      scrollTarget = Math.max(0, Math.min(maxScroll, scrollTarget + e.deltaY));
+
+      gsap.to(window, {
+        duration: 0.65,
+        scrollTo: { y: scrollTarget, autoKill: true },
+        ease: "power2.out",
+        overwrite: "auto",
+        onUpdate: () => {
+          ScrollTrigger.update();
+        }
+      });
+    };
+
+    const handleScroll = () => {
+      if (!gsap.isTweening(window)) {
+        scrollTarget = window.scrollY;
+      }
+      setShowScrollTop(window.scrollY > 400);
+    };
+
+    window.addEventListener('wheel', handleWheel, { passive: false });
+    window.addEventListener('scroll', handleScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener('wheel', handleWheel);
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, [isDownloadModalOpen]);
   useGSAP(() => {
     // Accessibility: Honor reduced motion preference immediately
     const prefersReducedMotion = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -775,11 +825,19 @@ export default function LandingPage({
 
   const handleSmoothScroll = (e, targetHref) => {
     if (!targetHref || !targetHref.startsWith('#')) return;
-    e.preventDefault();
+    if (e && typeof e.preventDefault === 'function') e.preventDefault();
+    if (targetHref === '#hero' || targetHref === '#top') {
+      gsap.to(window, {
+        duration: 1.0,
+        scrollTo: { y: 0 },
+        ease: "power3.inOut",
+      });
+      return;
+    }
     const targetEl = document.querySelector(targetHref);
     if (targetEl) {
       gsap.to(window, {
-        duration: 1.1,
+        duration: 1.0,
         scrollTo: { y: targetEl, offsetY: 70 },
         ease: "power3.inOut",
       });
@@ -826,7 +884,7 @@ export default function LandingPage({
   return (
     <div className={`cursor-canvas-root ${theme === 'light' ? 'light-mode' : ''}`} data-theme={theme} ref={containerRef}>
       {/* Keyboard Accessibility: Skip to Main Content Link */}
-      <a href="#hero" className="cursor-skip-link">
+      <a href="#hero" className="cursor-skip-link" onClick={(e) => handleSmoothScroll(e, '#hero')}>
         Skip to main content
       </a>
 
@@ -1765,6 +1823,19 @@ export default function LandingPage({
             </div>
           </div>
         </div>
+      )}
+
+      {/* Floating Smooth Scroll to Top Button */}
+      {showScrollTop && (
+        <button
+          type="button"
+          className="cursor-floating-scroll-top"
+          onClick={() => handleSmoothScroll(null, '#top')}
+          title="Scroll smoothly to top"
+          aria-label="Scroll smoothly to top"
+        >
+          <ChevronUp size={18} aria-hidden="true" />
+        </button>
       )}
     </div>
   );
