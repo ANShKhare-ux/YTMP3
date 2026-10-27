@@ -473,7 +473,7 @@ function startConversion({ url, format = 'mp3', quality = '320k', jobId, turbo =
     console.warn(`[converter ${jobId} stderr]:`, errText.trim());
   });
 
-  child.on('close', (code) => {
+  child.on('close', async (code) => {
     if (code === 0) {
       // Find output file
       const expectedFile = path.join(DOWNLOADS_DIR, `${jobId}.${targetFormat}`);
@@ -486,7 +486,8 @@ function startConversion({ url, format = 'mp3', quality = '320k', jobId, turbo =
         console.log(`[converter] Job ${jobId} completed successfully!`);
       } else {
         // Look for any file with jobId prefix in downloads dir
-        const found = fs.readdirSync(DOWNLOADS_DIR).find(f => f.startsWith(jobId));
+        const files = await fs.promises.readdir(DOWNLOADS_DIR);
+        const found = files.find(f => f.startsWith(jobId));
         if (found) {
           jobState.status = 'completed';
           jobState.progress = 100;
@@ -517,9 +518,10 @@ function startConversion({ url, format = 'mp3', quality = '320k', jobId, turbo =
 
       // Clean up any incomplete partial files on error
       try {
-        const partials = fs.readdirSync(DOWNLOADS_DIR).filter(f => f.startsWith(jobId));
+        const files = await fs.promises.readdir(DOWNLOADS_DIR);
+        const partials = files.filter(f => f.startsWith(jobId));
         for (const part of partials) {
-          fs.unlinkSync(path.join(DOWNLOADS_DIR, part));
+          await fs.promises.unlink(path.join(DOWNLOADS_DIR, part)).catch(() => {});
         }
       } catch {}
     }
@@ -575,12 +577,13 @@ function cancelConversion(jobId) {
     console.log(`[converter] Job ${jobId} cancelled.`);
 
     // Clean up partial downloads on cancellation
-    setTimeout(() => {
+    setTimeout(async () => {
       try {
         if (fs.existsSync(DOWNLOADS_DIR)) {
-          const partials = fs.readdirSync(DOWNLOADS_DIR).filter(f => f.startsWith(jobId));
+          const files = await fs.promises.readdir(DOWNLOADS_DIR);
+          const partials = files.filter(f => f.startsWith(jobId));
           for (const part of partials) {
-            fs.unlinkSync(path.join(DOWNLOADS_DIR, part));
+            await fs.promises.unlink(path.join(DOWNLOADS_DIR, part)).catch(() => {});
           }
         }
       } catch {}
