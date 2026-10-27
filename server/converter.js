@@ -553,7 +553,7 @@ function getHistory() {
   for (const [id, job] of jobs.entries()) {
     if (job.status === 'completed') {
       const { process, ...clean } = job;
-      clean.isAvailable = clean.filePath ? fs.existsSync(clean.filePath) : false;
+      clean.isAvailable = !!clean.filePath;
       list.push(clean);
     }
   }
