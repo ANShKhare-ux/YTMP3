@@ -1,7 +1,7 @@
 const path = require('path');
 const fs = require('fs');
 const https = require('https');
-const { execSync } = require('child_process');
+const { execFileSync } = require('child_process');
 
 const isWin = process.platform === 'win32';
 const BIN_DIR = path.join(__dirname, 'bin');
@@ -91,7 +91,7 @@ async function verifyBinaries() {
       if (!isWin) {
         try { fs.chmodSync(YT_DLP_PATH, 0o755); } catch {}
       }
-      const output = execSync(`"${YT_DLP_PATH}" --version`, { encoding: 'utf8' }).trim();
+      const output = execFileSync(YT_DLP_PATH, ['--version'], { encoding: 'utf8' }).trim();
       status.ytDlp = true;
       status.ytDlpVersion = output;
       console.log(`[binManager] yt-dlp verified (v${output})`);
@@ -123,7 +123,7 @@ async function verifyBinaries() {
       if (!isWin) {
         try { fs.chmodSync(ffmpegPath, 0o755); } catch {}
       }
-      const output = execSync(`"${ffmpegPath}" -version`, { encoding: 'utf8' }).split('\n')[0];
+      const output = execFileSync(ffmpegPath, ['-version'], { encoding: 'utf8' }).split('\n')[0];
       status.ffmpeg = true;
       status.ffmpegVersion = output;
       console.log(`[binManager] ffmpeg verified: ${output}`);
@@ -133,7 +133,7 @@ async function verifyBinaries() {
   } else {
     // Check if system ffmpeg is available
     try {
-      const output = execSync('ffmpeg -version', { encoding: 'utf8' }).split('\n')[0];
+      const output = execFileSync('ffmpeg', ['-version'], { encoding: 'utf8' }).split('\n')[0];
       ffmpegPath = 'ffmpeg';
       status.ffmpeg = true;
       status.ffmpegVersion = output;
@@ -174,8 +174,8 @@ function updateYtDlp() {
       if (!fs.existsSync(YT_DLP_PATH)) {
         return resolve({ success: false, message: 'yt-dlp binary not installed' });
       }
-      const output = execSync(`"${YT_DLP_PATH}" -U`, { encoding: 'utf8', timeout: 45000 });
-      const version = execSync(`"${YT_DLP_PATH}" --version`, { encoding: 'utf8' }).trim();
+      const output = execFileSync(YT_DLP_PATH, ['-U'], { encoding: 'utf8', timeout: 45000 });
+      const version = execFileSync(YT_DLP_PATH, ['--version'], { encoding: 'utf8' }).trim();
       resolve({ success: true, output: output.trim(), version });
     } catch (err) {
       resolve({ success: false, error: err.message });
