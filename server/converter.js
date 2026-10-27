@@ -1,6 +1,7 @@
 const { spawn, execFile } = require('child_process');
 const path = require('path');
 const fs = require('fs');
+const fsp = require('fs/promises');
 const { getYtDlpPath, getFfmpegPath, getFfmpegLocation, getBinDir } = require('./binManager');
 
 const DOWNLOADS_DIR = path.join(__dirname, 'downloads');
@@ -74,18 +75,25 @@ function savePersistentHistory(job) {
 }
 
 // Clean up files older than 2 hours every 30 minutes to prevent disk exhaustion and memory leaks
-function cleanOldDownloads() {
+async function cleanOldDownloads() {
   try {
     const now = Date.now();
     const maxAge = 2 * 60 * 60 * 1000;
-    if (fs.existsSync(DOWNLOADS_DIR)) {
-      const files = fs.readdirSync(DOWNLOADS_DIR);
+
+    let exists = false;
+    try {
+      await fsp.access(DOWNLOADS_DIR);
+      exists = true;
+    } catch {}
+
+    if (exists) {
+      const files = await fsp.readdir(DOWNLOADS_DIR);
       for (const file of files) {
         const fullPath = path.join(DOWNLOADS_DIR, file);
         try {
-          const stats = fs.statSync(fullPath);
+          const stats = await fsp.stat(fullPath);
           if (now - stats.mtimeMs > maxAge) {
-            fs.unlinkSync(fullPath);
+            await fsp.unlink(fullPath);
           }
         } catch {}
       }
@@ -95,8 +103,14 @@ function cleanOldDownloads() {
     for (const [id, job] of jobs.entries()) {
       if ((job.status === 'completed' || job.status === 'failed' || job.status === 'cancelled') &&
           now - (job.createdAt || 0) > maxAge) {
-        if (!job.filePath || !fs.existsSync(job.filePath)) {
+        if (!job.filePath) {
           jobs.delete(id);
+        } else {
+          try {
+            await fsp.access(job.filePath);
+          } catch {
+            jobs.delete(id);
+          }
         }
       }
     }
