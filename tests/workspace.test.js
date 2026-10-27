@@ -54,3 +54,8 @@ test('workspace - GitHub Actions CI workflow exists', () => {
   assert.ok(content.includes('npm test'), 'CI workflow must execute npm test');
 });
 
+test('workspace - LICENSE file exists', () => {
+  const licensePath = path.join(rootDir, 'LICENSE');
+  assert.ok(fs.existsSync(licensePath), 'LICENSE file must exist');
+});
+
