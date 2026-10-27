@@ -25,7 +25,9 @@ import {
   Menu,
   FileCode,
   FolderArchive,
-  ArrowRight
+  ArrowRight,
+  Sun,
+  Moon
 } from 'lucide-react';
 import FaqAccordion from './ui/FaqAccordion';
 import HalftoneWordmarkFooter from './ui/halftone-wordmark-footer';
@@ -213,6 +215,23 @@ export default function LandingPage({
 }) {
   const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [theme, setTheme] = useState(() => {
+    try {
+      return localStorage.getItem('sonicwave_landing_theme') || 'dark';
+    } catch {
+      return 'dark';
+    }
+  });
+
+  const toggleTheme = () => {
+    setTheme((prev) => {
+      const next = prev === 'dark' ? 'light' : 'dark';
+      try {
+        localStorage.setItem('sonicwave_landing_theme', next);
+      } catch {}
+      return next;
+    });
+  };
   const [selectedDemoTrack, setSelectedDemoTrack] = useState(DEMO_TRACKS[0]);
   const [isPlayingDemo, setIsPlayingDemo] = useState(false);
   const [demoProgress, setDemoProgress] = useState(32);
@@ -805,7 +824,7 @@ export default function LandingPage({
   };
 
   return (
-    <div className="cursor-canvas-root" ref={containerRef}>
+    <div className={`cursor-canvas-root ${theme === 'light' ? 'light-mode' : ''}`} data-theme={theme} ref={containerRef}>
       {/* Keyboard Accessibility: Skip to Main Content Link */}
       <a href="#hero" className="cursor-skip-link">
         Skip to main content
@@ -832,6 +851,16 @@ export default function LandingPage({
           </nav>
 
           <div className="cursor-nav-actions">
+            <button
+              type="button"
+              className="cursor-button-secondary cursor-nav-theme-btn"
+              onClick={toggleTheme}
+              title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+              aria-label={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            >
+              {theme === 'dark' ? <Sun size={14} aria-hidden="true" /> : <Moon size={14} aria-hidden="true" />}
+            </button>
+
             <button
               type="button"
               className="cursor-button-secondary cursor-nav-cmd-btn"
@@ -893,6 +922,18 @@ export default function LandingPage({
               >
                 <CommandIcon size={14} />
                 <span>Command Palette (⌘K)</span>
+              </button>
+              <button
+                type="button"
+                className="cursor-button-secondary cursor-mobile-theme-btn"
+                onClick={() => {
+                  toggleTheme();
+                  setIsMobileMenuOpen(false);
+                }}
+                aria-label={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+              >
+                {theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
+                <span>{theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}</span>
               </button>
             </div>
           </div>
@@ -1630,8 +1671,13 @@ export default function LandingPage({
         crop={0.2}
         dotGap={6}
         radius={85}
-        grain={0.4}
-        palette={{
+        grain={theme === 'light' ? 0.25 : 0.4}
+        preset={theme === 'light' ? 'paper' : 'night'}
+        palette={theme === 'light' ? {
+          background: '#f7f8f9',
+          ink: '#0d0f12',
+          warm: '#5e6ad2',
+        } : {
           background: '#010102',
           ink: '#f0f3f6',
           warm: '#5e69d1',
