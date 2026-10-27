@@ -24,12 +24,28 @@ import Logo from './components/Logo';
 import CommandPalette from './components/CommandPalette';
 import PricingModal from './components/PricingModal';
 import LandingPage from './components/LandingPage';
+import PrivacyPolicy from './components/legal/PrivacyPolicy';
+import TermsOfUse from './components/legal/TermsOfUse';
+import CopyrightPolicy from './components/legal/CopyrightPolicy';
+import ContactSupport from './components/legal/ContactSupport';
 import { Crown, Command as CommandIcon } from 'lucide-react';
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
+function getInitialRoute() {
+  const pathname = window.location.pathname.replace(/\/$/, '') || '/';
+  const hash = window.location.hash;
+
+  if (pathname === '/privacy' || hash === '#privacy' || hash === '#/privacy') return 'privacy';
+  if (pathname === '/terms' || hash === '#terms' || hash === '#/terms') return 'terms';
+  if (pathname === '/copyright-acceptable-use' || hash === '#copyright-acceptable-use' || hash === '#/copyright-acceptable-use') return 'copyright';
+  if (pathname === '/contact' || hash === '#contact' || hash === '#/contact') return 'contact';
+  if (hash === '#app') return 'app';
+  return 'landing';
+}
+
 export default function App() {
-  const [currentView, setCurrentView] = useState(() => (window.location.hash === '#app' ? 'app' : 'landing'));
+  const [currentView, setCurrentView] = useState(getInitialRoute);
   const [url, setUrl] = useState('');
   const [videoInfo, setVideoInfo] = useState(null);
   const [bitrate, setBitrate] = useState('320k');
@@ -44,23 +60,49 @@ export default function App() {
   const [isPricingOpen, setIsPricingOpen] = useState(false);
   const eventSourceRef = useRef(null);
 
-  // Sync hash routing (#landing vs #app)
+  const navigateTo = (view, path) => {
+    setCurrentView(view);
+    if (path) {
+      window.history.pushState({}, '', path);
+      window.scrollTo(0, 0);
+    }
+  };
+
+  // Sync browser path and hash routing
   useEffect(() => {
-    const handleHashChange = () => {
-      setCurrentView(window.location.hash === '#app' ? 'app' : 'landing');
+    const handleRouteSync = () => {
+      const pathname = window.location.pathname.replace(/\/$/, '') || '/';
+      const hash = window.location.hash;
+
+      if (pathname === '/privacy' || hash === '#privacy' || hash === '#/privacy') {
+        setCurrentView('privacy');
+      } else if (pathname === '/terms' || hash === '#terms' || hash === '#/terms') {
+        setCurrentView('terms');
+      } else if (pathname === '/copyright-acceptable-use' || hash === '#copyright-acceptable-use' || hash === '#/copyright-acceptable-use') {
+        setCurrentView('copyright');
+      } else if (pathname === '/contact' || hash === '#contact' || hash === '#/contact') {
+        setCurrentView('contact');
+      } else if (hash === '#app') {
+        setCurrentView('app');
+      } else {
+        setCurrentView('landing');
+      }
     };
-    window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
+
+    window.addEventListener('popstate', handleRouteSync);
+    window.addEventListener('hashchange', handleRouteSync);
+    return () => {
+      window.removeEventListener('popstate', handleRouteSync);
+      window.removeEventListener('hashchange', handleRouteSync);
+    };
   }, []);
 
   const handleOpenLocalStudio = () => {
-    setCurrentView('app');
-    window.location.hash = '#app';
+    navigateTo('app', '/#app');
   };
 
   const handleBackToLanding = () => {
-    setCurrentView('landing');
-    window.location.hash = '#landing';
+    navigateTo('landing', '/');
   };
 
 
@@ -458,6 +500,20 @@ export default function App() {
     } catch {}
   };
 
+  // Render Legal Pages
+  if (currentView === 'privacy') {
+    return <PrivacyPolicy onNavigate={navigateTo} />;
+  }
+  if (currentView === 'terms') {
+    return <TermsOfUse onNavigate={navigateTo} />;
+  }
+  if (currentView === 'copyright') {
+    return <CopyrightPolicy onNavigate={navigateTo} />;
+  }
+  if (currentView === 'contact') {
+    return <ContactSupport onNavigate={navigateTo} />;
+  }
+
   // Render Landing Page if currentView is 'landing'
   if (currentView === 'landing') {
     return (
@@ -465,6 +521,7 @@ export default function App() {
         <LandingPage
           onOpenCmd={() => setIsCmdOpen(true)}
           onOpenPricing={() => setIsPricingOpen(true)}
+          onNavigate={navigateTo}
         />
 
         {/* Docked Spotify Bottom Audio/Video Player */}
@@ -799,6 +856,12 @@ export default function App() {
             <p>
               SonicWave &bull; Spotify-Vibe Studio Converter &bull; Powered by yt-dlp & FFmpeg
             </p>
+            <div className="spotify-footer-links">
+              <a href="/privacy" onClick={(e) => { e.preventDefault(); navigateTo('privacy', '/privacy'); }}>Privacy Policy</a>
+              <a href="/terms" onClick={(e) => { e.preventDefault(); navigateTo('terms', '/terms'); }}>Terms of Use</a>
+              <a href="/copyright-acceptable-use" onClick={(e) => { e.preventDefault(); navigateTo('copyright', '/copyright-acceptable-use'); }}>Copyright &amp; Abuse</a>
+              <a href="/contact" onClick={(e) => { e.preventDefault(); navigateTo('contact', '/contact'); }}>Contact &amp; Support</a>
+            </div>
           </footer>
         </div>
       </main>

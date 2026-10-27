@@ -201,6 +201,15 @@ const FOOTER_COLUMNS = [
     ],
   },
   {
+    title: 'Legal & Help',
+    links: [
+      { label: 'Privacy Policy', href: '/privacy' },
+      { label: 'Terms of Use', href: '/terms' },
+      { label: 'Copyright & Abuse', href: '/copyright-acceptable-use' },
+      { label: 'Contact & Support', href: '/contact' },
+    ],
+  },
+  {
     title: 'Download',
     links: [
       { label: 'Windows (.zip)', href: '/SonicWave-v1.0.0-Windows.zip' },
@@ -212,7 +221,8 @@ const FOOTER_COLUMNS = [
 
 export default function LandingPage({
   onOpenCmd,
-  onOpenPricing
+  onOpenPricing,
+  onNavigate
 }) {
   const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -1693,6 +1703,17 @@ export default function LandingPage({
         radius={85}
         grain={theme === 'light' ? 0.25 : 0.4}
         preset={theme === 'light' ? 'paper' : 'night'}
+        onNavigate={(href) => {
+          if (onNavigate) {
+            if (href === '/privacy') onNavigate('privacy', '/privacy');
+            else if (href === '/terms') onNavigate('terms', '/terms');
+            else if (href === '/copyright-acceptable-use') onNavigate('copyright', '/copyright-acceptable-use');
+            else if (href === '/contact') onNavigate('contact', '/contact');
+            else onNavigate('landing', href);
+          } else {
+            window.location.href = href;
+          }
+        }}
         palette={theme === 'light' ? {
           background: '#f7f8f9',
           ink: '#0d0f12',

@@ -77,6 +77,8 @@ export interface HalftoneWordmarkFooterProps {
   height?: string
   /** Extra root class names. */
   className?: string
+  /** Callback for client-side routing */
+  onNavigate?: (href: string) => void
 }
 
 const PRESETS: { [K in HalftonePreset]: HalftonePalette } = {
@@ -154,7 +156,7 @@ const HWF_CSS = `
 }
 .hwf-root canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; max-width: none; }
 .hwf-top {
-  position: relative; z-index: 1; display: grid; grid-template-columns: minmax(0, 1.25fr) repeat(3, minmax(0, 1fr));
+  position: relative; z-index: 1; display: grid; grid-template-columns: minmax(0, 1.2fr) repeat(4, minmax(0, 1fr));
   gap: 24px; padding: clamp(22px, 3.4vw, 40px) clamp(20px, 3.4vw, 44px) 0;
   font-family: var(--hwf-mono); font-size: 10.5px; letter-spacing: .18em; text-transform: uppercase; line-height: 1.75;
 }
@@ -179,7 +181,7 @@ const HWF_CSS = `
   font-family: var(--hwf-mono); font-size: 10.5px; letter-spacing: .18em; text-transform: uppercase;
 }
 .hwf-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-@media (max-width: 720px) {
+@media (max-width: 900px) {
   .hwf-top { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); row-gap: 18px; }
   .hwf-brand { grid-column: 1 / -1; }
 }
@@ -206,6 +208,7 @@ export default function HalftoneWordmarkFooter({
   monoFamily = MONO_STACK,
   height = "560px",
   className = "",
+  onNavigate,
 }: HalftoneWordmarkFooterProps) {
   const colors = { ...(PRESETS[preset] || PRESETS.night), ...(palette || {}) }
   const rootRef = React.useRef(null as HTMLElement | null)
@@ -484,6 +487,9 @@ export default function HalftoneWordmarkFooter({
       if (target) {
         gsap.to(window, { duration: 1.1, scrollTo: { y: target, offsetY: 70 }, ease: "power3.inOut" })
       }
+    } else if (href && href.startsWith("/") && onNavigate) {
+      e.preventDefault()
+      onNavigate(href)
     }
   }
 

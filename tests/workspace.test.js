@@ -61,3 +61,27 @@ test('workspace - LICENSE file exists', () => {
   assert.ok(fs.existsSync(licensePath), 'LICENSE file must exist');
 });
 
+test('workspace - legal & support pages and sitemap integrity', () => {
+  const legalFiles = [
+    'PrivacyPolicy.jsx',
+    'TermsOfUse.jsx',
+    'CopyrightPolicy.jsx',
+    'ContactSupport.jsx',
+    'LegalLayout.jsx',
+    'useDocumentMetadata.js'
+  ];
+  for (const f of legalFiles) {
+    const filePath = path.join(rootDir, 'client', 'src', 'components', 'legal', f);
+    assert.ok(fs.existsSync(filePath), `Legal component ${f} must exist`);
+  }
+
+  const sitemapPath = path.join(rootDir, 'client', 'public', 'sitemap.xml');
+  assert.ok(fs.existsSync(sitemapPath), 'sitemap.xml must exist');
+  const sitemapContent = fs.readFileSync(sitemapPath, 'utf8');
+  assert.ok(sitemapContent.includes('/privacy'), 'sitemap.xml must include /privacy');
+  assert.ok(sitemapContent.includes('/terms'), 'sitemap.xml must include /terms');
+  assert.ok(sitemapContent.includes('/copyright-acceptable-use'), 'sitemap.xml must include /copyright-acceptable-use');
+  assert.ok(sitemapContent.includes('/contact'), 'sitemap.xml must include /contact');
+});
+
+
