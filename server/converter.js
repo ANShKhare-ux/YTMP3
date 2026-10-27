@@ -197,7 +197,7 @@ function getVideoInfo(rawUrl) {
       '--dump-single-json',
       '--no-warnings',
       '--no-playlist',
-      '--no-check-certificates',
+
       ...(isYouTube && !cookiePath ? ['--extractor-args', 'youtube:player_client=android,web'] : []),
       ...cookieFlags,
       '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
@@ -365,7 +365,7 @@ function startConversion({ url, format = 'mp3', quality = '320k', jobId, turbo =
       '--no-playlist',
       '--embed-metadata',
       '--embed-thumbnail',
-      '--no-check-certificates',
+
       ...ffmpegFlags,
       ...speedFlags,
       '--',
@@ -397,7 +397,7 @@ function startConversion({ url, format = 'mp3', quality = '320k', jobId, turbo =
       '--embed-metadata',
       '--embed-thumbnail',
       '--convert-thumbnails', 'jpg',
-      '--no-check-certificates',
+
       ...ffmpegFlags,
       ...speedFlags,
       '--',
