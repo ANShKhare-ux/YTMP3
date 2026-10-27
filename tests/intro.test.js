@@ -72,6 +72,16 @@ test('intro - in-app SonicIntro component implements accessibility and audio saf
   // Audio master gain for pop-free transitions
   assert.ok(content.includes('masterGainRef'), 'Must use master gain ref for click-free volume control');
 
+  // AudioContext lifecycle stability: initAudioEngine must NOT depend on isMuted state
+  assert.ok(content.includes('initAudioEngine = useCallback('), 'Must define initAudioEngine callback');
+  assert.ok(!content.includes('}, [isMuted])'), 'initAudioEngine must not depend on isMuted to prevent AudioContext teardown loops');
+
+  // Real-time 60fps progress tracking via requestAnimationFrame
+  assert.ok(content.includes('requestAnimationFrame(trackProgress)'), 'Must track video progress at 60fps via rAF');
+
+  // Video container & shockwave radiation
+  assert.ok(content.includes('sonic-intro-video-container'), 'Must structure video inside radiating container');
+
   // Scroll lock
   assert.ok(content.includes('document.body.style.overflow'), 'Must lock and restore body scroll');
 });

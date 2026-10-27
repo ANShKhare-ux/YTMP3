@@ -5069,7 +5069,7 @@ button:focus-visible {
   width: 100vw;
   height: 100vh;
   z-index: 99999;
-  background-color: #070908;
+  background-color: #080b09;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -5209,47 +5209,57 @@ button:focus-visible {
   text-align: center;
 }
 
-/* Shockwave Energy Rings */
+/* Video Showcase Stage (High-Resolution Remotion Masterpiece) */
+.sonic-intro-video-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 15;
+}
+
+/* Shockwave Energy Rings Radiating Around Video Frame */
 .sonic-intro-shockwave {
   position: absolute;
-  width: 140px;
-  height: 140px;
-  border-radius: 50%;
+  inset: -14px;
+  border-radius: 28px;
   border: 1.5px solid var(--spotify-green);
   opacity: 0;
   pointer-events: none;
-  transform: scale(0.4);
+  transform: scale(0.97);
+  box-shadow: 0 0 24px rgba(30, 215, 96, 0.35);
 }
 
 .sonic-intro-shockwave.active {
-  animation: introShockwavePulse 1.4s var(--ease-intro-overshoot) forwards;
+  animation: introShockwavePulse 1.6s var(--ease-intro-overshoot) forwards;
 }
 
 .sonic-intro-shockwave.ring-2.active {
-  animation-delay: 0.18s;
+  animation-delay: 0.2s;
   border-color: #00f5a0;
+  box-shadow: 0 0 28px rgba(0, 245, 160, 0.4);
 }
 
 .sonic-intro-shockwave.ring-3.active {
-  animation-delay: 0.35s;
-  border-color: rgba(30, 215, 96, 0.6);
+  animation-delay: 0.4s;
+  border-color: rgba(30, 215, 96, 0.7);
+  box-shadow: 0 0 32px rgba(30, 215, 96, 0.3);
 }
 
 @keyframes introShockwavePulse {
   0% {
-    transform: scale(0.3);
-    opacity: 0.9;
+    transform: scale(0.97);
+    opacity: 0.85;
   }
-  60% {
-    opacity: 0.45;
+  50% {
+    opacity: 0.4;
   }
   100% {
-    transform: scale(3.2);
+    transform: scale(1.12);
     opacity: 0;
   }
 }
 
-/* Video Showcase Stage (High-Resolution Remotion Masterpiece) */
 .sonic-intro-video-wrapper {
   position: relative;
   width: 100vw;
@@ -5262,7 +5272,7 @@ button:focus-visible {
   border-radius: 18px;
   overflow: hidden;
   box-shadow: 0 32px 100px rgba(0, 0, 0, 0.95), 0 0 60px rgba(30, 215, 96, 0.28);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(30, 215, 96, 0.22);
   background-color: #080b09;
   z-index: 15;
   transition: transform 0.6s var(--ease-intro-spring), box-shadow 0.6s ease;
@@ -5598,7 +5608,7 @@ button:focus-visible {
   width: 0%;
   background: linear-gradient(90deg, #10b981, #1ed760, #00f5a0);
   box-shadow: 0 0 10px rgba(0, 245, 160, 0.5);
-  transition: width 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: width 0.12s linear;
 }
 
 .sonic-intro-timeline-fill.phase-1 { width: 22%; }

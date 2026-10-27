@@ -65,16 +65,16 @@ export default function SonicIntro({ onComplete, forcePlay = false }) {
     try {
       const AudioCtx = window.AudioContext || window.webkitAudioContext;
       if (!AudioCtx) return;
-      if (!audioCtxRef.current) {
+      if (!audioCtxRef.current || audioCtxRef.current.state === 'closed') {
         audioCtxRef.current = new AudioCtx();
       }
       const ctx = audioCtxRef.current;
       if (ctx.state === 'suspended') {
-        ctx.resume();
+        ctx.resume().catch(() => {});
       }
       if (!masterGainRef.current) {
         const masterGain = ctx.createGain();
-        masterGain.gain.setValueAtTime(isMuted ? 0.0001 : 1.0, ctx.currentTime);
+        masterGain.gain.setValueAtTime(1.0, ctx.currentTime);
         masterGain.connect(ctx.destination);
         masterGainRef.current = masterGain;
 
@@ -84,41 +84,37 @@ export default function SonicIntro({ onComplete, forcePlay = false }) {
             source.connect(masterGain);
             sourceNodeRef.current = source;
           } catch {
-            // MediaElementSource fallback
+            // MediaElementSource fallback (e.g. already connected or CORS)
           }
         }
       }
     } catch (e) {
       console.warn('AudioContext init warning:', e);
     }
-  }, [isMuted]);
+  }, []);
 
-  const toggleSound = useCallback(() => {
+  const toggleSound = useCallback((e) => {
+    if (e && e.stopPropagation) {
+      e.stopPropagation();
+    }
     initAudioEngine();
     const video = videoRef.current;
 
-    if (isMuted) {
+    setIsMuted((prevMuted) => {
+      const nextMuted = !prevMuted;
       if (video) {
-        video.muted = false;
+        video.muted = nextMuted;
       }
       if (audioCtxRef.current && masterGainRef.current) {
-        const now = audioCtxRef.current.currentTime;
-        masterGainRef.current.gain.cancelScheduledValues(now);
-        masterGainRef.current.gain.setTargetAtTime(1.0, now, 0.06);
+        try {
+          const now = audioCtxRef.current.currentTime;
+          masterGainRef.current.gain.cancelScheduledValues(now);
+          masterGainRef.current.gain.setTargetAtTime(nextMuted ? 0.0001 : 1.0, now, 0.04);
+        } catch {}
       }
-      setIsMuted(false);
-    } else {
-      if (audioCtxRef.current && masterGainRef.current) {
-        const now = audioCtxRef.current.currentTime;
-        masterGainRef.current.gain.cancelScheduledValues(now);
-        masterGainRef.current.gain.setTargetAtTime(0.0001, now, 0.04);
-      }
-      if (video) {
-        video.muted = true;
-      }
-      setIsMuted(true);
-    }
-  }, [isMuted, initAudioEngine]);
+      return nextMuted;
+    });
+  }, [initAudioEngine]);
 
   // Body scroll lock & Reduced Motion respect
   useEffect(() => {
@@ -142,7 +138,9 @@ export default function SonicIntro({ onComplete, forcePlay = false }) {
         setIsMuted(false);
         initAudioEngine();
         if (audioCtxRef.current && masterGainRef.current) {
-          masterGainRef.current.gain.setValueAtTime(1.0, audioCtxRef.current.currentTime);
+          try {
+            masterGainRef.current.gain.setValueAtTime(1.0, audioCtxRef.current.currentTime);
+          } catch {}
         }
         video.play().catch(() => {
           // Autoplay policy fallback: play muted if unmuted is blocked
@@ -172,16 +170,20 @@ export default function SonicIntro({ onComplete, forcePlay = false }) {
     };
   }, [forcePlay, finishIntro, initAudioEngine]);
 
-  // Fallback timer if video errors
+  // Fallback multi-phase timer if video decoding errors
   useEffect(() => {
-    if (videoError) {
-      fallbackTimerRef.current = setTimeout(() => {
-        handleEnded();
-      }, 4500);
-      return () => {
-        if (fallbackTimerRef.current) clearTimeout(fallbackTimerRef.current);
-      };
-    }
+    if (!videoError) return;
+    setPhase(1);
+    const t1 = setTimeout(() => setPhase(2), 900);
+    const t2 = setTimeout(() => setPhase(3), 1900);
+    const t3 = setTimeout(() => setPhase(4), 2900);
+    const t4 = setTimeout(() => handleEnded(), 4300);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+      clearTimeout(t4);
+    };
   }, [videoError, handleEnded]);
 
   // Keyboard shortcut: Escape to dismiss (does not intercept typing spacebar)
@@ -196,7 +198,22 @@ export default function SonicIntro({ onComplete, forcePlay = false }) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleSkip]);
 
-  // Real-time video progress updates
+  // Continuous 60fps video progress tracking via requestAnimationFrame
+  useEffect(() => {
+    if (videoError) return;
+    let rId;
+    const trackProgress = () => {
+      const v = videoRef.current;
+      if (v && v.duration && !v.paused && !v.ended) {
+        const pct = (v.currentTime / v.duration) * 100;
+        setProgress(Math.min(100, Math.max(0, pct)));
+      }
+      rId = requestAnimationFrame(trackProgress);
+    };
+    rId = requestAnimationFrame(trackProgress);
+    return () => cancelAnimationFrame(rId);
+  }, [videoError]);
+
   const handleTimeUpdate = () => {
     const video = videoRef.current;
     if (video && video.duration) {
@@ -272,8 +289,8 @@ export default function SonicIntro({ onComplete, forcePlay = false }) {
       <canvas ref={canvasRef} className="sonic-intro-canvas" aria-hidden="true" />
 
       {/* Atmospheric Ambient Radial Aura */}
-      <div className="sonic-intro-glow-core phase-4" aria-hidden="true" />
-      <div className="sonic-intro-glow-cyan phase-4" aria-hidden="true" />
+      <div className={`sonic-intro-glow-core phase-${phase}`} aria-hidden="true" />
+      <div className={`sonic-intro-glow-cyan phase-${phase}`} aria-hidden="true" />
 
       {/* Top HUD Controls: Audio toggle & Skip button */}
       <div className="sonic-intro-hud">
@@ -303,44 +320,47 @@ export default function SonicIntro({ onComplete, forcePlay = false }) {
 
       {/* Central Visual Stage */}
       <div className="sonic-intro-center">
-        {/* Concentric Shockwave Energy Rings */}
-        <div className="sonic-intro-shockwave ring-1 active" />
-        <div className="sonic-intro-shockwave ring-2 active" />
-        <div className="sonic-intro-shockwave ring-3 active" />
-
         {!videoError ? (
-          /* Primary Full HD Remotion Video Showcase */
-          <div className="sonic-intro-video-wrapper">
-            <video
-              ref={videoRef}
-              src="/sonicwave-intro.mp4"
-              poster="/frame-105-lockup.png"
-              playsInline
-              autoPlay
-              muted={isMuted}
-              className="sonic-intro-video"
-              onTimeUpdate={handleTimeUpdate}
-              onEnded={handleEnded}
-              onError={() => setVideoError(true)}
-              onClick={toggleSound}
-            />
+          /* Primary Full HD Remotion Video Showcase with Radiating Shockwaves */
+          <div className="sonic-intro-video-container">
+            {/* Concentric Shockwave Energy Rings Radiating Around Video Frame */}
+            <div className="sonic-intro-shockwave ring-1 active" />
+            <div className="sonic-intro-shockwave ring-2 active" />
+            <div className="sonic-intro-shockwave ring-3 active" />
 
-            {/* Tap to Unmute Overlay Prompt if muted */}
-            {isMuted && (
-              <button
-                type="button"
+            <div className="sonic-intro-video-wrapper">
+              <video
+                ref={videoRef}
+                src="/sonicwave-intro.mp4"
+                playsInline
+                autoPlay
+                preload="auto"
+                muted={isMuted}
+                className="sonic-intro-video"
+                onTimeUpdate={handleTimeUpdate}
+                onEnded={handleEnded}
+                onError={() => setVideoError(true)}
                 onClick={toggleSound}
-                className="sonic-intro-sound-prompt"
-                title="Click to enable sound"
-              >
-                <VolumeX size={15} />
-                <span>Tap to enable sound</span>
-              </button>
-            )}
+              />
+
+              {/* Tap to Unmute Overlay Prompt if muted */}
+              {isMuted && (
+                <button
+                  type="button"
+                  onClick={toggleSound}
+                  className="sonic-intro-sound-prompt"
+                  title="Click to enable sound"
+                  aria-label="Click to enable sound"
+                >
+                  <VolumeX size={15} />
+                  <span>Tap to enable sound</span>
+                </button>
+              )}
+            </div>
           </div>
         ) : (
           /* Resilient Fallback Vector Lockup */
-          <div className="sonic-intro-emblem-wrap phase-4">
+          <div className={`sonic-intro-emblem-wrap phase-${phase}`}>
             <svg
               viewBox="0 0 100 100"
               className="sonic-intro-svg"
@@ -394,7 +414,7 @@ export default function SonicIntro({ onComplete, forcePlay = false }) {
                 strokeWidth="2.5"
                 strokeLinecap="round"
               />
-              <g className="intro-equalizer-group active">
+              <g className={`intro-equalizer-group ${phase >= 2 ? 'active' : ''}`}>
                 <rect x="29" y="42" width="4.5" height="16" rx="2.25" className="intro-bar bar-1" fill="url(#introWaveGrad)" />
                 <rect x="37" y="32" width="4.5" height="36" rx="2.25" className="intro-bar bar-2" fill="url(#introWaveGrad)" />
                 <rect x="45" y="24" width="5.0" height="52" rx="2.5" className="intro-bar bar-3" fill="url(#introNeonGrad)" />
@@ -403,11 +423,11 @@ export default function SonicIntro({ onComplete, forcePlay = false }) {
               </g>
               <path
                 d="M48 41.5 L64 50 L48 58.5 Z"
-                className="intro-play-vector impact"
+                className={`intro-play-vector ${phase >= 3 ? 'impact' : ''}`}
                 fill="#ffffff"
               />
             </svg>
-            <div className="sonic-intro-typography revealed">
+            <div className={`sonic-intro-typography ${phase >= 4 ? 'revealed' : ''}`}>
               <div className="sonic-intro-wordmark">
                 <span className="intro-word-sonic">Sonic</span>
                 <span className="intro-word-wave">Wave</span>
@@ -426,8 +446,8 @@ export default function SonicIntro({ onComplete, forcePlay = false }) {
       {/* Bottom Timeline Progress Bar */}
       <div className="sonic-intro-timeline-bar">
         <div
-          className="sonic-intro-timeline-fill"
-          style={{ width: `${progress}%` }}
+          className={`sonic-intro-timeline-fill ${videoError ? `phase-${phase}` : ''}`}
+          style={!videoError ? { width: `${progress}%` } : undefined}
         />
       </div>
     </div>
