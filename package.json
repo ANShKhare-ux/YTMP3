@@ -13,7 +13,8 @@
     "server": "npm --prefix server run dev",
     "client": "npm --prefix client run dev",
     "dev": "concurrently -n \"SERVER,CLIENT\" -c \"cyan,magenta\" \"npm run server\" \"npm run client\"",
-    "package": "node scripts/package-desktop.mjs"
+    "package": "node scripts/package-desktop.mjs",
+    "test": "node --test tests/*.test.js"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"

@@ -102,7 +102,7 @@ function cleanOldDownloads() {
     }
   } catch {}
 }
-setInterval(cleanOldDownloads, 30 * 60 * 1000);
+setInterval(cleanOldDownloads, 30 * 60 * 1000).unref();
 
 /**
  * Format seconds into HH:MM:SS or MM:SS
