@@ -212,7 +212,8 @@ const FOOTER_COLUMNS = [
 
 export default function LandingPage({
   onOpenCmd,
-  onOpenPricing
+  onOpenPricing,
+  onReplayIntro
 }) {
   const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -866,6 +867,20 @@ export default function LandingPage({
           </nav>
 
           <div className="cursor-nav-actions">
+            {onReplayIntro && (
+              <button
+                type="button"
+                className="cursor-button-secondary cursor-nav-theme-btn"
+                onClick={onReplayIntro}
+                title="Watch SonicWave Cinematic Animated Intro"
+                aria-label="Watch Cinematic Intro"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', color: 'var(--spotify-green)' }}
+              >
+                <Sparkles size={13} aria-hidden="true" />
+                <span style={{ fontSize: '12px', fontWeight: 600 }}>Intro</span>
+              </button>
+            )}
+
             <button
               type="button"
               className="cursor-button-secondary cursor-nav-theme-btn"

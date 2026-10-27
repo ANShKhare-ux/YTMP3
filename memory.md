@@ -21,7 +21,10 @@
 - **Self-Bootstrapping Engine**: Automatic provisioning of `yt-dlp` executable and local bridge for `ffmpeg`.
 - **Persistent History**: Server-side JSON storage (`server/data/history.json`, capped at 50 records) and client-side `localStorage` cache.
 - **Desktop Packaging**: `scripts/package-desktop.mjs` generates `SonicWave-v1.0.0-Windows.zip` stripped of marketing landing components.
-- **UI Design System**: Spotify-inspired dark theme (`#121212`, Spotify Green `#1ed760`) for converter studio, paired with a Linear-styled marketing landing page featuring an exclusive light mode toggle (`Sun` / `Moon`) that preserves dark mode in the converter. Integrated Easing Wizard physics-based animation curves (`--ease-page`, `--ease-modal`, `--ease-dropdown`, `--ease-button-spring`, `--ease-button-punch`, `--ease-card`, `--ease-hover`) with full `prefers-reduced-motion` compliance.
+- **UI Design System**: Spotify-inspired dark theme (`#121212`, Spotify Green `#1ed760`) for converter studio, paired with a Linear-styled marketing landing page featuring an exclusive light mode toggle (`Sun` / `Moon`) that preserves dark mode in the converter. Integrated Easing Wizard physics-based animation curves (`--ease-page`, `--ease-modal`, `--ease-dropdown`, `--ease-button-spring`, `--ease-button-punch`, `--ease-card`, `--ease-hover`, `--ease-intro-spring`, `--ease-intro-overshoot`, `--ease-intro-bounce`, `--ease-intro-expo`, `--ease-intro-back`) with full `prefers-reduced-motion` compliance.
+- **Cinematic Motion Intro & Video Pipeline**:
+  1. *In-App Cinematic Intro (`SonicIntro.jsx`)*: Web Audio API synthesized ambient sub-bass & chime sweep, dynamic canvas audio dust particles, concentric acoustic radar waves, bouncing frequency wavebars, squircle spring lockup, and expo-out typography reveal. Plays on initial session with instant skip (`Esc`), mute toggle, and replay triggers via Quick Menu (`⌘K`), studio top-bar button, and landing navigation.
+  2. *Programmatic Remotion Composition (`remotion/`)*: Frame-accurate Remotion 4.0.539 Full HD video engine (`SonicWaveIntro`, 1920x1080 @ 30fps, 180 frames = 6.0s) rendering to `out/sonicwave-intro.mp4` with headless Chrome and FFmpeg.
 - **Automated Test Suite**: Node.js native test runner (`node:test`) covering converter formatting, binary management, and workspace integrity.
 
 ### Planned / Inferred / Unimplemented Features
@@ -46,6 +49,7 @@
 | **Bundler & Dev Server**| Vite | `^6.0.0` | `client/vite.config.js` |
 | **Icons** | Lucide React | `^1.16.0` | `client/package.json` |
 | **Animations** | GSAP & @gsap/react | `^3.15.0` / `^2.1.2` | `client/package.json` |
+| **Motion Video Engine** | Remotion & @remotion/cli | `4.0.539` | `remotion/package.json` |
 | **Visual Effects** | canvas-confetti | `^1.9.4` | `client/package.json` |
 | **Test Runner** | Node.js Test Runner | Native (`node:test`, `node:assert`) | Built-in to Node v22 |
 
@@ -80,11 +84,16 @@
 | `server/converter.js` | Core conversion orchestrator, `yt-dlp` spawn manager, progress parser, TTL disk cleaner. |
 | `server/binManager.js` | Binary locator, auto-downloader for `yt-dlp`, and bridge for `ffmpeg`. |
 | `server/cookies.txt` | Netscape cookie jar for bypassing YouTube/Instagram bot protection. |
-| `client/src/App.jsx` | Web root with `#landing` vs `#app` hash routing, job state orchestration. |
+| `client/src/App.jsx` | Web root with `#landing` vs `#app` hash routing, job state orchestration, and `SonicIntro`. |
 | `client/src/AppDesktop.jsx` | Dedicated root component for packaged desktop release (no landing page). |
+| `client/src/components/SonicIntro.jsx` | In-app cinematic animated intro with Web Audio synthesis & Easing Wizard physics curves. |
 | `client/src/components/AudioPlayer.jsx` | Audio/video player with range-based stream seeking and download actions. |
-| `client/src/components/CommandPalette.jsx` | `Ctrl+K` quick action menu for shortcuts, format switching, and engine updates. |
-| `client/src/index.css` | Spotify-inspired dark UI design tokens, layout, and component styling. |
+| `client/src/components/CommandPalette.jsx` | `Ctrl+K` quick action menu with format switching, engine updates, and intro replay. |
+| `client/src/index.css` | Spotify-inspired dark UI design tokens, Easing Wizard physics curves, and intro styling. |
+| `remotion/src/SonicWaveIntro.tsx` | Full HD 1080p @ 30fps programmatic Remotion video composition component. |
+| `remotion/src/Root.tsx` | Remotion root registering `SonicWaveIntro` composition. |
+| `out/sonicwave-intro.mp4` | Rendered production MP4 animated video intro (Full HD 1080p, 6.0s). |
+| `scripts/package-desktop.mjs` | Automated builder for `SonicWave-v1.0.0-Windows.zip`. |
 | `scripts/package-desktop.mjs` | Automated builder for `SonicWave-v1.0.0-Windows.zip`. |
 | `tests/converter.test.js` | Duration formatting, job state isolation, and directory validation tests. |
 | `tests/binManager.test.js` | Path validation, binary existence, and binary execution tests. |
