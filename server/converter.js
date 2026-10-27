@@ -268,56 +268,7 @@ function getVideoInfo(rawUrl) {
   });
 }
 
-/**
- * Start Conversion Job with 16-Stream Turbo Acceleration
- */
-function startConversion({ url, format = 'mp3', quality = '320k', jobId, turbo = true }) {
-  const ytDlp = getYtDlpPath();
-  const ffmpeg = getFfmpegPath();
-
-  const validFormats = ['mp3', 'm4a', 'wav', 'flac', 'mp4'];
-  const targetFormat = validFormats.includes(format.toLowerCase()) ? format.toLowerCase() : 'mp3';
-  const isVideo = targetFormat === 'mp4';
-
-  // Sanitize and whitelist quality values
-  const validAudioQualities = ['320k', '256k', '192k', '128k', '0', '5', '9'];
-  const validVideoQualities = ['1080p', '720p', '480p', 'best'];
-  let targetQuality = quality;
-  if (isVideo) {
-    targetQuality = validVideoQualities.includes(quality) ? quality : '1080p';
-  } else {
-    targetQuality = validAudioQualities.includes(quality) ? quality : '320k';
-  }
-
-  // Output filename template
-  const outputTemplate = path.join(DOWNLOADS_DIR, `${jobId}.%(ext)s`);
-
-  const jobState = {
-    id: jobId,
-    url,
-    format: targetFormat,
-    quality: targetQuality,
-    isVideo,
-    turbo: true,
-    parallelStreams: 16,
-    fragmentInfo: null,
-    status: 'starting', // starting, downloading, converting, completed, failed
-    progress: 0,
-    speed: '0 KiB/s',
-    eta: '--:--',
-    totalSize: 'Calculating...',
-    title: '',
-    artist: '',
-    thumbnail: '',
-    duration: 0,
-    filePath: null,
-    fileName: null,
-    error: null,
-    createdAt: Date.now()
-  };
-
-  jobs.set(jobId, jobState);
-
+function buildYtDlpArgs(url, isVideo, targetFormat, targetQuality, outputTemplate) {
   const binDir = getBinDir();
 
   const isYouTube = url.includes('youtube.com') || url.includes('youtu.be');
@@ -348,11 +299,11 @@ function startConversion({ url, format = 'mp3', quality = '320k', jobId, turbo =
   if (isVideo) {
     // Video download with resolution filter & Direct Stream Copy MP4 merge
     let formatFilter = 'bv*[ext=mp4]+ba[ext=m4a]/b[ext=mp4] / bv*+ba/b';
-    if (quality === '1080p') {
+    if (targetQuality === '1080p') {
       formatFilter = 'bv*[height<=1080][ext=mp4]+ba[ext=m4a]/bv*[height<=1080]+ba/b[height<=1080] / bv*+ba/b';
-    } else if (quality === '720p') {
+    } else if (targetQuality === '720p') {
       formatFilter = 'bv*[height<=720][ext=mp4]+ba[ext=m4a]/bv*[height<=720]+ba/b[height<=720] / bv*+ba/b';
-    } else if (quality === '480p') {
+    } else if (targetQuality === '480p') {
       formatFilter = 'bv*[height<=480][ext=mp4]+ba[ext=m4a]/bv*[height<=480]+ba/b[height<=480] / bv*+ba/b';
     }
 
@@ -405,63 +356,107 @@ function startConversion({ url, format = 'mp3', quality = '320k', jobId, turbo =
     ];
   }
 
-  console.log(`[converter] Starting job ${jobId} (Turbo 16x): ${url} (${targetFormat}, ${quality})`);
+  return args;
+}
 
-  const child = spawn(ytDlp, args);
-  jobState.process = child;
-
-  const parseProgressLine = (line) => {
-    // Examples:
-    // [download]   5.4% of   10.23MiB at    1.24MiB/s ETA 00:08
-    // [download] 100% of   10.23MiB in 00:03
-    // [ExtractAudio] Destination: ...
-    // [Metadata] Adding metadata...
-    // [ThumbnailsConvertor] Converting thumbnail...
-
-    if (line.includes('[download]')) {
-      jobState.status = 'downloading';
-      const percentMatch = line.match(/(\d+(?:\.\d+)?)%/);
-      if (percentMatch) {
-        jobState.progress = Math.min(Math.round(parseFloat(percentMatch[1])), 95);
-      }
-
-      // Match high speeds (e.g., 28.5MiB/s, 1.2GiB/s, 450KiB/s)
-      const speedMatch = line.match(/at\s+([\d.]+\s*[KMGTkmgt]i?B\/s)/i);
-      if (speedMatch) {
-        jobState.speed = speedMatch[1];
-      }
-
-      // Match ETA (e.g., 03:45, 01:23:45)
-      const etaMatch = line.match(/ETA\s+([\d:]+)/i);
-      if (etaMatch) {
-        jobState.eta = etaMatch[1];
-      }
-
-      // Match multi-gigabyte and multi-megabyte file sizes
-      const sizeMatch = line.match(/of\s+~?([\d.]+\s*[KMGTkmgt]i?B)/i);
-      if (sizeMatch) {
-        jobState.totalSize = sizeMatch[1];
-      }
-
-      // Match fragment download progress (e.g. frag 250/1800)
-      const fragMatch = line.match(/frag\s+(\d+\/\d+)/i);
-      if (fragMatch) {
-        jobState.fragmentInfo = fragMatch[1];
-      }
-    } else if (line.includes('[ExtractAudio]') || line.includes('[ffmpeg]') || line.includes('[Merger]')) {
-      jobState.status = 'converting';
-      jobState.progress = Math.max(jobState.progress, 92);
-    } else if (line.includes('[Metadata]') || line.includes('[ThumbnailsConvertor]') || line.includes('[EmbedThumbnail]')) {
-      jobState.status = 'tagging';
-      jobState.progress = 98;
+function parseProgressLine(line, jobState) {
+  if (line.includes('[download]')) {
+    jobState.status = 'downloading';
+    const percentMatch = line.match(/(\d+(?:\.\d+)?)%/);
+    if (percentMatch) {
+      jobState.progress = Math.min(Math.round(parseFloat(percentMatch[1])), 95);
     }
-  };
 
+    // Match high speeds (e.g., 28.5MiB/s, 1.2GiB/s, 450KiB/s)
+    const speedMatch = line.match(/at\s+([\d.]+\s*[KMGTkmgt]i?B\/s)/i);
+    if (speedMatch) {
+      jobState.speed = speedMatch[1];
+    }
+
+    // Match ETA (e.g., 03:45, 01:23:45)
+    const etaMatch = line.match(/ETA\s+([\d:]+)/i);
+    if (etaMatch) {
+      jobState.eta = etaMatch[1];
+    }
+
+    // Match multi-gigabyte and multi-megabyte file sizes
+    const sizeMatch = line.match(/of\s+~?([\d.]+\s*[KMGTkmgt]i?B)/i);
+    if (sizeMatch) {
+      jobState.totalSize = sizeMatch[1];
+    }
+
+    // Match fragment download progress (e.g. frag 250/1800)
+    const fragMatch = line.match(/frag\s+(\d+\/\d+)/i);
+    if (fragMatch) {
+      jobState.fragmentInfo = fragMatch[1];
+    }
+  } else if (line.includes('[ExtractAudio]') || line.includes('[ffmpeg]') || line.includes('[Merger]')) {
+    jobState.status = 'converting';
+    jobState.progress = Math.max(jobState.progress, 92);
+  } else if (line.includes('[Metadata]') || line.includes('[ThumbnailsConvertor]') || line.includes('[EmbedThumbnail]')) {
+    jobState.status = 'tagging';
+    jobState.progress = 98;
+  }
+}
+
+function handleProcessClose(code, jobId, jobState, targetFormat, stderrBuffer) {
+  if (code === 0) {
+    // Find output file
+    const expectedFile = path.join(DOWNLOADS_DIR, `${jobId}.${targetFormat}`);
+    if (fs.existsSync(expectedFile)) {
+      jobState.status = 'completed';
+      jobState.progress = 100;
+      jobState.filePath = expectedFile;
+      jobState.fileName = `${(jobState.title || 'audio').replace(/[/\\?%*:|"<>]/g, '_')}.${targetFormat}`;
+      savePersistentHistory(jobState);
+      console.log(`[converter] Job ${jobId} completed successfully!`);
+    } else {
+      // Look for any file with jobId prefix in downloads dir
+      const found = fs.readdirSync(DOWNLOADS_DIR).find(f => f.startsWith(jobId));
+      if (found) {
+        jobState.status = 'completed';
+        jobState.progress = 100;
+        jobState.filePath = path.join(DOWNLOADS_DIR, found);
+        jobState.fileName = found;
+        savePersistentHistory(jobState);
+        console.log(`[converter] Job ${jobId} finished with file ${found}`);
+      } else {
+        jobState.status = 'failed';
+        jobState.error = 'Output media file was not created.';
+      }
+    }
+  } else {
+    jobState.status = 'failed';
+    let errorMsg = `Conversion failed (exit code ${code})`;
+    if (stderrBuffer.includes('Sign in to confirm your age')) {
+      errorMsg = 'This video is age-restricted and requires sign-in.';
+    } else if (stderrBuffer.includes('Sign in') || stderrBuffer.includes('bot')) {
+      errorMsg = 'YouTube flagged this video with bot/login verification. Try another video link or export cookies.txt.';
+    } else {
+      const match = stderrBuffer.match(/ERROR:\s*(?:\[[^\]]+\]\s*)?([^\r\n]+)/i);
+      if (match && match[1]) {
+        errorMsg = match[1].trim();
+      }
+    }
+    jobState.error = errorMsg;
+    console.error(`[converter] Job ${jobId} failed: ${errorMsg}`);
+
+    // Clean up any incomplete partial files on error
+    try {
+      const partials = fs.readdirSync(DOWNLOADS_DIR).filter(f => f.startsWith(jobId));
+      for (const part of partials) {
+        fs.unlinkSync(path.join(DOWNLOADS_DIR, part));
+      }
+    } catch {}
+  }
+}
+
+function attachProcessHandlers(child, jobState, jobId, targetFormat) {
   child.stdout.on('data', (chunk) => {
     const lines = chunk.toString().split(/\r?\n/);
     for (const line of lines) {
       if (line.trim()) {
-        parseProgressLine(line.trim());
+        parseProgressLine(line.trim(), jobState);
       }
     }
   });
@@ -474,55 +469,7 @@ function startConversion({ url, format = 'mp3', quality = '320k', jobId, turbo =
   });
 
   child.on('close', (code) => {
-    if (code === 0) {
-      // Find output file
-      const expectedFile = path.join(DOWNLOADS_DIR, `${jobId}.${targetFormat}`);
-      if (fs.existsSync(expectedFile)) {
-        jobState.status = 'completed';
-        jobState.progress = 100;
-        jobState.filePath = expectedFile;
-        jobState.fileName = `${(jobState.title || 'audio').replace(/[/\\?%*:|"<>]/g, '_')}.${targetFormat}`;
-        savePersistentHistory(jobState);
-        console.log(`[converter] Job ${jobId} completed successfully!`);
-      } else {
-        // Look for any file with jobId prefix in downloads dir
-        const found = fs.readdirSync(DOWNLOADS_DIR).find(f => f.startsWith(jobId));
-        if (found) {
-          jobState.status = 'completed';
-          jobState.progress = 100;
-          jobState.filePath = path.join(DOWNLOADS_DIR, found);
-          jobState.fileName = found;
-          savePersistentHistory(jobState);
-          console.log(`[converter] Job ${jobId} finished with file ${found}`);
-        } else {
-          jobState.status = 'failed';
-          jobState.error = 'Output media file was not created.';
-        }
-      }
-    } else {
-      jobState.status = 'failed';
-      let errorMsg = `Conversion failed (exit code ${code})`;
-      if (stderrBuffer.includes('Sign in to confirm your age')) {
-        errorMsg = 'This video is age-restricted and requires sign-in.';
-      } else if (stderrBuffer.includes('Sign in') || stderrBuffer.includes('bot')) {
-        errorMsg = 'YouTube flagged this video with bot/login verification. Try another video link or export cookies.txt.';
-      } else {
-        const match = stderrBuffer.match(/ERROR:\s*(?:\[[^\]]+\]\s*)?([^\r\n]+)/i);
-        if (match && match[1]) {
-          errorMsg = match[1].trim();
-        }
-      }
-      jobState.error = errorMsg;
-      console.error(`[converter] Job ${jobId} failed: ${errorMsg}`);
-
-      // Clean up any incomplete partial files on error
-      try {
-        const partials = fs.readdirSync(DOWNLOADS_DIR).filter(f => f.startsWith(jobId));
-        for (const part of partials) {
-          fs.unlinkSync(path.join(DOWNLOADS_DIR, part));
-        }
-      } catch {}
-    }
+    handleProcessClose(code, jobId, jobState, targetFormat, stderrBuffer);
   });
 
   child.on('error', (err) => {
@@ -530,6 +477,66 @@ function startConversion({ url, format = 'mp3', quality = '320k', jobId, turbo =
     jobState.status = 'failed';
     jobState.error = err.message;
   });
+}
+
+/**
+ * Start Conversion Job with 16-Stream Turbo Acceleration
+ */
+function startConversion({ url, format = 'mp3', quality = '320k', jobId, turbo = true }) {
+  const ytDlp = getYtDlpPath();
+  const ffmpeg = getFfmpegPath();
+
+  const validFormats = ['mp3', 'm4a', 'wav', 'flac', 'mp4'];
+  const targetFormat = validFormats.includes(format.toLowerCase()) ? format.toLowerCase() : 'mp3';
+  const isVideo = targetFormat === 'mp4';
+
+  // Sanitize and whitelist quality values
+  const validAudioQualities = ['320k', '256k', '192k', '128k', '0', '5', '9'];
+  const validVideoQualities = ['1080p', '720p', '480p', 'best'];
+  let targetQuality = quality;
+  if (isVideo) {
+    targetQuality = validVideoQualities.includes(quality) ? quality : '1080p';
+  } else {
+    targetQuality = validAudioQualities.includes(quality) ? quality : '320k';
+  }
+
+  // Output filename template
+  const outputTemplate = path.join(DOWNLOADS_DIR, `${jobId}.%(ext)s`);
+
+  const jobState = {
+    id: jobId,
+    url,
+    format: targetFormat,
+    quality: targetQuality,
+    isVideo,
+    turbo: true,
+    parallelStreams: 16,
+    fragmentInfo: null,
+    status: 'starting', // starting, downloading, converting, completed, failed
+    progress: 0,
+    speed: '0 KiB/s',
+    eta: '--:--',
+    totalSize: 'Calculating...',
+    title: '',
+    artist: '',
+    thumbnail: '',
+    duration: 0,
+    filePath: null,
+    fileName: null,
+    error: null,
+    createdAt: Date.now()
+  };
+
+  jobs.set(jobId, jobState);
+
+  const args = buildYtDlpArgs(url, isVideo, targetFormat, targetQuality, outputTemplate);
+
+  console.log(`[converter] Starting job ${jobId} (Turbo 16x): ${url} (${targetFormat}, ${quality})`);
+
+  const child = spawn(ytDlp, args);
+  jobState.process = child;
+
+  attachProcessHandlers(child, jobState, jobId, targetFormat);
 
   return jobState;
 }

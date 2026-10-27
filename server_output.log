@@ -1,0 +1,33 @@
+
+> ytmp3-converter@1.0.0 dev
+> concurrently -n "SERVER,CLIENT" -c "cyan,magenta" "npm run server" "npm run client"
+
+[SERVER]
+[SERVER] > ytmp3-converter@1.0.0 server
+[SERVER] > npm --prefix server run dev
+[SERVER]
+[CLIENT]
+[CLIENT] > ytmp3-converter@1.0.0 client
+[CLIENT] > npm --prefix client run dev
+[CLIENT]
+[SERVER]
+[SERVER] > ytmp3-server@1.0.0 dev
+[SERVER] > node index.js
+[SERVER]
+[CLIENT]
+[CLIENT] > client@1.0.0 dev
+[CLIENT] > vite
+[CLIENT]
+[SERVER] [server] Bootstrapping binaries...
+[CLIENT]
+[CLIENT]   VITE v6.4.3  ready in 225 ms
+[CLIENT]
+[CLIENT]   ➜  Local:   http://localhost:5173/
+[CLIENT]   ➜  Network: use --host to expose
+[SERVER] [binManager] yt-dlp verified (v2026.10.21)
+[SERVER] [binManager] ffmpeg verified: ffmpeg version 7.0.2-static https://johnvansickle.com/ffmpeg/  Copyright (c) 2000-2024 the FFmpeg developers
+[SERVER] [server] Server listening on http://localhost:3001
+[SERVER] [server] Status: Ready
+[SERVER] Terminated
+[SERVER] npm run server exited with code 143
+[CLIENT] npm run client exited with code 143
