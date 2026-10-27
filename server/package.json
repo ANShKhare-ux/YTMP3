@@ -2,6 +2,7 @@
   "name": "ytmp3-server",
   "version": "1.0.0",
   "description": "Backend server for YouTube to MP3 converter",
+  "license": "MIT",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",

@@ -10,6 +10,7 @@ test('workspace - root package.json configuration', () => {
   assert.ok(fs.existsSync(rootPkgPath), 'Root package.json must exist');
   const pkg = JSON.parse(fs.readFileSync(rootPkgPath, 'utf8'));
   assert.strictEqual(pkg.name, 'ytmp3-converter');
+  assert.strictEqual(pkg.license, 'MIT');
   assert.deepStrictEqual(pkg.workspaces, ['client', 'server']);
   assert.ok(pkg.scripts.start, 'Root start script must be defined');
   assert.ok(pkg.scripts.build, 'Root build script must be defined');
@@ -30,6 +31,7 @@ test('workspace - server package.json configuration', () => {
   assert.ok(fs.existsSync(serverPkgPath), 'Server package.json must exist');
   const pkg = JSON.parse(fs.readFileSync(serverPkgPath, 'utf8'));
   assert.strictEqual(pkg.name, 'ytmp3-server');
+  assert.strictEqual(pkg.license, 'MIT');
   assert.ok(pkg.dependencies.express, 'Express must be in server dependencies');
   assert.ok(pkg.dependencies.cors, 'CORS must be in server dependencies');
 });
