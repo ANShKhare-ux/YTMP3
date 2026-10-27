@@ -278,54 +278,19 @@ export default function LandingPage({
 
   const [showScrollTop, setShowScrollTop] = useState(false);
 
-  // Smooth inertial wheel scroll & scroll-to-top visibility tracking
+  // Track scroll position to show/hide the floating scroll-to-top button
   useEffect(() => {
-    let scrollTarget = window.scrollY;
-
-    const handleWheel = (e) => {
-      // Don't intercept if ctrl/meta is pressed (browser zoom) or modal is open
-      if (e.ctrlKey || e.metaKey || isDownloadModalOpen) return;
-
-      // Allow natural scroll inside internal scrollable elements (e.g. modals, overflow boxes)
-      let el = e.target;
-      while (el && el !== document.body && el !== document.documentElement) {
-        const overflowY = window.getComputedStyle(el).overflowY;
-        if ((overflowY === 'auto' || overflowY === 'scroll') && el.scrollHeight > el.clientHeight) {
-          return;
-        }
-        el = el.parentElement;
-      }
-
-      e.preventDefault();
-      const maxScroll = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
-      scrollTarget = Math.max(0, Math.min(maxScroll, scrollTarget + e.deltaY));
-
-      gsap.to(window, {
-        duration: 0.65,
-        scrollTo: { y: scrollTarget, autoKill: true },
-        ease: "power2.out",
-        overwrite: "auto",
-        onUpdate: () => {
-          ScrollTrigger.update();
-        }
-      });
-    };
-
     const handleScroll = () => {
-      if (!gsap.isTweening(window)) {
-        scrollTarget = window.scrollY;
-      }
       setShowScrollTop(window.scrollY > 400);
     };
 
-    window.addEventListener('wheel', handleWheel, { passive: false });
     window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
 
     return () => {
-      window.removeEventListener('wheel', handleWheel);
       window.removeEventListener('scroll', handleScroll);
     };
-  }, [isDownloadModalOpen]);
+  }, []);
   useGSAP(() => {
     // Accessibility: Honor reduced motion preference immediately
     const prefersReducedMotion = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -827,20 +792,12 @@ export default function LandingPage({
     if (!targetHref || !targetHref.startsWith('#')) return;
     if (e && typeof e.preventDefault === 'function') e.preventDefault();
     if (targetHref === '#hero' || targetHref === '#top') {
-      gsap.to(window, {
-        duration: 1.0,
-        scrollTo: { y: 0 },
-        ease: "power3.inOut",
-      });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
     const targetEl = document.querySelector(targetHref);
     if (targetEl) {
-      gsap.to(window, {
-        duration: 1.0,
-        scrollTo: { y: targetEl, offsetY: 70 },
-        ease: "power3.inOut",
-      });
+      targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   };
 
