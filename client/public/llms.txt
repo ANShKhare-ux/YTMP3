@@ -1,0 +1,36 @@
+# SonicWave
+
+> Free, ad-free Windows media downloader and offline audio player powered by local FFmpeg and yt-dlp.
+
+## Overview
+SonicWave is a local desktop application and in-browser media converter studio for Windows 10 and Windows 11 (64-bit). It enables fast, private, high-fidelity extraction of audio and video from over 1,000 supported platforms directly to your PC for lawful personal offline archiving.
+
+## Core Capabilities
+- **16-Stream Turbo Acceleration**: Multi-threaded parallel fragment extraction for up to 16x faster downloads compared to throttled web converters.
+- **True 320 kbps Audio**: High-fidelity MP3 (at 320k, 256k, 192k, 128k CBR/VBR), AAC (M4A), lossless FLAC, and uncompressed WAV.
+- **1080p Full HD Video**: Clean MP4 video demuxing with automatic audio-video multiplexing via local FFmpeg.
+- **100% Local Execution**: All processing occurs locally on the user's PC with zero cloud telemetry, no user tracking, and no advertising redirects.
+- **Automatic ID3 Metadata**: Embeds high-resolution cover artwork, title, and artist tags for Windows Media Player, iTunes, Groove, and mobile music apps.
+- **In-App Media Player**: Built-in audio/video audition player with real-time waveform visualization, scrubber seeking, and volume controls.
+- **1-Click Engine Updates**: Instant upstream yt-dlp definition updater via the Ctrl+K command palette.
+
+## Supported Media Platforms
+- YouTube (1080p HD Video, 320 kbps Audio)
+- Instagram (Reels, Public Videos & Audio Stems)
+- TikTok (Original Audio & Clean MP4 Video)
+- Twitter / X (Clips & Audio Spaces)
+- SoundCloud (Original Tracks & DJ Sets)
+- Reddit (Video with Audio Multiplex)
+- Facebook, Twitch, Vimeo, Bandcamp, Bilibili, Mixcloud (1,000+ total)
+
+## Technical Specifications & Requirements
+- Platform: Windows 10, Windows 11 (64-bit)
+- Processing Engines: yt-dlp & FFmpeg 6.1.1
+- License: Open Source (MIT)
+- Pricing: Free ($0.00 USD)
+
+## Canonical URLs
+- Homepage: https://ytmp-3-five.vercel.app/
+- Windows Portable ZIP: https://ytmp-3-five.vercel.app/SonicWave-v1.0.0-Windows.zip
+- Sitemap: https://ytmp-3-five.vercel.app/sitemap.xml
+- Robots Directives: https://ytmp-3-five.vercel.app/robots.txt

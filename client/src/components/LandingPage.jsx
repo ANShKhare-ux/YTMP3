@@ -1103,7 +1103,7 @@ export default function LandingPage({
                 <div className="cursor-visualizer-surface">
                   <div className="cursor-vis-head">
                     <div>
-                      <h4 className="cursor-vis-title">{selectedDemoTrack.title}</h4>
+                      <div className="cursor-vis-title" role="heading" aria-level="3">{selectedDemoTrack.title}</div>
                       <p className="cursor-vis-sub">{selectedDemoTrack.artist} &bull; Embedded ID3 Tags</p>
                     </div>
                     <span className="cursor-vis-badge">{selectedDemoTrack.format} &bull; {selectedDemoTrack.quality}</span>

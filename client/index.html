@@ -7,12 +7,14 @@
     <meta name="theme-color" content="#010102" />
     <meta name="color-scheme" content="dark" />
 
-    <!-- Primary Search Engine Metadata -->
+    <!-- Primary Search Engine & Verification Metadata -->
     <title>SonicWave — Free Windows Media Downloader &amp; Offline Player</title>
     <meta
       name="description"
-      content="Fast, ad-free media downloader and offline audio player for Windows. Extract audio and video from YouTube, Instagram, TikTok, and 1,000+ sources directly to your PC with local FFmpeg."
+      content="Fast, ad-free media downloader and offline audio player for Windows. Extract 320 kbps MP3 and 1080p MP4 from YouTube and 1,000+ platforms with local FFmpeg."
     />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <meta name="googlebot" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
     <meta name="google-site-verification" content="vyi8Qkc4E4RP878V8Gc8VFv05oWR53YLsP0m6eWjYCI" />
     <link rel="canonical" href="https://ytmp-3-five.vercel.app/" />
 
@@ -22,46 +24,119 @@
     <meta property="og:title" content="SonicWave — Free Windows Media Downloader &amp; Offline Player" />
     <meta
       property="og:description"
-      content="Fast, ad-free media downloader and offline audio player for Windows. Extract audio and video from YouTube, Instagram, TikTok, and 1,000+ sources directly to your PC."
+      content="Fast, ad-free media downloader and offline audio player for Windows. Extract 320 kbps MP3 and 1080p MP4 from YouTube and 1,000+ platforms with local FFmpeg."
     />
     <meta property="og:site_name" content="SonicWave" />
-    <meta property="og:image" content="https://ytmp-3-five.vercel.app/logo.svg" />
+    <meta property="og:image" content="https://ytmp-3-five.vercel.app/og-image.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="SonicWave Windows Media Downloader and Offline Player preview" />
 
-    <!-- Twitter -->
-    <meta name="twitter:card" content="summary" />
+    <!-- Twitter / X -->
+    <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:url" content="https://ytmp-3-five.vercel.app/" />
     <meta name="twitter:title" content="SonicWave — Free Windows Media Downloader &amp; Offline Player" />
     <meta
       name="twitter:description"
-      content="Fast, ad-free media downloader and offline audio player for Windows. Extract audio and video directly to your PC with local FFmpeg."
+      content="Fast, ad-free media downloader and offline audio player for Windows. Extract 320 kbps MP3 and 1080p MP4 directly to your PC with local FFmpeg."
     />
-    <meta name="twitter:image" content="https://ytmp-3-five.vercel.app/logo.svg" />
+    <meta name="twitter:image" content="https://ytmp-3-five.vercel.app/og-image.png" />
+    <meta name="twitter:image:alt" content="SonicWave Windows Media Downloader and Offline Player preview" />
 
-    <!-- Structured Data: Schema.org SoftwareApplication -->
+    <!-- Structured Data: Schema.org Graph (WebSite, SoftwareApplication, FAQPage) -->
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
-        "@type": "SoftwareApplication",
-        "name": "SonicWave",
-        "operatingSystem": "Windows 10, Windows 11 (64-bit)",
-        "applicationCategory": "MultimediaApplication",
-        "offers": {
-          "@type": "Offer",
-          "price": "0",
-          "priceCurrency": "USD"
-        },
-        "description": "Clean, ad-free media downloader and offline audio player for Windows with multi-threaded downloads, 320 kbps MP3, and 1080p MP4 output.",
-        "softwareVersion": "1.0.0",
-        "fileSize": "316 KB",
-        "downloadUrl": "https://ytmp-3-five.vercel.app/SonicWave-v1.0.0-Windows.zip",
-        "featureList": [
-          "16-stream parallel multi-thread download acceleration",
-          "True 320 kbps CBR/VBR MP3, FLAC, and WAV audio extraction",
-          "1080p Full HD video demuxing with local FFmpeg",
-          "Support for YouTube, Instagram Reels, TikTok, Twitter/X, SoundCloud, and 1,000+ platforms",
-          "100% ad-free local PC execution with zero telemetry",
-          "Embedded high-resolution ID3 metadata and album cover art",
-          "Docked in-app audio audition player with real-time waveform visualizer"
+        "@graph": [
+          {
+            "@type": "WebSite",
+            "@id": "https://ytmp-3-five.vercel.app/#website",
+            "url": "https://ytmp-3-five.vercel.app/",
+            "name": "SonicWave",
+            "description": "Fast, ad-free media downloader and offline audio player for Windows.",
+            "inLanguage": "en-US"
+          },
+          {
+            "@type": "SoftwareApplication",
+            "@id": "https://ytmp-3-five.vercel.app/#software",
+            "name": "SonicWave",
+            "operatingSystem": "Windows 10, Windows 11 (64-bit)",
+            "applicationCategory": "MultimediaApplication",
+            "softwareVersion": "1.0.0",
+            "fileSize": "326 KB",
+            "downloadUrl": "https://ytmp-3-five.vercel.app/SonicWave-v1.0.0-Windows.zip",
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "USD"
+            },
+            "description": "Clean, ad-free media downloader and offline audio player for Windows with multi-threaded downloads, 320 kbps MP3, and 1080p MP4 output.",
+            "image": "https://ytmp-3-five.vercel.app/og-image.png",
+            "featureList": [
+              "16-stream parallel multi-thread download acceleration",
+              "True 320 kbps CBR/VBR MP3, FLAC, and WAV audio extraction",
+              "1080p Full HD video demuxing with local FFmpeg",
+              "Support for YouTube, Instagram Reels, TikTok, Twitter/X, SoundCloud, and 1,000+ platforms",
+              "100% ad-free local PC execution with zero telemetry",
+              "Embedded high-resolution ID3 metadata and album cover art",
+              "Docked in-app audio audition player with real-time waveform visualizer"
+            ]
+          },
+          {
+            "@type": "FAQPage",
+            "@id": "https://ytmp-3-five.vercel.app/#faq",
+            "mainEntity": [
+              {
+                "@type": "Question",
+                "name": "Why choose local software over web-based online converters?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Cloud converter websites throttle download speeds to a single thread, introduce security risks via ad redirects, and frequently compress audio down to 128 kbps. SonicWave executes locally on your Windows PC with a 16-stream parallel turbo engine, local FFmpeg & yt-dlp extraction, zero advertisements, and authentic 320 kbps MP3 and 1080p MP4 output."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Do I need to install Python, FFmpeg, or modify system environment variables?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "No. SonicWave is self-bootstrapping. When you launch start.bat on Windows, the software automatically downloads and verifies the official yt-dlp and FFmpeg binaries into its local server directory. No manual configuration is required."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Which audio and video formats are supported?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "SonicWave supports MP3 (at 320k, 256k, 192k, and 128k CBR/VBR), AAC (M4A), uncompressed WAV, and FLAC for audio. For video, it supports MP4 in 1080p Full HD, 720p HD, and 480p SD with automatically multiplexed stereo audio."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Is SonicWave open-source and free of telemetry?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Yes. SonicWave is completely free and open-source. There are no subscriptions, no locked tiers, and zero user telemetry or URL tracking. All conversions happen entirely on your machine."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Does SonicWave inject album artwork and ID3 metadata tags?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Yes. Converted audio tracks automatically have ID3 tags embedded with the video title, uploader name, and high-resolution thumbnail artwork so your files display cleanly in Windows Media Player, iTunes, Groove, Spotify, and mobile players."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "How are extraction rules updated when upstream video platforms change?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "SonicWave includes a 1-click binary updater. Press Ctrl+K in the app and select 'Update Engine (yt-dlp)' to pull the latest extraction definitions directly from the official upstream repository in seconds."
+                }
+              }
+            ]
+          }
         ]
       }
     </script>
@@ -75,8 +150,159 @@
     />
   </head>
   <body>
-    <div id="root"></div>
+    <!-- Pre-rendered semantic structure for raw HTML crawler indexing (hydrated/replaced on React mount) -->
+    <div id="root">
+      <header>
+        <nav aria-label="Main Navigation">
+          <a href="/" aria-label="SonicWave Home">SonicWave</a>
+          <a href="#features">Features</a>
+          <a href="#how-it-works">Installation</a>
+          <a href="#platforms">Platforms</a>
+          <a href="#comparison">Speed 16x</a>
+          <a href="#specs">Specs</a>
+          <a href="#faq">FAQ</a>
+          <a href="/SonicWave-v1.0.0-Windows.zip">Download for Windows (.zip)</a>
+        </nav>
+      </header>
+      <main>
+        <article>
+          <header>
+            <p>Windows 10 &amp; 11 Desktop Software</p>
+            <h1>High-speed media downloader &amp; offline audio player for Windows.</h1>
+            <p>
+              Extract true 320 kbps MP3 audio and 1080p Full HD video from YouTube, Instagram, TikTok,
+              Twitter/X, and 1,000+ sources directly to your PC with local FFmpeg. 100% free, zero ads, zero telemetry.
+            </p>
+            <p>
+              <a href="/SonicWave-v1.0.0-Windows.zip">Download SonicWave v1.0.0 for Windows (.zip) &mdash; 326 KB</a>
+            </p>
+          </header>
+
+          <section id="features">
+            <h2>Engineered for fidelity and speed.</h2>
+            <ul>
+              <li>
+                <strong>16-Stream parallel turbo:</strong> Multi-threaded parallel fragment extraction for up to 16x
+                faster downloads without server-side throttling.
+              </li>
+              <li>
+                <strong>True 320 kbps &amp; lossless audio:</strong> Clean MP3 (320k CBR/VBR), AAC (M4A), uncompressed
+                WAV, and FLAC output with authentic frequency retention.
+              </li>
+              <li>
+                <strong>1080p Full HD video merge:</strong> Automatically multiplexes video streams and high-bitrate audio
+                into smooth MP4 files using local FFmpeg.
+              </li>
+              <li>
+                <strong>100% Local &amp; zero telemetry:</strong> Runs entirely on your PC. No tracking cookies, no
+                redirects, and zero URL logging.
+              </li>
+              <li>
+                <strong>Automatic ID3 tags &amp; cover art:</strong> High-resolution album artwork, artist, and title
+                metadata automatically injected into every converted file.
+              </li>
+              <li>
+                <strong>Studio player &amp; local library:</strong> In-browser audition player with real-time waveform
+                visualization and keyboard shortcuts.
+              </li>
+            </ul>
+          </section>
+
+          <section id="how-it-works">
+            <h2>Up and running in 30 seconds.</h2>
+            <ol>
+              <li>
+                <strong>Download &amp; extract:</strong> Unzip SonicWave-v1.0.0-Windows.zip to any directory on your
+                Windows machine.
+              </li>
+              <li>
+                <strong>Launch start.bat:</strong> Runs the self-bootstrapping launcher which automatically verifies yt-dlp
+                and local FFmpeg binaries.
+              </li>
+              <li>
+                <strong>Convert and stream:</strong> Paste any media URL, pick your format (MP3, M4A, FLAC, WAV, MP4), and
+                download or play immediately.
+              </li>
+            </ol>
+          </section>
+
+          <section id="platforms">
+            <h2>One binary. Every media platform.</h2>
+            <p>
+              Extract audio and video from YouTube, Instagram Reels, TikTok, Twitter/X Clips, SoundCloud, Reddit,
+              Facebook, Twitch, Vimeo, Bandcamp, Bilibili, Mixcloud, and over 1,000 platforms for lawful personal offline
+              archiving.
+            </p>
+          </section>
+
+          <section id="comparison">
+            <h2>SonicWave vs. typical web converters.</h2>
+            <p>
+              Unlike online conversion websites that throttle downloads to single-stream speeds, inject intrusive banner ads,
+              and compress audio to 128 kbps, SonicWave provides 16 parallel threads, true 320 kbps bitrates, and 100%
+              private local execution.
+            </p>
+          </section>
+
+          <section id="specs">
+            <h2>System specifications.</h2>
+            <p>
+              Compatible with 64-bit Windows 10 and Windows 11. Built with Node.js, React 19, FFmpeg 6.1.1, and yt-dlp. Free
+              and open source under the MIT License.
+            </p>
+          </section>
+
+          <section id="faq">
+            <h2>Frequently asked questions.</h2>
+            <dl>
+              <dt>Why choose local software over web-based online converters?</dt>
+              <dd>
+                Cloud converter websites throttle download speeds to a single thread, introduce security risks via ad redirects,
+                and frequently compress audio down to 128 kbps. SonicWave executes locally on your Windows PC with a 16-stream
+                parallel turbo engine, local FFmpeg &amp; yt-dlp extraction, zero advertisements, and authentic 320 kbps MP3 and
+                1080p MP4 output.
+              </dd>
+              <dt>Do I need to install Python, FFmpeg, or modify system environment variables?</dt>
+              <dd>
+                No. SonicWave is self-bootstrapping. When you launch start.bat on Windows, the software automatically downloads and
+                verifies the official yt-dlp and FFmpeg binaries into its local server directory. No manual configuration is
+                required.
+              </dd>
+              <dt>Which audio and video formats are supported?</dt>
+              <dd>
+                SonicWave supports MP3 (at 320k, 256k, 192k, and 128k CBR/VBR), AAC (M4A), uncompressed WAV, and FLAC for audio.
+                For video, it supports MP4 in 1080p Full HD, 720p HD, and 480p SD with automatically multiplexed stereo audio.
+              </dd>
+              <dt>Is SonicWave open-source and free of telemetry?</dt>
+              <dd>
+                Yes. SonicWave is completely free and open-source. There are no subscriptions, no locked tiers, and zero user
+                telemetry or URL tracking. All conversions happen entirely on your machine.
+              </dd>
+              <dt>Does SonicWave inject album artwork and ID3 metadata tags?</dt>
+              <dd>
+                Yes. Converted audio tracks automatically have ID3 tags embedded with the video title, uploader name, and
+                high-resolution thumbnail artwork so your files display cleanly in Windows Media Player, iTunes, Groove, Spotify,
+                and mobile players.
+              </dd>
+              <dt>How are extraction rules updated when upstream video platforms change?</dt>
+              <dd>
+                SonicWave includes a 1-click binary updater. Press Ctrl+K in the app and select 'Update Engine (yt-dlp)' to pull
+                the latest extraction definitions directly from the official upstream repository in seconds.
+              </dd>
+            </dl>
+          </section>
+        </article>
+      </main>
+    </div>
+    <noscript>
+      <div style="padding: 2rem; max-width: 800px; margin: 0 auto; color: #fff; font-family: sans-serif;">
+        <p>
+          SonicWave is an ad-free Windows media downloader. JavaScript is required for the interactive conversion studio,
+          or you can download the standalone Windows package directly:
+        </p>
+        <p><a href="/SonicWave-v1.0.0-Windows.zip" style="color: #1ed760; font-weight: bold;">Download SonicWave for Windows (.zip)</a></p>
+      </div>
+    </noscript>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
-

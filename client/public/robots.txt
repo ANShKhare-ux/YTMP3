@@ -1,6 +1,28 @@
 # SonicWave Robots.txt
+# https://ytmp-3-five.vercel.app/
+
 User-agent: *
 Allow: /
 
-Sitemap: https://ytmp-3-five.vercel.app/sitemap.xml
+# Search Engine Crawlers
+User-agent: Googlebot
+Allow: /
 
+User-agent: Bingbot
+Allow: /
+
+# AI Search & Retrieval Crawlers (Eligible for citations and answers)
+User-agent: Google-Extended
+Allow: /
+
+User-agent: GPTBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+# Sitemap & LLM Context
+Sitemap: https://ytmp-3-five.vercel.app/sitemap.xml
