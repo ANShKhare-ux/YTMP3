@@ -25,6 +25,12 @@
 - **Cinematic Motion Intro & Video Pipeline**:
   1. *In-App Cinematic Intro (`SonicIntro.jsx`)*: Hardware-accelerated Full HD video presentation perfectly synchronized with the Remotion broadcast master (`sonicwave-intro.mp4`), featuring pop-free Web Audio API gain scheduling (`masterGainRef`) with isolated lifecycle architecture (preventing AudioContext teardown loops during mute/unmute), continuous 60fps requestAnimationFrame timeline tracking, radiating video shockwaves, background color alignment (`#080b09`), dynamic canvas audio dust, body scroll locking, and smooth expo-out dissolve exit. Coordinated with `LandingPage.jsx` so hero entrance animations wait for intro exit before playing. Plays on initial session with instant skip (`Esc`), sound unmute toggle, strict `prefers-reduced-motion` auto-exit, and replay triggers via Quick Menu (`⌘K`), studio top-bar button, and landing navigation.
   2. *Programmatic Remotion Composition (`remotion/`)*: Frame-accurate Remotion 4.0.539 Full HD video engine (`SonicWaveIntro`, 1920x1080 @ 30fps, 180 frames = 6.0s) rendering to `out/sonicwave-intro.mp4` with embedded 48kHz stereo AAC soundtrack, 320px commanding emblem scale, and FFmpeg encoding.
+- **Technical SEO & Search Console Verification**:
+  - Global Search Console verification meta tag (`vyi8Qkc4E4RP878V8Gc8VFv05oWR53YLsP0m6eWjYCI`) configured in `<head>` of `client/index.html`.
+  - Canonical URL anchored to live production deployment (`https://ytmp-3-five.vercel.app/`).
+  - Search engine crawler directives in `client/public/robots.txt` (`User-agent: *`, `Allow: /`, pointing to `https://ytmp-3-five.vercel.app/sitemap.xml`).
+  - Standard compliant `client/public/sitemap.xml` strictly referencing public canonical URL without non-crawlable hash anchors.
+  - HTML file verification backup preserved at `client/public/google18abb8e90c4c273e.html`.
 - **Automated Test Suite**: Node.js native test runner (`node:test`) covering converter formatting, binary management, and workspace integrity.
 
 ### Planned / Inferred / Unimplemented Features
