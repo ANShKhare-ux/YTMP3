@@ -23,19 +23,11 @@ import HistorySection from './components/HistorySection';
 import Logo from './components/Logo';
 import CommandPalette from './components/CommandPalette';
 import PricingModal from './components/PricingModal';
-import SonicIntro from './components/SonicIntro';
-import { Crown, Command as CommandIcon, Sparkles } from 'lucide-react';
+import { Crown, Command as CommandIcon } from 'lucide-react';
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
 export default function App() {
-  const [showIntro, setShowIntro] = useState(() => {
-    try {
-      return sessionStorage.getItem('sonicwave_intro_seen') !== 'true';
-    } catch {
-      return false;
-    }
-  });
   const [url, setUrl] = useState('');
   const [videoInfo, setVideoInfo] = useState(null);
   const [bitrate, setBitrate] = useState('320k');
@@ -49,12 +41,6 @@ export default function App() {
   const [isCmdOpen, setIsCmdOpen] = useState(false);
   const [isPricingOpen, setIsPricingOpen] = useState(false);
   const eventSourceRef = useRef(null);
-
-  const [introForcePlay, setIntroForcePlay] = useState(false);
-  const handleReplayIntro = () => {
-    setIntroForcePlay(true);
-    setShowIntro(true);
-  };
 
   // Global Command Palette shortcut (⌘K / Ctrl+K)
   useEffect(() => {
@@ -583,17 +569,6 @@ export default function App() {
             <button
               type="button"
               className="top-bar-action-pill"
-              onClick={handleReplayIntro}
-              title="Replay SonicWave Cinematic Motion Intro"
-              style={{ background: 'rgba(30, 215, 96, 0.12)', borderColor: 'rgba(30, 215, 96, 0.3)', color: 'var(--spotify-green)' }}
-            >
-              <Sparkles size={12} />
-              <span>Intro</span>
-            </button>
-
-            <button
-              type="button"
-              className="top-bar-action-pill"
               onClick={() => setIsCmdOpen(true)}
               title="Open Command Palette (⌘K / Ctrl+K)"
               style={{ background: 'rgba(255, 255, 255, 0.06)', borderColor: 'rgba(255, 255, 255, 0.15)', color: '#ffffff' }}
@@ -762,7 +737,6 @@ export default function App() {
             .catch((err) => alert(`Update request error: ${err.message}`));
         }}
         onOpenPricing={() => setIsPricingOpen(true)}
-        onReplayIntro={handleReplayIntro}
       />
 
       {/* SaaS Studio Capabilities & Tier Comparison Modal */}
@@ -770,17 +744,6 @@ export default function App() {
         isOpen={isPricingOpen}
         onClose={() => setIsPricingOpen(false)}
       />
-
-      {/* Cinematic Animated Intro (Plays on first visit or via Quick Menu) */}
-      {showIntro && (
-        <SonicIntro
-          onComplete={() => {
-            setShowIntro(false);
-            setIntroForcePlay(false);
-          }}
-          forcePlay={introForcePlay}
-        />
-      )}
     </div>
   );
 }

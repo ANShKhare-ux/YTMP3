@@ -24,20 +24,12 @@ import Logo from './components/Logo';
 import CommandPalette from './components/CommandPalette';
 import PricingModal from './components/PricingModal';
 import LandingPage from './components/LandingPage';
-import SonicIntro from './components/SonicIntro';
-import { Crown, Command as CommandIcon, Sparkles } from 'lucide-react';
+import { Crown, Command as CommandIcon } from 'lucide-react';
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
 export default function App() {
   const [currentView, setCurrentView] = useState(() => (window.location.hash === '#app' ? 'app' : 'landing'));
-  const [showIntro, setShowIntro] = useState(() => {
-    try {
-      return sessionStorage.getItem('sonicwave_intro_seen') !== 'true';
-    } catch {
-      return false;
-    }
-  });
   const [url, setUrl] = useState('');
   const [videoInfo, setVideoInfo] = useState(null);
   const [bitrate, setBitrate] = useState('320k');
@@ -51,12 +43,6 @@ export default function App() {
   const [isCmdOpen, setIsCmdOpen] = useState(false);
   const [isPricingOpen, setIsPricingOpen] = useState(false);
   const eventSourceRef = useRef(null);
-
-  const [introForcePlay, setIntroForcePlay] = useState(false);
-  const handleReplayIntro = () => {
-    setIntroForcePlay(true);
-    setShowIntro(true);
-  };
 
   // Sync hash routing (#landing vs #app)
   useEffect(() => {
@@ -479,8 +465,6 @@ export default function App() {
         <LandingPage
           onOpenCmd={() => setIsCmdOpen(true)}
           onOpenPricing={() => setIsPricingOpen(true)}
-          onReplayIntro={handleReplayIntro}
-          introActive={showIntro}
         />
 
         {/* Docked Spotify Bottom Audio/Video Player */}
@@ -521,7 +505,6 @@ export default function App() {
               .catch((err) => alert(`Update request error: ${err.message}`));
           }}
           onOpenPricing={() => setIsPricingOpen(true)}
-          onReplayIntro={handleReplayIntro}
           currentView={currentView}
         />
 
@@ -530,17 +513,6 @@ export default function App() {
           isOpen={isPricingOpen}
           onClose={() => setIsPricingOpen(false)}
         />
-
-        {/* Cinematic Animated Intro (Plays on first visit or via Quick Menu) */}
-        {showIntro && (
-          <SonicIntro
-            onComplete={() => {
-              setShowIntro(false);
-              setIntroForcePlay(false);
-            }}
-            forcePlay={introForcePlay}
-          />
-        )}
       </div>
     );
   }
@@ -685,17 +657,6 @@ export default function App() {
           </div>
 
           <div className="top-bar-actions">
-            <button
-              type="button"
-              className="top-bar-action-pill"
-              onClick={handleReplayIntro}
-              title="Replay SonicWave Cinematic Motion Intro"
-              style={{ background: 'rgba(30, 215, 96, 0.12)', borderColor: 'rgba(30, 215, 96, 0.3)', color: 'var(--spotify-green)' }}
-            >
-              <Sparkles size={12} />
-              <span>Intro</span>
-            </button>
-
             <button
               type="button"
               className="top-bar-action-pill"
@@ -884,7 +845,6 @@ export default function App() {
         onOpenPricing={() => setIsPricingOpen(true)}
         onNavigateStudio={handleOpenLocalStudio}
         onNavigateLanding={handleBackToLanding}
-        onReplayIntro={handleReplayIntro}
         currentView={currentView}
       />
 
@@ -893,17 +853,6 @@ export default function App() {
         isOpen={isPricingOpen}
         onClose={() => setIsPricingOpen(false)}
       />
-
-      {/* Cinematic Animated Intro (Plays on first visit or via Quick Menu) */}
-      {showIntro && (
-        <SonicIntro
-          onComplete={() => {
-            setShowIntro(false);
-            setIntroForcePlay(false);
-          }}
-          forcePlay={introForcePlay}
-        />
-      )}
     </div>
   );
 }

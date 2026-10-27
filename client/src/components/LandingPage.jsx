@@ -212,9 +212,7 @@ const FOOTER_COLUMNS = [
 
 export default function LandingPage({
   onOpenCmd,
-  onOpenPricing,
-  onReplayIntro,
-  introActive = false
+  onOpenPricing
 }) {
   const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -307,21 +305,6 @@ export default function LandingPage({
         ".cursor-trust-cell",
         wrapRef.current
       ], { clearProps: "all" });
-      return;
-    }
-
-    // While cinematic intro is playing, hold hero elements primed so they don't animate hidden in the dark
-    if (introActive) {
-      gsap.set([
-        ".cursor-top-nav",
-        ".cursor-eyebrow-pill",
-        ".cursor-display-xl",
-        ".cursor-body-lg",
-        ".cursor-hero-cta-row > *",
-        ".cursor-hero-microproof",
-        ".cursor-trust-cell"
-      ], { opacity: 0 });
-      if (wrapRef.current) gsap.set(wrapRef.current, { opacity: 0 });
       return;
     }
 
@@ -784,7 +767,7 @@ export default function LandingPage({
     return () => {
       if (statusTimer) clearInterval(statusTimer);
     };
-  }, { scope: containerRef, dependencies: [introActive] });
+  }, { scope: containerRef });
 
   // Dynamic equalizer physics with CustomWiggle when playing
   useEffect(() => {
@@ -884,20 +867,6 @@ export default function LandingPage({
           </nav>
 
           <div className="cursor-nav-actions">
-            {onReplayIntro && (
-              <button
-                type="button"
-                className="cursor-button-secondary cursor-nav-theme-btn"
-                onClick={onReplayIntro}
-                title="Watch SonicWave Cinematic Animated Intro"
-                aria-label="Watch Cinematic Intro"
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', color: 'var(--spotify-green)' }}
-              >
-                <Sparkles size={13} aria-hidden="true" />
-                <span style={{ fontSize: '12px', fontWeight: 600 }}>Intro</span>
-              </button>
-            )}
-
             <button
               type="button"
               className="cursor-button-secondary cursor-nav-theme-btn"
@@ -954,17 +923,6 @@ export default function LandingPage({
               <a href="#faq" className="cursor-mobile-nav-link" onClick={(e) => { setIsMobileMenuOpen(false); handleSmoothScroll(e, '#faq'); }}>FAQ</a>
             </nav>
             <div className="cursor-mobile-menu-actions">
-              {onReplayIntro && (
-                <button
-                  type="button"
-                  className="cursor-button-secondary cursor-mobile-cmd-btn"
-                  onClick={() => { setIsMobileMenuOpen(false); onReplayIntro(); }}
-                  style={{ color: 'var(--spotify-green)', borderColor: 'rgba(30, 215, 96, 0.3)' }}
-                >
-                  <Sparkles size={14} />
-                  <span>Watch Cinematic Intro</span>
-                </button>
-              )}
               <button
                 type="button"
                 className="cursor-button-primary cursor-mobile-download-btn"

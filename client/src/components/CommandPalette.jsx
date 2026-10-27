@@ -27,7 +27,6 @@ export default function CommandPalette({
   onOpenPricing,
   onNavigateStudio,
   onNavigateLanding,
-  onReplayIntro,
   currentView = 'app'
 }) {
   const [query, setQuery] = useState('');
@@ -45,14 +44,6 @@ export default function CommandPalette({
   }, [isOpen]);
 
   const allActions = [
-    ...(onReplayIntro ? [{
-      id: 'replay-intro',
-      category: 'Experience',
-      title: 'Play Cinematic Intro',
-      subtitle: 'Watch the full SonicWave visual motion identity intro',
-      icon: <Sparkles size={16} style={{ color: 'var(--spotify-green)' }} />,
-      action: () => { onReplayIntro(); onClose(); }
-    }] : []),
     ...(onNavigateLanding && onNavigateStudio ? [{
       id: 'nav-view-toggle',
       category: 'Navigation',
