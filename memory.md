@@ -28,6 +28,12 @@
   - Search engine crawler directives in `client/public/robots.txt` (`User-agent: *`, `Allow: /`, pointing to `https://ytmp-3-five.vercel.app/sitemap.xml`).
   - Standard compliant `client/public/sitemap.xml` strictly referencing public canonical URL without non-crawlable hash anchors.
   - HTML file verification backup preserved at `client/public/google18abb8e90c4c273e.html`.
+- **Accessibility & WCAG 2.2 AA Compliance**:
+  - Prohibited ARIA resolution: Removed invalid `aria-label` from generic `div.cursor-waveform-spectrum`, added `aria-hidden="true"` for decorative spectrum animation.
+  - Semantic Heading Hierarchy: Restructured interactive track preview to use `<p className="cursor-vis-title">` instead of skipped `h3`/`h4` under hero `h1`.
+  - Landmark Structure: Wrapped landing page sections in `<main id="main-content" tabIndex={-1} aria-label="SonicWave Product Overview">` with matching skip-link destination.
+  - Contrast AA/AAA Remediation: Replaced low-contrast lavender text (`#5e6ad2`, 3.89:1) with high-contrast `--cursor-primary-text` (`#96a1ff`, 8.78:1 dark, `#414cae` 6.88:1 light), updated tertiary/subtle ink tokens (`#9fa6b2` and `#9ca3af`, >7:1), and adjusted halftone wordmark footer opacities.
+  - Touch Target Sizing: Standardized navigation links (`.cursor-nav-link`, `.cursor-mobile-nav-link`) with >= 44px hit heights and >= 8px padding, plus verified footer touch spacing and eliminated fake `href="#"` dummy links.
 - **Automated Test Suite**: Node.js native test runner (`node:test`) covering converter formatting, binary management, and workspace integrity.
 
 ### Planned / Inferred / Unimplemented Features

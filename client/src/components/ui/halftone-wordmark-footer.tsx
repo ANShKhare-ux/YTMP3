@@ -159,15 +159,17 @@ const HWF_CSS = `
   font-family: var(--hwf-mono); font-size: 10.5px; letter-spacing: .18em; text-transform: uppercase; line-height: 1.75;
 }
 .hwf-brand strong { display: block; font-weight: 500; }
-.hwf-brand span { opacity: .45; }
-.hwf-col h3 { margin: 0; font: inherit; opacity: .4; font-weight: 500; }
+.hwf-brand span { opacity: .75; }
+.hwf-col h3 { margin: 0; font: inherit; opacity: .75; font-weight: 600; }
 .hwf-col ul { list-style: none; margin: 0; padding: 0; }
-.hwf-col a, .hwf-up {
-  color: inherit; text-decoration: none; opacity: .78; background: none; border: 0; padding: 0;
+.hwf-col a, .hwf-up, .hwf-text-item {
+  color: inherit; text-decoration: none; opacity: .9; background: none; border: 0; padding: 6px 0;
+  display: inline-block; min-height: 28px;
   font: inherit; letter-spacing: inherit; text-transform: inherit; cursor: pointer;
   background-image: linear-gradient(currentColor, currentColor); background-size: 0% 1px;
   background-repeat: no-repeat; background-position: 0 100%; transition: opacity .25s ease, background-size .35s cubic-bezier(.2,.7,.1,1);
 }
+.hwf-text-item { cursor: default; background-image: none; opacity: .75; }
 .hwf-col a:hover, .hwf-up:hover { opacity: 1; background-size: 100% 1px; }
 .hwf-col a:focus-visible, .hwf-up:focus-visible { outline: 1px solid currentColor; outline-offset: 3px; opacity: 1; }
 .hwf-rule {
@@ -512,9 +514,13 @@ export default function HalftoneWordmarkFooter({
             <ul>
               {col.links.map((l) => (
                 <li key={l.label}>
-                  <a href={l.href || "#"} onClick={(e) => handleLinkClick(e, l.href)}>
-                    {l.label}
-                  </a>
+                  {l.href ? (
+                    <a href={l.href} onClick={(e) => handleLinkClick(e, l.href)}>
+                      {l.label}
+                    </a>
+                  ) : (
+                    <span className="hwf-text-item">{l.label}</span>
+                  )}
                 </li>
               ))}
             </ul>

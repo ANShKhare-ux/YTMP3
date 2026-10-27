@@ -193,19 +193,19 @@ const FOOTER_COLUMNS = [
   {
     title: 'Engine',
     links: [
-      { label: 'yt-dlp 16-Stream' },
-      { label: 'FFmpeg 7.0 Mux' },
-      { label: 'Node.js Local' },
-      { label: 'React 19 & Vite' },
-      { label: 'ID3 High-Res Art' },
+      { label: 'yt-dlp 16-Stream', href: '#specs' },
+      { label: 'FFmpeg 7.0 Mux', href: '#specs' },
+      { label: 'Node.js Local', href: '#specs' },
+      { label: 'React 19 & Vite', href: '#specs' },
+      { label: 'ID3 High-Res Art', href: '#features' },
     ],
   },
   {
     title: 'Download',
     links: [
       { label: 'Windows (.zip)', href: '/SonicWave-v1.0.0-Windows.zip' },
-      { label: 'Zero Telemetry' },
-      { label: 'Personal Archiving' },
+      { label: 'Zero Telemetry', href: '#features' },
+      { label: 'Personal Archiving', href: '#how-it-works' },
     ],
   },
 ];
@@ -842,7 +842,7 @@ export default function LandingPage({
   return (
     <div className={`cursor-canvas-root ${theme === 'light' ? 'light-mode' : ''}`} data-theme={theme} ref={containerRef}>
       {/* Keyboard Accessibility: Skip to Main Content Link */}
-      <a href="#hero" className="cursor-skip-link" onClick={(e) => handleSmoothScroll(e, '#hero')}>
+      <a href="#main-content" className="cursor-skip-link" onClick={(e) => handleSmoothScroll(e, '#main-content')}>
         Skip to main content
       </a>
 
@@ -955,6 +955,9 @@ export default function LandingPage({
           </div>
         )}
       </header>
+
+      {/* Main Landmark for WCAG 2.2 AA Compliance */}
+      <main id="main-content" tabIndex={-1} aria-label="SonicWave Product Overview">
 
       {/* =========================================================================
           HERO SECTION (Near-black canvas, display-xl with negative tracking, lavender CTA)
@@ -1103,14 +1106,14 @@ export default function LandingPage({
                 <div className="cursor-visualizer-surface">
                   <div className="cursor-vis-head">
                     <div>
-                      <div className="cursor-vis-title" role="heading" aria-level="3">{selectedDemoTrack.title}</div>
+                      <p className="cursor-vis-title">{selectedDemoTrack.title}</p>
                       <p className="cursor-vis-sub">{selectedDemoTrack.artist} &bull; Embedded ID3 Tags</p>
                     </div>
                     <span className="cursor-vis-badge">{selectedDemoTrack.format} &bull; {selectedDemoTrack.quality}</span>
                   </div>
 
                   {/* Frequency Spectrum (Lavender #5e6ad2) */}
-                  <div className="cursor-waveform-spectrum" aria-label="Frequency Equalizer Spectrum">
+                  <div className="cursor-waveform-spectrum" aria-hidden="true">
                     {selectedDemoTrack.waveform.map((val, idx) => {
                       const isActive = (idx / selectedDemoTrack.waveform.length) * 100 <= demoProgress;
                       const animatedHeight = isPlayingDemo
@@ -1673,6 +1676,7 @@ export default function LandingPage({
           </div>
         </div>
       </section>
+      </main>
 
       {/* =========================================================================
           HALFTONE WORDMARK FOOTER (Interactive Spring Dots & Shock Ring)
