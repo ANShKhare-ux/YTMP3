@@ -213,7 +213,8 @@ const FOOTER_COLUMNS = [
 export default function LandingPage({
   onOpenCmd,
   onOpenPricing,
-  onReplayIntro
+  onReplayIntro,
+  introActive = false
 }) {
   const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -309,10 +310,26 @@ export default function LandingPage({
       return;
     }
 
-    // 1. Custom Physics Curves & Eases (from uploaded GSAP suite)
+    // While cinematic intro is playing, hold hero elements primed so they don't animate hidden in the dark
+    if (introActive) {
+      gsap.set([
+        ".cursor-top-nav",
+        ".cursor-eyebrow-pill",
+        ".cursor-display-xl",
+        ".cursor-body-lg",
+        ".cursor-hero-cta-row > *",
+        ".cursor-hero-microproof",
+        ".cursor-trust-cell"
+      ], { opacity: 0 });
+      if (wrapRef.current) gsap.set(wrapRef.current, { opacity: 0 });
+      return;
+    }
+
+    // 1. Custom Physics Curves & Eases (curated via Easing Wizard MCP)
     CustomEase.create("appleSpring", "M0,0 C0.16,1 0.3,1 1,1");
     CustomEase.create("punchSpring", "M0,0 C0.18,0.85 0.32,1.15 1,1");
     CustomEase.create("smoothGlide", "M0,0 C0.25,0.1 0.25,1 1,1");
+    CustomEase.create("backSnap", "M0,0 C0.34,1.56 0.64,1 1,1");
     CustomBounce.create("btnBounce", { strength: 0.5, squash: 2 });
     CustomWiggle.create("waveformWiggle", { wiggles: 8, type: "random" });
 
@@ -366,7 +383,7 @@ export default function LandingPage({
       )
       .fromTo(".cursor-display-xl", 
         { y: 25, opacity: 0 }, 
-        { y: 0, opacity: 1, duration: 0.55, ease: "power3.out" }, 
+        { y: 0, opacity: 1, duration: 0.55, ease: "appleSpring" }, 
         "-=0.3"
       )
       .fromTo(".cursor-body-lg", 
@@ -393,7 +410,7 @@ export default function LandingPage({
     if (wrapRef.current) {
       heroTl.fromTo(wrapRef.current, 
         { y: 40, opacity: 0, rotateX: 5, transformPerspective: 1200 }, 
-        { y: 0, opacity: 1, rotateX: 0, duration: 0.65, ease: "power3.out" }, 
+        { y: 0, opacity: 1, rotateX: 0, duration: 0.65, ease: "appleSpring" }, 
         "-=0.35"
       );
     }
@@ -767,7 +784,7 @@ export default function LandingPage({
     return () => {
       if (statusTimer) clearInterval(statusTimer);
     };
-  }, { scope: containerRef });
+  }, { scope: containerRef, dependencies: [introActive] });
 
   // Dynamic equalizer physics with CustomWiggle when playing
   useEffect(() => {

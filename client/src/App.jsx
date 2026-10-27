@@ -480,6 +480,7 @@ export default function App() {
           onOpenCmd={() => setIsCmdOpen(true)}
           onOpenPricing={() => setIsPricingOpen(true)}
           onReplayIntro={handleReplayIntro}
+          introActive={showIntro}
         />
 
         {/* Docked Spotify Bottom Audio/Video Player */}
