@@ -40,37 +40,69 @@ function loadPersistentHistory() {
 loadPersistentHistory();
 
 /**
- * Append or update a completed job in persistent history
+ * Queue jobs for async history saving to prevent event loop blocking
  */
-function savePersistentHistory(job) {
+let historyQueue = [];
+let isWritingHistory = false;
+
+async function processHistoryQueue() {
+  if (isWritingHistory || historyQueue.length === 0) return;
+  isWritingHistory = true;
+
   try {
+    // Take a snapshot of the current queue
+    const jobsToSave = [...historyQueue];
+    historyQueue = [];
+
     let list = [];
-    if (fs.existsSync(HISTORY_FILE)) {
-      try {
-        list = JSON.parse(fs.readFileSync(HISTORY_FILE, 'utf8'));
-      } catch {}
+    try {
+      if (fs.existsSync(HISTORY_FILE)) {
+        const data = await fs.promises.readFile(HISTORY_FILE, 'utf8');
+        list = JSON.parse(data);
+      }
+    } catch (e) {
+      // Ignore parse/read errors and default to empty list
     }
-    const cleanJob = {
-      id: job.id,
-      url: job.url,
-      format: job.format,
-      quality: job.quality,
-      isVideo: job.isVideo,
-      status: 'completed',
-      progress: 100,
-      title: job.title || 'Audio File',
-      artist: job.artist || 'Media Artist',
-      thumbnail: job.thumbnail || '',
-      duration: job.duration || 0,
-      filePath: job.filePath,
-      fileName: job.fileName,
-      createdAt: job.createdAt || Date.now()
-    };
-    list = [cleanJob, ...list.filter(item => item.id !== job.id)].slice(0, 50);
-    fs.writeFileSync(HISTORY_FILE, JSON.stringify(list, null, 2), 'utf8');
+
+    // Process all jobs in this batch
+    for (const job of jobsToSave) {
+      const cleanJob = {
+        id: job.id,
+        url: job.url,
+        format: job.format,
+        quality: job.quality,
+        isVideo: job.isVideo,
+        status: 'completed',
+        progress: 100,
+        title: job.title || 'Audio File',
+        artist: job.artist || 'Media Artist',
+        thumbnail: job.thumbnail || '',
+        duration: job.duration || 0,
+        filePath: job.filePath,
+        fileName: job.fileName,
+        createdAt: job.createdAt || Date.now()
+      };
+      list = [cleanJob, ...list.filter(item => item.id !== job.id)].slice(0, 50);
+    }
+
+    await fs.promises.writeFile(HISTORY_FILE, JSON.stringify(list, null, 2), 'utf8');
   } catch (err) {
     console.warn('[converter] Failed to save history to disk:', err.message);
+  } finally {
+    isWritingHistory = false;
+    // If more jobs came in while we were writing, process them
+    if (historyQueue.length > 0) {
+      processHistoryQueue();
+    }
   }
+}
+
+/**
+ * Append or update a completed job in persistent history (async queued)
+ */
+function savePersistentHistory(job) {
+  historyQueue.push(job);
+  processHistoryQueue();
 }
 
 // Clean up files older than 2 hours every 30 minutes to prevent disk exhaustion and memory leaks
