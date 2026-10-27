@@ -1121,7 +1121,7 @@ export default function LandingPage({
                           className={`cursor-waveform-col ${isActive ? 'active' : ''}`}
                           style={{
                             height: `${animatedHeight}%`,
-                            transition: 'height 0.15s ease'
+                            transition: 'height 0.18s var(--ease-hover)'
                           }}
                           aria-hidden="true"
                         />

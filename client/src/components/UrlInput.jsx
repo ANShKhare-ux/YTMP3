@@ -137,7 +137,7 @@ export default function UrlInput({
                 color: 'var(--text-subdued)',
                 fontSize: '11px',
                 cursor: 'pointer',
-                transition: 'all 0.15s ease'
+                transition: 'all 0.18s var(--ease-hover)'
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.borderColor = 'var(--spotify-green)';
