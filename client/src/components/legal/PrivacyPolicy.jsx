@@ -82,9 +82,9 @@ export default function PrivacyPolicy({ onNavigate }) {
           These server-level access logs are processed by Vercel for infrastructure stability, security analysis, DDoS detection, and edge routing compliance, subject to Vercel&rsquo;s Privacy Policy. The SonicWave maintainers do not operate a separate database of website visitor records.
         </p>
 
-        <h3>2.2 Cookies and Third-Party Trackers</h3>
+        <h3>2.2 Web Analytics &amp; Cookies</h3>
         <p>
-          The Website does not use commercial analytics platforms (such as Google Analytics, Mixpanel, or PostHog), marketing pixels (such as Meta Pixel), or third-party advertising cookies. We do not engage in cross-site tracking or sale of personal data.
+          The Website uses Vercel Web Analytics (<code>@vercel/analytics</code>) to monitor overall aggregate visitor volume and page performance. Vercel Web Analytics is designed with privacy as a priority: it does not use tracking cookies, does not store personal data, does not record raw IP addresses, and does not track users across independent websites. We do not use commercial advertising pixels or third-party marketing cookies.
         </p>
 
         <h3>2.3 Website Local Storage Usage</h3>
