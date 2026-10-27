@@ -111,13 +111,6 @@ export default function LegalLayout({
               <ArrowLeft size={13} style={{ marginRight: 4 }} aria-hidden="true" />
               Back to Home
             </a>
-            <a
-              href="/#app"
-              className="cursor-nav-link"
-              onClick={(e) => handleLinkClick(e, '/#app', 'app')}
-            >
-              Converter Studio
-            </a>
           </nav>
 
           <div className="cursor-nav-actions">
