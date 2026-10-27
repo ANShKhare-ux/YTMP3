@@ -1,7 +1,7 @@
 const { spawn, execFile } = require('child_process');
 const path = require('path');
 const fs = require('fs');
-const { getYtDlpPath, getFfmpegPath, getFfmpegLocation, getBinDir } = require('./binManager');
+const { getYtDlpPath, getFfmpegPath, getFfmpegLocation } = require('./binManager');
 
 const DOWNLOADS_DIR = path.join(__dirname, 'downloads');
 if (!fs.existsSync(DOWNLOADS_DIR)) {
@@ -317,8 +317,6 @@ function startConversion({ url, format = 'mp3', quality = '320k', jobId, turbo =
   };
 
   jobs.set(jobId, jobState);
-
-  const binDir = getBinDir();
 
   const isYouTube = url.includes('youtube.com') || url.includes('youtu.be');
 
