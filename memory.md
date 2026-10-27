@@ -23,8 +23,8 @@
 - **Desktop Packaging**: `scripts/package-desktop.mjs` generates `SonicWave-v1.0.0-Windows.zip` stripped of marketing landing components.
 - **UI Design System**: Spotify-inspired dark theme (`#121212`, Spotify Green `#1ed760`) for converter studio, paired with a Linear-styled marketing landing page featuring an exclusive light mode toggle (`Sun` / `Moon`) that preserves dark mode in the converter. Integrated Easing Wizard physics-based animation curves (`--ease-page`, `--ease-modal`, `--ease-dropdown`, `--ease-button-spring`, `--ease-button-punch`, `--ease-card`, `--ease-hover`, `--ease-intro-spring`, `--ease-intro-overshoot`, `--ease-intro-bounce`, `--ease-intro-expo`, `--ease-intro-back`) with full `prefers-reduced-motion` compliance.
 - **Cinematic Motion Intro & Video Pipeline**:
-  1. *In-App Cinematic Intro (`SonicIntro.jsx`)*: Web Audio API synthesized ambient sub-bass & chime sweep, dynamic canvas audio dust particles, concentric acoustic radar waves, bouncing frequency wavebars, squircle spring lockup, and expo-out typography reveal. Plays on initial session with instant skip (`Esc`), mute toggle, and replay triggers via Quick Menu (`⌘K`), studio top-bar button, and landing navigation.
-  2. *Programmatic Remotion Composition (`remotion/`)*: Frame-accurate Remotion 4.0.539 Full HD video engine (`SonicWaveIntro`, 1920x1080 @ 30fps, 180 frames = 6.0s) rendering to `out/sonicwave-intro.mp4` with headless Chrome and FFmpeg.
+  1. *In-App Cinematic Intro (`SonicIntro.jsx`)*: Web Audio API procedural synthesis with pop-free master gain scheduling (45Hz->80Hz->35Hz sub-bass + 880Hz->1760Hz chime), dynamic canvas audio dust, concentric radar waves, bouncing frequency wavebars, squircle spring lockup, body scroll locking, and expo-out typography reveal. Plays on initial session with instant skip (`Esc`), mute toggle, strict `prefers-reduced-motion` auto-exit, and replay triggers via Quick Menu (`⌘K`), studio top-bar button, and landing navigation.
+  2. *Programmatic Remotion Composition (`remotion/`)*: Frame-accurate Remotion 4.0.539 Full HD video engine (`SonicWaveIntro`, 1920x1080 @ 30fps, 180 frames = 6.0s) rendering to `out/sonicwave-intro.mp4` with embedded 48kHz stereo AAC soundtrack, 320px commanding emblem scale, and FFmpeg encoding.
 - **Automated Test Suite**: Node.js native test runner (`node:test`) covering converter formatting, binary management, and workspace integrity.
 
 ### Planned / Inferred / Unimplemented Features
@@ -92,11 +92,11 @@
 | `client/src/index.css` | Spotify-inspired dark UI design tokens, Easing Wizard physics curves, and intro styling. |
 | `remotion/src/SonicWaveIntro.tsx` | Full HD 1080p @ 30fps programmatic Remotion video composition component. |
 | `remotion/src/Root.tsx` | Remotion root registering `SonicWaveIntro` composition. |
-| `out/sonicwave-intro.mp4` | Rendered production MP4 animated video intro (Full HD 1080p, 6.0s). |
-| `scripts/package-desktop.mjs` | Automated builder for `SonicWave-v1.0.0-Windows.zip`. |
+| `scripts/generate-intro-audio.js` | Synthesizes 48kHz stereo 16-bit PCM cinematic soundscape for Remotion and web. |
 | `scripts/package-desktop.mjs` | Automated builder for `SonicWave-v1.0.0-Windows.zip`. |
 | `tests/converter.test.js` | Duration formatting, job state isolation, and directory validation tests. |
 | `tests/binManager.test.js` | Path validation, binary existence, and binary execution tests. |
+| `tests/intro.test.js` | Video assets, audio synthesis, accessibility safeguards, and Easing Wizard tests. |
 | `tests/workspace.test.js` | Package manifests and workspace configuration integrity tests. |
 
 ---

@@ -1,8 +1,10 @@
 import React from "react";
 import {
   AbsoluteFill,
+  Audio,
   interpolate,
   spring,
+  staticFile,
   useCurrentFrame,
   useVideoConfig,
   Easing,
@@ -43,20 +45,21 @@ export const SonicWaveIntro: React.FC<SonicWaveIntroProps> = ({
   //
   // Scene 1 (Frames 0 - 30): Deep-space acoustic awakening & radar arcs expansion
   // Scene 2 (Frames 25 - 65): Neon equalizer harmonic ignition & bounce
-  // Scene 3 (Frames 45 - 90): Obsidian vessel & play-vector lockup
-  // Scene 4 (Frames 80 - 140): Kinetic typography reveal (Expo-Out)
+  // Scene 3 (Frames 45 - 90): Obsidian squircle vessel & play-vector lockup
+  // Scene 4 (Frames 75 - 145): Kinetic typography reveal (Expo-Out) & live pulse
   // Scene 5 (Frames 150 - 180): Final cinematic resolve & dissolve
   // ---------------------------------------------------------------------------
 
-  // Global camera push-in
-  const cameraScale = interpolate(frame, [0, durationInFrames], [0.96, 1.04], {
+  // Global camera push-in with gentle easing
+  const cameraScale = interpolate(frame, [0, durationInFrames], [0.95, 1.05], {
     extrapolateRight: "clamp",
+    easing: Easing.bezier(0.2, 0.8, 0.4, 1),
   });
 
   // Global master opacity for smooth tail dissolve
   const masterOpacity = interpolate(
     frame,
-    [durationInFrames - 20, durationInFrames],
+    [durationInFrames - 18, durationInFrames],
     [1, 0],
     {
       extrapolateLeft: "clamp",
@@ -67,14 +70,14 @@ export const SonicWaveIntro: React.FC<SonicWaveIntroProps> = ({
   // Background ambient pulsing glow
   const glowScale = interpolate(
     frame,
-    [0, 60, 120, 180],
-    [0.7, 1.15, 1.05, 1.2],
+    [0, 50, 110, 180],
+    [0.75, 1.25, 1.15, 1.3],
     { extrapolateRight: "clamp" }
   );
   const glowOpacity = interpolate(
     frame,
-    [0, 30, 150, 180],
-    [0.15, 0.45, 0.5, 0],
+    [0, 25, 145, 180],
+    [0.2, 0.55, 0.6, 0],
     { extrapolateRight: "clamp" }
   );
 
@@ -84,7 +87,7 @@ export const SonicWaveIntro: React.FC<SonicWaveIntroProps> = ({
     fps,
     config: { mass: 0.8, stiffness: 120, damping: 10 },
   });
-  const sparkOpacity = interpolate(frame, [0, 8, 50], [0, 1, 0.85], {
+  const sparkOpacity = interpolate(frame, [0, 8, 48], [0, 1, 0.9], {
     extrapolateRight: "clamp",
   });
 
@@ -94,128 +97,129 @@ export const SonicWaveIntro: React.FC<SonicWaveIntroProps> = ({
     fps,
     config: { mass: 1.2, stiffness: 70, damping: 18 },
   });
-  const radarArcOpacity = interpolate(frame, [6, 18], [0, 0.9], {
+  const radarArcOpacity = interpolate(frame, [6, 16], [0, 0.95], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
 
-  // Concentric Shockwave Rings
-  const shockwave1 = interpolate(frame, [10, 45], [0.2, 2.8], {
+  // Concentric Shockwave Rings (Tuned to lockup moment)
+  const shockwave1 = interpolate(frame, [10, 42], [0.2, 2.6], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
     easing: Easing.bezier(0.16, 1, 0.3, 1),
   });
-  const shockwaveOpacity1 = interpolate(frame, [10, 20, 45], [0, 0.7, 0], {
+  const shockwaveOpacity1 = interpolate(frame, [10, 20, 42], [0, 0.75, 0], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
 
-  const shockwave2 = interpolate(frame, [22, 55], [0.2, 3.2], {
+  const shockwaveLockup = interpolate(frame, [46, 78], [0.4, 3.4], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
     easing: Easing.bezier(0.16, 1, 0.3, 1),
   });
-  const shockwaveOpacity2 = interpolate(frame, [22, 32, 55], [0, 0.5, 0], {
+  const shockwaveLockupOpacity = interpolate(frame, [46, 54, 78], [0, 0.85, 0], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
 
   // --- SCENE 2: Outer Dashed Orbit Ring & Equalizer Wavebars ---
-  const orbitRotation = interpolate(frame, [0, durationInFrames], [0, 360]);
+  const orbitRotation = interpolate(frame, [0, durationInFrames], [0, 270]);
   const orbitScale = spring({
-    frame: frame - 18,
+    frame: frame - 16,
     fps,
     config: { mass: 1, stiffness: 90, damping: 15 },
   });
-  const orbitOpacity = interpolate(frame, [18, 30], [0, 0.6], {
+  const orbitOpacity = interpolate(frame, [16, 28], [0, 0.7], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
 
   // Equalizer wavebars bounce harmonic oscillation (Easing Wizard bounce 0a2m2w1n25y202)
   const eqGroupSpring = spring({
-    frame: frame - 22,
+    frame: frame - 20,
     fps,
     config: { mass: 1, stiffness: 100, damping: 12 },
   });
-  const eqGroupOpacity = interpolate(frame, [20, 30], [0, 1], {
+  const eqGroupOpacity = interpolate(frame, [18, 28], [0, 1], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
 
-  const bar1Scale = 0.4 + 0.6 * Math.abs(Math.sin((frame - 20) * 0.22));
-  const bar2Scale = 0.5 + 0.5 * Math.abs(Math.sin((frame - 24) * 0.25));
-  const bar3Scale = 0.6 + 0.4 * Math.abs(Math.sin((frame - 28) * 0.28));
-  const bar4Scale = 0.45 + 0.55 * Math.abs(Math.sin((frame - 22) * 0.24));
-  const bar5Scale = 0.35 + 0.65 * Math.abs(Math.sin((frame - 26) * 0.21));
+  // Dynamic harmonic frequency response across entire video
+  const bar1Scale = 0.35 + 0.65 * Math.abs(Math.sin((frame - 18) * 0.22));
+  const bar2Scale = 0.45 + 0.55 * Math.abs(Math.sin((frame - 22) * 0.26));
+  const bar3Scale = 0.55 + 0.45 * Math.abs(Math.sin((frame - 26) * 0.29));
+  const bar4Scale = 0.40 + 0.60 * Math.abs(Math.sin((frame - 20) * 0.25));
+  const bar5Scale = 0.30 + 0.70 * Math.abs(Math.sin((frame - 24) * 0.21));
 
   // --- SCENE 3: Core Obsidian Squircle & Play Vector Lockup ---
   // Easing Wizard Spring (0a1i1j85k14y22a: mass 1, stiffness 85, damping 14)
   const squircleScale = spring({
-    frame: frame - 38,
+    frame: frame - 36,
     fps,
     config: { mass: 1, stiffness: 85, damping: 14 },
   });
-  const squircleOpacity = interpolate(frame, [38, 48], [0, 1], {
+  const squircleOpacity = interpolate(frame, [36, 46], [0, 1], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
 
   // Play Vector Back-Out Snap (Easing Wizard Back-Out 0a0d.34e1.56f.64g137)
   const playVectorSpring = spring({
-    frame: frame - 48,
+    frame: frame - 46,
     fps,
     config: { mass: 0.9, stiffness: 110, damping: 11 },
   });
-  const playVectorTranslate = interpolate(playVectorSpring, [0, 1], [-25, 0]);
-  const playVectorOpacity = interpolate(frame, [48, 56], [0, 1], {
+  const playVectorTranslate = interpolate(playVectorSpring, [0, 1], [-28, 0]);
+  const playVectorOpacity = interpolate(frame, [46, 54], [0, 1], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
 
   // --- SCENE 4: Kinetic Typography Reveal ---
   // Easing Wizard Expo-Out (0a0d.16e1f.3g10K: cubic-bezier(0.16, 1, 0.3, 1))
-  const typoY = interpolate(frame, [72, 102], [40, 0], {
+  const typoY = interpolate(frame, [72, 102], [48, 0], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
     easing: Easing.bezier(0.16, 1, 0.3, 1),
   });
-  const typoOpacity = interpolate(frame, [72, 95], [0, 1], {
+  const typoOpacity = interpolate(frame, [72, 94], [0, 1], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
 
-  const sonicSlide = interpolate(frame, [72, 98], [-30, 0], {
+  const sonicSlide = interpolate(frame, [72, 98], [-36, 0], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
     easing: Easing.bezier(0.16, 1, 0.3, 1),
   });
-  const waveSlide = interpolate(frame, [76, 104], [30, 0], {
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp",
-    easing: Easing.bezier(0.16, 1, 0.3, 1),
-  });
-
-  const beaconBlink = Math.sin((frame - 80) * 0.25) > 0 ? 1 : 0.4;
-
-  const sublineOpacity = interpolate(frame, [90, 115], [0, 1], {
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp",
-  });
-  const sublineSpacing = interpolate(frame, [90, 125], [1, 4], {
+  const waveSlide = interpolate(frame, [76, 104], [36, 0], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
     easing: Easing.bezier(0.16, 1, 0.3, 1),
   });
 
-  // Generate 45 deterministic audio dust particles
-  const particles = Array.from({ length: 45 }).map((_, i) => {
+  const beaconBlink = Math.sin((frame - 80) * 0.22) > 0 ? 1 : 0.35;
+
+  const sublineOpacity = interpolate(frame, [88, 114], [0, 1], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp",
+  });
+  const sublineSpacing = interpolate(frame, [88, 126], [2, 5], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp",
+    easing: Easing.bezier(0.16, 1, 0.3, 1),
+  });
+
+  // Generate 55 deterministic audio dust particles
+  const particles = Array.from({ length: 55 }).map((_, i) => {
     const startX = seededRandom(i * 1.3) * width;
     const startY = seededRandom(i * 2.7) * height;
-    const size = 1.2 + seededRandom(i * 3.1) * 2.8;
-    const speedX = (seededRandom(i * 4.9) - 0.5) * 1.2;
-    const speedY = -0.5 - seededRandom(i * 5.3) * 0.8;
-    const alphaBase = 0.2 + seededRandom(i * 6.7) * 0.6;
+    const size = 1.6 + seededRandom(i * 3.1) * 3.4;
+    const speedX = (seededRandom(i * 4.9) - 0.5) * 1.4;
+    const speedY = -0.6 - seededRandom(i * 5.3) * 0.9;
+    const alphaBase = 0.25 + seededRandom(i * 6.7) * 0.65;
 
     const currentX = (startX + speedX * frame + width) % width;
     const currentY = (startY + speedY * frame + height) % height;
@@ -234,6 +238,17 @@ export const SonicWaveIntro: React.FC<SonicWaveIntroProps> = ({
         opacity: masterOpacity,
       }}
     >
+      {/* Cinematic Synthesized 48kHz Stereo Soundtrack */}
+      <Audio
+        src={staticFile("sonicwave-intro-audio.wav")}
+        volume={(f) =>
+          interpolate(f, [durationInFrames - 20, durationInFrames], [1, 0], {
+            extrapolateLeft: "clamp",
+            extrapolateRight: "clamp",
+          })
+        }
+      />
+
       {/* Dynamic Background Audio Dust Particles */}
       {particles.map((p, idx) => (
         <div
@@ -247,7 +262,7 @@ export const SonicWaveIntro: React.FC<SonicWaveIntroProps> = ({
             borderRadius: "50%",
             backgroundColor: accentColor,
             opacity: p.alpha,
-            boxShadow: `0 0 ${p.size * 2}px ${accentColor}`,
+            boxShadow: `0 0 ${p.size * 2.5}px ${accentColor}`,
             pointerEvents: "none",
           }}
         />
@@ -258,13 +273,13 @@ export const SonicWaveIntro: React.FC<SonicWaveIntroProps> = ({
         style={{
           position: "absolute",
           left: "50%",
-          top: "46%",
+          top: "44%",
           transform: `translate(-50%, -50%) scale(${glowScale})`,
-          width: 750,
-          height: 750,
+          width: 950,
+          height: 950,
           borderRadius: "50%",
-          background: `radial-gradient(circle, rgba(30, 215, 96, 0.24) 0%, rgba(16, 185, 129, 0.08) 45%, transparent 70%)`,
-          filter: "blur(70px)",
+          background: `radial-gradient(circle, rgba(30, 215, 96, 0.28) 0%, rgba(16, 185, 129, 0.1) 45%, transparent 70%)`,
+          filter: "blur(85px)",
           opacity: glowOpacity,
           pointerEvents: "none",
         }}
@@ -273,13 +288,13 @@ export const SonicWaveIntro: React.FC<SonicWaveIntroProps> = ({
         style={{
           position: "absolute",
           left: "50%",
-          top: "46%",
+          top: "44%",
           transform: `translate(-50%, -50%) scale(${glowScale * 0.85})`,
-          width: 550,
-          height: 550,
+          width: 700,
+          height: 700,
           borderRadius: "50%",
-          background: `radial-gradient(circle, rgba(0, 245, 160, 0.18) 0%, transparent 65%)`,
-          filter: "blur(55px)",
+          background: `radial-gradient(circle, rgba(0, 245, 160, 0.22) 0%, transparent 65%)`,
+          filter: "blur(65px)",
           opacity: glowOpacity * 0.85,
           pointerEvents: "none",
         }}
@@ -302,10 +317,10 @@ export const SonicWaveIntro: React.FC<SonicWaveIntroProps> = ({
         <div
           style={{
             position: "absolute",
-            width: 220,
-            height: 220,
+            width: 320,
+            height: 320,
             borderRadius: "50%",
-            border: `2px solid ${accentColor}`,
+            border: `2.5px solid ${accentColor}`,
             transform: `scale(${shockwave1})`,
             opacity: shockwaveOpacity1,
             pointerEvents: "none",
@@ -314,26 +329,26 @@ export const SonicWaveIntro: React.FC<SonicWaveIntroProps> = ({
         <div
           style={{
             position: "absolute",
-            width: 220,
-            height: 220,
+            width: 320,
+            height: 320,
             borderRadius: "50%",
-            border: `1.5px solid ${cyanColor}`,
-            transform: `scale(${shockwave2})`,
-            opacity: shockwaveOpacity2,
+            border: `2.5px solid ${cyanColor}`,
+            transform: `scale(${shockwaveLockup})`,
+            opacity: shockwaveLockupOpacity,
             pointerEvents: "none",
           }}
         />
 
-        {/* Hero Emblem Group */}
+        {/* Hero Emblem Group (Commanding 320px scale for 1080p canvas) */}
         <div
           style={{
-            width: 200,
-            height: 200,
+            width: 320,
+            height: 320,
             position: "relative",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            filter: `drop-shadow(0 16px 40px rgba(0, 0, 0, 0.8)) drop-shadow(0 0 32px rgba(30, 215, 96, 0.35))`,
+            filter: `drop-shadow(0 24px 60px rgba(0, 0, 0, 0.85)) drop-shadow(0 0 44px rgba(30, 215, 96, 0.4))`,
           }}
         >
           <svg
@@ -361,9 +376,9 @@ export const SonicWaveIntro: React.FC<SonicWaveIntroProps> = ({
               </linearGradient>
 
               <linearGradient id="remotionBorderGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor={accentColor} stopOpacity="0.9" />
-                <stop offset="50%" stopColor={cyanColor} stopOpacity="0.3" />
-                <stop offset="100%" stopColor={accentColor} stopOpacity="0.8" />
+                <stop offset="0%" stopColor={accentColor} stopOpacity="0.95" />
+                <stop offset="50%" stopColor={cyanColor} stopOpacity="0.4" />
+                <stop offset="100%" stopColor={accentColor} stopOpacity="0.85" />
               </linearGradient>
 
               <filter id="remotionBloom" x="-40%" y="-40%" width="180%" height="180%">
@@ -372,6 +387,11 @@ export const SonicWaveIntro: React.FC<SonicWaveIntroProps> = ({
                   <feMergeNode in="glow" />
                   <feMergeNode in="SourceGraphic" />
                 </feMerge>
+              </filter>
+
+              <filter id="remotionPlayVectorHalo" x="-50%" y="-50%" width="200%" height="200%">
+                <feDropShadow dx="0" dy="0" stdDeviation="2.5" floodColor="#080b09" floodOpacity="0.9" />
+                <feDropShadow dx="0" dy="0" stdDeviation="6" floodColor={cyanColor} floodOpacity="0.5" />
               </filter>
             </defs>
 
@@ -502,11 +522,11 @@ export const SonicWaveIntro: React.FC<SonicWaveIntroProps> = ({
               />
             </g>
 
-            {/* Forward Play Vector (Back-Out Snap) */}
+            {/* Forward Play Vector with High-Contrast Halo */}
             <path
               d="M48 41.5 L64 50 L48 58.5 Z"
               fill="#ffffff"
-              filter="url(#remotionBloom)"
+              filter="url(#remotionPlayVectorHalo)"
               style={{
                 transformOrigin: "50px 50px",
                 transform: `translateX(${playVectorTranslate}px) scale(${playVectorSpring})`,
@@ -533,7 +553,7 @@ export const SonicWaveIntro: React.FC<SonicWaveIntroProps> = ({
         {/* Kinetic Typography Lockup */}
         <div
           style={{
-            marginTop: 36,
+            marginTop: 48,
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
@@ -545,9 +565,9 @@ export const SonicWaveIntro: React.FC<SonicWaveIntroProps> = ({
             style={{
               display: "flex",
               alignItems: "center",
-              fontSize: 54,
+              fontSize: 76,
               fontWeight: 800,
-              letterSpacing: "-0.04em",
+              letterSpacing: "-0.035em",
               lineHeight: 1,
             }}
           >
@@ -555,7 +575,7 @@ export const SonicWaveIntro: React.FC<SonicWaveIntroProps> = ({
               style={{
                 color: "#ffffff",
                 transform: `translateX(${sonicSlide}px)`,
-                textShadow: "0 2px 16px rgba(255, 255, 255, 0.22)",
+                textShadow: "0 2px 20px rgba(255, 255, 255, 0.25)",
               }}
             >
               {title}
@@ -564,19 +584,19 @@ export const SonicWaveIntro: React.FC<SonicWaveIntroProps> = ({
               style={{
                 color: accentColor,
                 transform: `translateX(${waveSlide}px)`,
-                textShadow: `0 0 28px rgba(30, 215, 96, 0.5), 0 2px 10px rgba(30, 215, 96, 0.3)`,
+                textShadow: `0 0 36px rgba(30, 215, 96, 0.55), 0 2px 12px rgba(30, 215, 96, 0.35)`,
               }}
             >
               {accentTitle}
             </span>
             <span
               style={{
-                width: 12,
-                height: 12,
+                width: 14,
+                height: 14,
                 borderRadius: "50%",
                 backgroundColor: cyanColor,
-                marginLeft: 14,
-                boxShadow: `0 0 16px ${cyanColor}`,
+                marginLeft: 18,
+                boxShadow: `0 0 20px ${cyanColor}`,
                 opacity: beaconBlink,
               }}
             />
@@ -584,13 +604,13 @@ export const SonicWaveIntro: React.FC<SonicWaveIntroProps> = ({
 
           <div
             style={{
-              marginTop: 14,
+              marginTop: 18,
               display: "flex",
               alignItems: "center",
-              gap: 12,
+              gap: 16,
               opacity: sublineOpacity,
               letterSpacing: `${sublineSpacing}px`,
-              fontSize: 14,
+              fontSize: 16,
               fontWeight: 600,
               textTransform: "uppercase",
             }}
@@ -599,14 +619,14 @@ export const SonicWaveIntro: React.FC<SonicWaveIntroProps> = ({
               style={{
                 color: accentColor,
                 background: "rgba(30, 215, 96, 0.12)",
-                border: "1px solid rgba(30, 215, 96, 0.3)",
-                padding: "4px 10px",
-                borderRadius: 4,
+                border: "1px solid rgba(30, 215, 96, 0.35)",
+                padding: "5px 14px",
+                borderRadius: 6,
               }}
             >
               {tagline}
             </span>
-            <span style={{ color: "rgba(255, 255, 255, 0.3)" }}>•</span>
+            <span style={{ color: "rgba(255, 255, 255, 0.35)" }}>•</span>
             <span style={{ color: "#a1a1aa" }}>{specs}</span>
           </div>
         </div>

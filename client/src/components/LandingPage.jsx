@@ -937,6 +937,17 @@ export default function LandingPage({
               <a href="#faq" className="cursor-mobile-nav-link" onClick={(e) => { setIsMobileMenuOpen(false); handleSmoothScroll(e, '#faq'); }}>FAQ</a>
             </nav>
             <div className="cursor-mobile-menu-actions">
+              {onReplayIntro && (
+                <button
+                  type="button"
+                  className="cursor-button-secondary cursor-mobile-cmd-btn"
+                  onClick={() => { setIsMobileMenuOpen(false); onReplayIntro(); }}
+                  style={{ color: 'var(--spotify-green)', borderColor: 'rgba(30, 215, 96, 0.3)' }}
+                >
+                  <Sparkles size={14} />
+                  <span>Watch Cinematic Intro</span>
+                </button>
+              )}
               <button
                 type="button"
                 className="cursor-button-primary cursor-mobile-download-btn"

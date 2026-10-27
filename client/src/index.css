@@ -5526,10 +5526,17 @@ button:focus-visible {
 .sonic-intro-timeline-fill.phase-4 { width: 92%; }
 .sonic-intro-timeline-fill.phase-5 { width: 100%; }
 
-/* Reduced Motion Respect */
+/* Reduced Motion Respect: disable intense transforms and transitions */
 @media (prefers-reduced-motion: reduce) {
   .sonic-intro-stage {
-    display: none !important;
+    transition: none !important;
+  }
+  .sonic-intro-stage *,
+  .sonic-intro-stage *::before,
+  .sonic-intro-stage *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
   }
 }
 

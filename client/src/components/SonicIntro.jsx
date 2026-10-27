@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Volume2, VolumeX, SkipForward, Play } from 'lucide-react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Volume2, VolumeX, SkipForward } from 'lucide-react';
 
 /**
  * SonicWave Cinematic Animated Intro
@@ -11,40 +11,70 @@ import { Volume2, VolumeX, SkipForward, Play } from 'lucide-react';
  * - Back-Out curve (0a0d.34e1.56f.64g137): Play-vector audio emitter impact
  * - Expo-Out curve (0a0d.16e1f.3g10K): Typography wordmark & tag reveal
  *
- * Web Audio API synthesizer generates an ambient sub-bass harmonic sweep without external files.
+ * Includes zero-latency procedural Web Audio synthesizer with pop-free master gain
+ * scheduling, scroll locking, and strict prefers-reduced-motion compliance.
  */
 export default function SonicIntro({ onComplete, forcePlay = false }) {
   const [phase, setPhase] = useState(0); // 0: init, 1: wake, 2: equalizer, 3: lockup, 4: typography, 5: exit
   const [isMuted, setIsMuted] = useState(true);
   const [audioStarted, setAudioStarted] = useState(false);
   const audioCtxRef = useRef(null);
+  const masterGainRef = useRef(null);
   const canvasRef = useRef(null);
   const animFrameRef = useRef(null);
+  const startTimeRef = useRef(Date.now());
 
-  // Check reduced motion
+  const finishIntro = useCallback(() => {
+    try {
+      sessionStorage.setItem('sonicwave_intro_seen', 'true');
+    } catch {}
+    if (onComplete) onComplete();
+  }, [onComplete]);
+
+  const handleSkip = useCallback(() => {
+    // Smoothly fade out audio on skip
+    if (audioCtxRef.current && masterGainRef.current) {
+      try {
+        const now = audioCtxRef.current.currentTime;
+        masterGainRef.current.gain.cancelScheduledValues(now);
+        masterGainRef.current.gain.setTargetAtTime(0, now, 0.04);
+      } catch {}
+    }
+    setPhase(5);
+    setTimeout(finishIntro, 350);
+  }, [finishIntro]);
+
+  // Body scroll lock & Reduced Motion respect
   useEffect(() => {
+    // Lock body scrolling while intro is visible
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    // Strict reduced motion check: skip immediately without animation delay
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (prefersReducedMotion && !forcePlay) {
-      handleSkip();
+      document.body.style.overflow = originalOverflow;
+      finishIntro();
       return;
     }
 
-    // Sequence timeline:
-    // T+100ms: Phase 1 (Acoustic Awakening)
-    // T+900ms: Phase 2 (Equalizer Harmonic Ignition)
+    startTimeRef.current = Date.now();
+
+    // Choreographed timeline sequence:
+    // T+80ms:  Phase 1 (Acoustic Awakening & Radar Arcs)
+    // T+900ms: Phase 2 (Equalizer Harmonic Ignition & Bounce)
     // T+1800ms: Phase 3 (Obsidian Vessel & Play Vector Lockup)
-    // T+2800ms: Phase 4 (Typography Wordmark Reveal)
-    // T+4000ms: Phase 5 (Cinematic Dissolve & Finish)
+    // T+2800ms: Phase 4 (Typography Wordmark Reveal & Beacon Pulse)
+    // T+4100ms: Phase 5 (Cinematic Dissolve & Finish)
     const t1 = setTimeout(() => setPhase(1), 80);
     const t2 = setTimeout(() => setPhase(2), 900);
     const t3 = setTimeout(() => setPhase(3), 1800);
     const t4 = setTimeout(() => setPhase(4), 2800);
     const t5 = setTimeout(() => setPhase(5), 4100);
-    const t6 = setTimeout(() => {
-      finishIntro();
-    }, 4700);
+    const t6 = setTimeout(() => finishIntro(), 4700);
 
     return () => {
+      document.body.style.overflow = originalOverflow;
       clearTimeout(t1);
       clearTimeout(t2);
       clearTimeout(t3);
@@ -58,100 +88,112 @@ export default function SonicIntro({ onComplete, forcePlay = false }) {
         } catch {}
       }
     };
-  }, [forcePlay]);
+  }, [forcePlay, finishIntro]);
 
-  // Keyboard shortcut: Escape or Space to skip
+  // Keyboard shortcut: Escape to dismiss (does not intercept typing spacebar)
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (e.key === 'Escape' || e.key === ' ') {
+      if (e.key === 'Escape') {
         e.preventDefault();
         handleSkip();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [handleSkip]);
 
-  // Web Audio synthesizer for cinematic soundscape
-  const playCinematicSound = () => {
+  // Web Audio synthesizer with pop-free master gain
+  const playCinematicSound = useCallback(() => {
     try {
       const AudioCtx = window.AudioContext || window.webkitAudioContext;
       if (!AudioCtx) return;
       const ctx = new AudioCtx();
       audioCtxRef.current = ctx;
 
+      const masterGain = ctx.createGain();
+      masterGainRef.current = masterGain;
+      masterGain.gain.setValueAtTime(0.0001, ctx.currentTime);
+      // Smooth fade-in
+      masterGain.gain.linearRampToValueAtTime(1.0, ctx.currentTime + 0.08);
+      masterGain.connect(ctx.destination);
+
+      const elapsed = (Date.now() - startTimeRef.current) / 1000;
       const now = ctx.currentTime;
 
       // 1. Sub-bass riser to boom
+      const subOffset = Math.max(0, elapsed);
+      const subDuration = Math.max(0.1, 3.4 - subOffset);
       const subOsc = ctx.createOscillator();
       const subGain = ctx.createGain();
       subOsc.type = 'sine';
-      subOsc.frequency.setValueAtTime(45, now);
-      subOsc.frequency.exponentialRampToValueAtTime(80, now + 1.2);
-      subOsc.frequency.exponentialRampToValueAtTime(35, now + 2.5);
+
+      const startFreq = elapsed < 1.4 ? 45 + (80 - 45) * (elapsed / 1.4) : 80;
+      subOsc.frequency.setValueAtTime(Math.min(85, Math.max(35, startFreq)), now);
+      if (elapsed < 1.4) {
+        subOsc.frequency.exponentialRampToValueAtTime(80, now + Math.max(0.05, 1.4 - elapsed));
+        subOsc.frequency.exponentialRampToValueAtTime(35, now + Math.max(0.1, 2.6 - elapsed));
+      } else {
+        subOsc.frequency.exponentialRampToValueAtTime(35, now + Math.max(0.1, 2.6 - elapsed));
+      }
 
       subGain.gain.setValueAtTime(0.001, now);
-      subGain.gain.linearRampToValueAtTime(0.3, now + 1.4);
-      subGain.gain.exponentialRampToValueAtTime(0.001, now + 3.2);
+      subGain.gain.linearRampToValueAtTime(0.35, now + Math.min(1.2, subDuration * 0.4));
+      subGain.gain.exponentialRampToValueAtTime(0.001, now + subDuration);
 
       subOsc.connect(subGain);
-      subGain.connect(ctx.destination);
+      subGain.connect(masterGain);
       subOsc.start(now);
-      subOsc.stop(now + 3.3);
+      subOsc.stop(now + subDuration);
 
-      // 2. Crystalline Harmonic Chime
+      // 2. Crystalline Harmonic Chime Chord
+      const chimeDelay = Math.max(0, 1.8 - elapsed);
       const chimeOsc = ctx.createOscillator();
       const chimeGain = ctx.createGain();
       chimeOsc.type = 'triangle';
-      chimeOsc.frequency.setValueAtTime(880, now + 1.8);
-      chimeOsc.frequency.exponentialRampToValueAtTime(1760, now + 2.4);
+      chimeOsc.frequency.setValueAtTime(880, now + chimeDelay);
+      chimeOsc.frequency.exponentialRampToValueAtTime(1760, now + chimeDelay + 0.6);
 
-      chimeGain.gain.setValueAtTime(0.001, now);
-      chimeGain.gain.setValueAtTime(0.001, now + 1.8);
-      chimeGain.gain.linearRampToValueAtTime(0.12, now + 1.95);
-      chimeGain.gain.exponentialRampToValueAtTime(0.001, now + 3.5);
+      chimeGain.gain.setValueAtTime(0.0001, now);
+      chimeGain.gain.setValueAtTime(0.0001, now + chimeDelay);
+      chimeGain.gain.linearRampToValueAtTime(0.14, now + chimeDelay + 0.12);
+      chimeGain.gain.exponentialRampToValueAtTime(0.0001, now + chimeDelay + 1.8);
 
       chimeOsc.connect(chimeGain);
-      chimeGain.connect(ctx.destination);
-      chimeOsc.start(now + 1.8);
-      chimeOsc.stop(now + 3.6);
+      chimeGain.connect(masterGain);
+      chimeOsc.start(now + chimeDelay);
+      chimeOsc.stop(now + chimeDelay + 1.9);
 
       setAudioStarted(true);
       setIsMuted(false);
-    } catch (err) {
-      // Audio autoplay policy or unavailable
+    } catch {
+      // Audio autoplay policy fallback
     }
-  };
+  }, []);
 
-  const toggleSound = () => {
+  const toggleSound = useCallback(() => {
     if (isMuted) {
       if (!audioStarted) {
         playCinematicSound();
-      } else if (audioCtxRef.current && audioCtxRef.current.state === 'suspended') {
-        audioCtxRef.current.resume();
+      } else if (audioCtxRef.current && masterGainRef.current) {
+        if (audioCtxRef.current.state === 'suspended') {
+          audioCtxRef.current.resume();
+        }
+        const now = audioCtxRef.current.currentTime;
+        masterGainRef.current.gain.cancelScheduledValues(now);
+        masterGainRef.current.gain.setTargetAtTime(1.0, now, 0.05);
         setIsMuted(false);
       } else {
         setIsMuted(false);
       }
     } else {
-      if (audioCtxRef.current && audioCtxRef.current.state === 'running') {
-        audioCtxRef.current.suspend();
+      if (audioCtxRef.current && masterGainRef.current) {
+        const now = audioCtxRef.current.currentTime;
+        masterGainRef.current.gain.cancelScheduledValues(now);
+        masterGainRef.current.gain.setTargetAtTime(0.0001, now, 0.04);
       }
       setIsMuted(true);
     }
-  };
-
-  const finishIntro = () => {
-    try {
-      sessionStorage.setItem('sonicwave_intro_seen', 'true');
-    } catch {}
-    if (onComplete) onComplete();
-  };
-
-  const handleSkip = () => {
-    setPhase(5);
-    setTimeout(finishIntro, 350);
-  };
+  }, [isMuted, audioStarted, playCinematicSound]);
 
   // Ambient Canvas Particle Audio Dust
   useEffect(() => {
@@ -178,9 +220,7 @@ export default function SonicIntro({ onComplete, forcePlay = false }) {
       angle: Math.random() * Math.PI * 2
     }));
 
-    let frame = 0;
     const render = () => {
-      frame++;
       ctx.clearRect(0, 0, width, height);
 
       particles.forEach((p) => {
@@ -298,6 +338,11 @@ export default function SonicIntro({ onComplete, forcePlay = false }) {
                   <feMergeNode in="SourceGraphic" />
                 </feMerge>
               </filter>
+
+              <filter id="introPlayHalo" x="-40%" y="-40%" width="180%" height="180%">
+                <feDropShadow dx="0" dy="0" stdDeviation="1.8" floodColor="#080b09" floodOpacity="0.95" />
+                <feDropShadow dx="0" dy="0" stdDeviation="4" floodColor="#00f5a0" floodOpacity="0.45" />
+              </filter>
             </defs>
 
             {/* Orbit Pulsing Ring */}
@@ -349,12 +394,12 @@ export default function SonicIntro({ onComplete, forcePlay = false }) {
               <rect x="61" y="42" width="4.5" height="16" rx="2.25" className="intro-bar bar-5" fill="url(#introWaveGrad)" />
             </g>
 
-            {/* Play Vector Forward Audio Emitter (Phase 3 Back-Out Curve) */}
+            {/* Play Vector Forward Audio Emitter (Phase 3 Back-Out Curve with Halo) */}
             <path
               d="M48 41.5 L64 50 L48 58.5 Z"
               className={`intro-play-vector ${phase >= 3 ? 'impact' : ''}`}
               fill="#ffffff"
-              filter="url(#introBloom)"
+              filter="url(#introPlayHalo)"
             />
 
             {/* Central Photonic Spark (Phase 1) */}

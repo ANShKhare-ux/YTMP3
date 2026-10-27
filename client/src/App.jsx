@@ -52,7 +52,9 @@ export default function App() {
   const [isPricingOpen, setIsPricingOpen] = useState(false);
   const eventSourceRef = useRef(null);
 
+  const [introForcePlay, setIntroForcePlay] = useState(false);
   const handleReplayIntro = () => {
+    setIntroForcePlay(true);
     setShowIntro(true);
   };
 
@@ -531,8 +533,11 @@ export default function App() {
         {/* Cinematic Animated Intro (Plays on first visit or via Quick Menu) */}
         {showIntro && (
           <SonicIntro
-            onComplete={() => setShowIntro(false)}
-            forcePlay={true}
+            onComplete={() => {
+              setShowIntro(false);
+              setIntroForcePlay(false);
+            }}
+            forcePlay={introForcePlay}
           />
         )}
       </div>
@@ -891,8 +896,11 @@ export default function App() {
       {/* Cinematic Animated Intro (Plays on first visit or via Quick Menu) */}
       {showIntro && (
         <SonicIntro
-          onComplete={() => setShowIntro(false)}
-          forcePlay={true}
+          onComplete={() => {
+            setShowIntro(false);
+            setIntroForcePlay(false);
+          }}
+          forcePlay={introForcePlay}
         />
       )}
     </div>
