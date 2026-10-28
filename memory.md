@@ -188,8 +188,8 @@
 - **Execute All Tests**:
   ```powershell
   npm.cmd test
-  # Or directly:
-  node --test tests/*.test.js
+  # Or directly (Node native test runner recursively discovers tests):
+  node --test
   ```
 
 ---
