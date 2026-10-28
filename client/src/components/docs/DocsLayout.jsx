@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { trackAppDownload } from '../../utils/analytics';
 import {
   Download,
   Layers,
@@ -84,6 +85,7 @@ export default function DocsLayout({
   };
 
   const handleDownload = () => {
+    trackAppDownload({ source: 'docs_header' });
     window.location.href = '/SonicWave-v1.0.0-Windows.zip';
   };
 

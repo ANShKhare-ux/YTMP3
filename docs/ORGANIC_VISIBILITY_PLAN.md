@@ -203,9 +203,48 @@ All changes have been executed and verified in the local workspace:
 
 ---
 
-## 7. 30-Day Measurement & Optimization Plan
+## 7. 30-Day Measurement, Conversion Success Metric & Optimization Plan
 
-To track the effectiveness of this organic visibility rollout, implement the following measurement protocol across Google Search Console (GSC) and server/analytics logs:
+### 7.1 Primary Business Success Metric: App Download Conversion
+
+The ultimate conversion objective of SonicWave is turning organic search visitors into active desktop software users. To measure this with precision, SonicWave implements a dual-stage conversion tracking pipeline powered by `@vercel/analytics`:
+
+#### 1. Primary Success Metric: `app_download`
+Triggered whenever a user actively initiates the download of the standalone Windows software package (`SonicWave-v1.0.0-Windows.zip`).
+
+- **Event Name**: `app_download`
+- **Payload Schema**:
+  ```json
+  {
+    "product": "SonicWave",
+    "version": "1.0.0",
+    "platform": "windows_64bit",
+    "source": "modal_primary | install_guide_step1 | docs_header | legal_header | footer_link",
+    "file": "SonicWave-v1.0.0-Windows.zip",
+    "timestamp": "2026-10-28T13:40:00.000Z"
+  }
+  ```
+- **Tracked Touchpoints**:
+  1. `modal_primary`: Windows Download modal primary button click.
+  2. `install_guide_step1`: Direct ZIP download button inside `/install` Step 1 walkthrough.
+  3. `docs_header`: Top-level download button in the documentation layout (`DocsLayout.jsx`).
+  4. `legal_header`: Top-level download button in legal layouts (`LegalLayout.jsx`).
+  5. `footer_link`: Direct Windows archive download link in `HalftoneWordmarkFooter`.
+  6. `prerendered_nav` / `prerendered_hero`: Fallback onclick telemetry in static pre-rendered HTML before hydration.
+
+#### 2. Top-of-Funnel Intent Metric: `app_download_intent`
+Triggered whenever a user clicks any high-intent CTA button that opens the Windows Download dialog.
+
+- **Event Name**: `app_download_intent`
+- **Sources Tracked**: `hero_cta`, `nav_header`, `mobile_nav`, `bottom_cta`, `preview_cta`, `comparison_table`.
+- **Key Funnel KPIs**:
+  - **Download Click-Through Rate (CTR)**: `(app_download_intent / Total Pageviews) * 100%`
+  - **Download Completion Rate (CVR)**: `(app_download / app_download_intent) * 100%`
+  - **Organic Search Conversion Rate**: `(app_download from organic landing / Organic Landing Pageviews) * 100%`
+
+---
+
+To track the ongoing effectiveness of this organic visibility rollout, implement the following measurement protocol across Google Search Console (GSC) and analytics logs:
 
 ### Phase 1: Days 1–7 (Crawl & Indexation Verification)
 - **Action**: In Google Search Console, submit `https://ytmp-3-five.vercel.app/sitemap.xml`.

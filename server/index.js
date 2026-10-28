@@ -273,6 +273,15 @@ app.get('/api/history', (req, res) => {
   res.json({ success: true, history: getHistory() });
 });
 
+// Telemetry & Metrics endpoint: record conversion events & download metrics
+app.post('/api/metrics/event', (req, res) => {
+  const { eventName, properties } = req.body || {};
+  if (eventName === 'app_download') {
+    console.log(`[metric] Success Metric: app_download from ${properties?.source || 'unknown'} (${properties?.file || 'zip'})`);
+  }
+  res.json({ success: true, recorded: true });
+});
+
 // Serve frontend static build in production
 const clientDist = path.join(__dirname, '../client/dist');
 if (fs.existsSync(clientDist)) {
