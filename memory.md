@@ -41,7 +41,15 @@
   - Full sitemap integration in `client/public/sitemap.xml` referencing real canonical URLs.
   - Shared `LegalLayout` with tabbed cross-navigation, theme toggle, and dedicated legal footer, harmonized with Spotify/Linear design tokens.
   - Automated test assertions in `tests/workspace.test.js` validating legal component existence and sitemap URL coverage.
-- **Automated Test Suite**: Node.js native test runner (`node:test`) covering converter formatting, binary management, and workspace integrity.
+- **Brand Favicon Suite & Premium Social Share Preview**:
+  - `client/public/favicon.ico`: Windows multi-resolution icon binary packaging 16x16, 32x32, and 48x48 PNG layers with 5-bar acoustic soundwave brand mark.
+  - `client/public/favicon-96.png`: 96x96 PNG for modern browser tabs and Google Search desktop favicon snippet displays.
+  - `client/public/apple-touch-icon.png`: 180x180 PNG for iOS home screen bookmarks and Apple Safari pinned tabs.
+  - `client/public/og/sonicwave-share.png`: 1200x630 high-resolution social preview image featuring live-rendered 28-bar equalizer spectrum, Windows 11 frosted glass window card, 16-stream badge, and feature pills.
+  - `client/public/og-image.png`: Mirrored for backwards compatibility with legacy crawlers.
+  - `scripts/generate-assets.mjs` & `npm run generate:assets`: Automated generator leveraging Chrome headless with GDI+ bicubic downsampling.
+  - `client/index.html`: Fully updated with standard `<link rel="icon">`, `<link rel="apple-touch-icon">`, Open Graph, Twitter Cards, and Schema.org metadata.
+- **Automated Test Suite**: Node.js native test runner (`node:test`) covering converter formatting, binary management, workspace integrity, and brand assets.
 
 ### Planned / Inferred / Unimplemented Features
 - *Inferred*: The Pricing Modal (`PricingModal.jsx`) is a presentation/comparison UI; no external payment processor (Stripe, LemonSqueezy) is integrated.

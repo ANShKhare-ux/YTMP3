@@ -84,4 +84,50 @@ test('workspace - legal & support pages and sitemap integrity', () => {
   assert.ok(sitemapContent.includes('/contact'), 'sitemap.xml must include /contact');
 });
 
+test('workspace - favicon suite and social share assets integrity', () => {
+  const publicDir = path.join(rootDir, 'client', 'public');
+  const favIco = path.join(publicDir, 'favicon.ico');
+  const fav96 = path.join(publicDir, 'favicon-96.png');
+  const appleTouch = path.join(publicDir, 'apple-touch-icon.png');
+  const ogShare = path.join(publicDir, 'og', 'sonicwave-share.png');
+  const ogLegacy = path.join(publicDir, 'og-image.png');
+
+  assert.ok(fs.existsSync(favIco), 'favicon.ico must exist');
+  assert.ok(fs.existsSync(fav96), 'favicon-96.png must exist');
+  assert.ok(fs.existsSync(appleTouch), 'apple-touch-icon.png must exist');
+  assert.ok(fs.existsSync(ogShare), 'og/sonicwave-share.png must exist');
+  assert.ok(fs.existsSync(ogLegacy), 'og-image.png must exist for backwards compatibility');
+
+  // Verify non-empty files (> 1 KB)
+  assert.ok(fs.statSync(favIco).size > 1024, 'favicon.ico must be a populated ICO bundle');
+  assert.ok(fs.statSync(fav96).size > 1024, 'favicon-96.png must have valid non-empty image data');
+  assert.ok(fs.statSync(appleTouch).size > 1024, 'apple-touch-icon.png must have valid non-empty image data');
+  assert.ok(fs.statSync(ogShare).size > 50000, 'sonicwave-share.png must have valid rich preview data');
+
+  // Verify PNG dimensions from IHDR header
+  function readPngDimensions(filePath) {
+    const buf = fs.readFileSync(filePath);
+    assert.strictEqual(buf.subarray(0, 8).toString('hex'), '89504e470d0a1a0a', `${filePath} must be valid PNG`);
+    return { width: buf.readUInt32BE(16), height: buf.readUInt32BE(20) };
+  }
+
+  assert.deepStrictEqual(readPngDimensions(fav96), { width: 96, height: 96 }, 'favicon-96.png must be 96x96');
+  assert.deepStrictEqual(readPngDimensions(appleTouch), { width: 180, height: 180 }, 'apple-touch-icon.png must be 180x180');
+  assert.deepStrictEqual(readPngDimensions(ogShare), { width: 1200, height: 630 }, 'sonicwave-share.png must be 1200x630');
+
+  // Verify favicon.ico directory entry count
+  const icoBuf = fs.readFileSync(favIco);
+  assert.strictEqual(icoBuf.readUInt16LE(0), 0, 'ICO reserved must be 0');
+  assert.strictEqual(icoBuf.readUInt16LE(2), 1, 'ICO type must be 1 (icon)');
+  const imageCount = icoBuf.readUInt16LE(4);
+  assert.strictEqual(imageCount, 3, 'favicon.ico must contain 3 embedded resolutions (16, 32, 48)');
+
+  // Verify HTML metadata links
+  const indexHtml = fs.readFileSync(path.join(rootDir, 'client', 'index.html'), 'utf8');
+  assert.ok(indexHtml.includes('href="/favicon.ico"'), 'index.html must link favicon.ico');
+  assert.ok(indexHtml.includes('href="/favicon-96.png"'), 'index.html must link favicon-96.png');
+  assert.ok(indexHtml.includes('href="/apple-touch-icon.png"'), 'index.html must link apple-touch-icon.png');
+  assert.ok(indexHtml.includes('/og/sonicwave-share.png'), 'index.html must point Open Graph to sonicwave-share.png');
+});
+
 
