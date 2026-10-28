@@ -84,7 +84,7 @@ function cleanOldDownloads() {
         const fullPath = path.join(DOWNLOADS_DIR, file);
         try {
           const stats = fs.statSync(fullPath);
-          if (now - stats.mtimeMs > maxAge) {
+          if (stats.isFile() && now - stats.mtimeMs > maxAge) {
             fs.unlinkSync(fullPath);
           }
         } catch {}
@@ -140,25 +140,73 @@ function detectPlatform(url) {
 }
 
 /**
- * Clean & normalize any social media or web URL
+ * Clean & normalize any social media or web URL with strict SSRF & protocol controls
  */
 function normalizeUrl(rawUrl) {
   if (!rawUrl || typeof rawUrl !== 'string') {
     throw new Error('URL is required');
   }
   let url = rawUrl.trim();
-  
-  // Add protocol if omitted
-  if (!/^https?:\/\//i.test(url)) {
+
+  // Prevent null-byte injection
+  if (url.includes('\0')) {
+    throw new Error('Invalid URL format: null bytes detected.');
+  }
+
+  // If protocol scheme is provided, verify it is strictly HTTP or HTTPS
+  const schemeMatch = url.match(/^([a-zA-Z][a-zA-Z0-9+.-]*):/);
+  if (schemeMatch) {
+    const scheme = schemeMatch[1].toLowerCase();
+    if (scheme !== 'http' && scheme !== 'https') {
+      throw new Error('Only HTTP and HTTPS URLs are authorized.');
+    }
+  } else {
+    // Add default https protocol if omitted
     url = 'https://' + url;
   }
 
+  let parsed;
   try {
-    const parsed = new URL(url);
-    if (!parsed.hostname || !parsed.hostname.includes('.')) {
-      throw new Error('Invalid domain');
-    }
+    parsed = new URL(url);
   } catch (e) {
+    throw new Error('Please enter a valid link from YouTube, Instagram, TikTok, Twitter/X, Facebook, SoundCloud, Reddit, etc.');
+  }
+
+  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+    throw new Error('Only HTTP and HTTPS URLs are authorized.');
+  }
+
+  const hostname = parsed.hostname.toLowerCase();
+  if (!hostname) {
+    throw new Error('Please enter a valid link from YouTube, Instagram, TikTok, Twitter/X, Facebook, SoundCloud, Reddit, etc.');
+  }
+
+  // SSRF & Local/Private IP / Cloud Metadata Prevention
+  const isLoopback = (
+    hostname === 'localhost' ||
+    hostname === '127.0.0.1' ||
+    hostname === '0.0.0.0' ||
+    hostname === '::1' ||
+    hostname === '[::1]' ||
+    hostname.startsWith('127.') ||
+    hostname === '169.254.169.254' ||
+    hostname === 'metadata.google.internal'
+  );
+
+  // Private RFC 1918 & Carrier-grade NAT IPv4 check
+  const isPrivateIp = (
+    /^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(hostname) ||
+    /^172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3}$/.test(hostname) ||
+    /^192\.168\.\d{1,3}\.\d{1,3}$/.test(hostname) ||
+    /^100\.(6[4-9]|[7-9]\d|1[0-1]\d|12[0-7])\.\d{1,3}\.\d{1,3}$/.test(hostname) ||
+    /^169\.254\.\d{1,3}\.\d{1,3}$/.test(hostname)
+  );
+
+  if (isLoopback || isPrivateIp) {
+    throw new Error('Access to local, internal, or cloud metadata network addresses is strictly prohibited.');
+  }
+
+  if (!hostname.includes('.')) {
     throw new Error('Please enter a valid link from YouTube, Instagram, TikTok, Twitter/X, Facebook, SoundCloud, Reddit, etc.');
   }
 
@@ -590,6 +638,19 @@ function cancelConversion(jobId) {
   return false;
 }
 
+/**
+ * Get count of actively running conversions
+ */
+function getActiveJobCount() {
+  let count = 0;
+  for (const job of jobs.values()) {
+    if (job.status === 'starting' || job.status === 'downloading' || job.status === 'converting' || job.status === 'tagging') {
+      count++;
+    }
+  }
+  return count;
+}
+
 module.exports = {
   getVideoInfo,
   startConversion,
@@ -597,5 +658,7 @@ module.exports = {
   getJob,
   getHistory,
   formatDuration,
+  getActiveJobCount,
+  normalizeUrl,
   DOWNLOADS_DIR
 };

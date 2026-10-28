@@ -4,18 +4,44 @@ const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
 const { verifyBinaries, updateYtDlp } = require('./binManager');
-const { getVideoInfo, startConversion, cancelConversion, getJob, getHistory, DOWNLOADS_DIR } = require('./converter');
+const { getVideoInfo, startConversion, cancelConversion, getJob, getHistory, getActiveJobCount, DOWNLOADS_DIR } = require('./converter');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Middleware
+// Defensive Security Headers Middleware
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Permissions-Policy', 'geolocation=(), camera=(), microphone=()');
+  next();
+});
+
+// Strict Cross-Origin Resource Sharing (CORS) Configuration
+const ALLOWED_ORIGINS = new Set([
+  'http://localhost:5173',
+  'http://localhost:3001',
+  'http://127.0.0.1:5173',
+  'http://127.0.0.1:3001',
+  'https://ytmp-3-five.vercel.app'
+]);
+
 app.use(cors({
-  origin: '*',
+  origin: (origin, callback) => {
+    // Allow non-browser requests (null/undefined origin like desktop app, curl, electron)
+    if (!origin) return callback(null, true);
+    if (ALLOWED_ORIGINS.has(origin) || origin.endsWith('.vercel.app')) {
+      return callback(null, true);
+    }
+    return callback(new Error('Cross-Origin Request Blocked by SonicWave Security Policy'));
+  },
   methods: ['GET', 'POST', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Range']
 }));
-app.use(express.json());
+
+// Bounded Request Body Size
+app.use(express.json({ limit: '256kb' }));
 
 let systemStatus = {
   ready: false,
@@ -54,6 +80,15 @@ app.post('/api/convert', (req, res) => {
 
   if (!url) {
     return res.status(400).json({ success: false, error: 'Media URL is required' });
+  }
+
+  // Concurrency Limiter: Prevent CPU/Socket/Memory DoS from Unbounded Concurrent Conversions
+  const MAX_CONCURRENT_CONVERSIONS = 3;
+  if (getActiveJobCount() >= MAX_CONCURRENT_CONVERSIONS) {
+    return res.status(429).json({
+      success: false,
+      error: 'Server is currently processing maximum concurrent conversions (3). Please wait for active conversions to complete.'
+    });
   }
 
   const jobId = crypto.randomUUID();
@@ -123,9 +158,12 @@ app.get('/api/progress/:jobId', (req, res) => {
   const interval = setInterval(sendUpdate, 400);
   sendUpdate();
 
-  req.on('close', () => {
+  const cleanup = () => {
     clearInterval(interval);
-  });
+  };
+  req.on('close', cleanup);
+  res.on('close', cleanup);
+  res.on('error', cleanup);
 });
 
 // Polling fallback endpoint for progress
@@ -147,7 +185,14 @@ app.get('/api/stream/:jobId', (req, res) => {
     return res.status(404).send('Audio file not found or still processing.');
   }
 
-  const filePath = job.filePath;
+  // Strict Path Traversal Prevention: Confinement to authorized DOWNLOADS_DIR
+  const resolvedPath = path.resolve(job.filePath);
+  const resolvedDownloads = path.resolve(DOWNLOADS_DIR);
+  if (!resolvedPath.startsWith(resolvedDownloads + path.sep)) {
+    return res.status(403).send('Access denied: file path is outside authorized downloads directory.');
+  }
+
+  const filePath = resolvedPath;
   const stat = fs.statSync(filePath);
   const fileSize = stat.size;
   const range = req.headers.range;
@@ -187,7 +232,7 @@ app.get('/api/stream/:jobId', (req, res) => {
   }
 });
 
-// Download Audio/Video File with RFC 5987 Unicode Support
+// Download Audio/Video File with RFC 5987 Unicode Support & Path Sanitization
 app.get('/api/download/:jobId', (req, res) => {
   const { jobId } = req.params;
   const job = getJob(jobId);
@@ -196,12 +241,26 @@ app.get('/api/download/:jobId', (req, res) => {
     return res.status(404).send('File not found or still processing.');
   }
 
-  const filename = job.fileName || `${job.title || 'audio'}.${job.format}`;
-  const asciiFallback = filename.replace(/[^\x20-\x7E]/g, '_').replace(/["\r\n]/g, '_');
-  const utf8Encoded = encodeURIComponent(filename).replace(/['()]/g, escape);
+  // Strict Path Traversal Prevention: Confinement to authorized DOWNLOADS_DIR
+  const resolvedPath = path.resolve(job.filePath);
+  const resolvedDownloads = path.resolve(DOWNLOADS_DIR);
+  if (!resolvedPath.startsWith(resolvedDownloads + path.sep)) {
+    return res.status(403).send('Access denied: file path is outside authorized downloads directory.');
+  }
+
+  const rawFilename = job.fileName || `${job.title || 'audio'}.${job.format}`;
+  const safeFilename = path.basename(rawFilename).replace(/[^\w\s.-]/g, '_');
+  const asciiFallback = safeFilename.replace(/[^\x20-\x7E]/g, '_').replace(/["\r\n]/g, '_');
+  const utf8Encoded = encodeURIComponent(safeFilename);
 
   res.setHeader('Content-Disposition', `attachment; filename="${asciiFallback}"; filename*=UTF-8''${utf8Encoded}`);
-  res.sendFile(path.resolve(job.filePath), (err) => {
+  res.sendFile(resolvedPath, (err) => {
+    if (err && !res.headersSent) {
+      console.error('[server] Download error:', err.message);
+      res.status(500).send('Error downloading file.');
+    }
+  });
+});
     if (err && !res.headersSent) {
       console.error('[server] Download error:', err.message);
       res.status(500).send('Error downloading file.');

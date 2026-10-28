@@ -55,7 +55,16 @@
   - Schema.org structured data expansions (`HowTo`, `TechArticle`, `FAQPage`) with explicit step and diagnostic definitions.
   - Full sitemap coverage in `client/public/sitemap.xml` with priority weighting (1.0, 0.9, 0.8) and `client/public/llms.txt` synchronization.
   - Standardized honest file size claims across all UI components and metadata to **1.3 MB** (matching the actual `SonicWave-v1.0.0-Windows.zip`).
-- **Automated Test Suite**: Node.js native test runner (`node:test`) covering converter formatting, binary management, workspace integrity, brand assets, legal pages, and technical documentation routing.
+- **Security Hardening (Cloudflare Security Audit Workflow)**:
+  - Installed `cloudflare/security-audit-skill` globally to `C:\Users\shiv\.gemini\config\skills\security-audit`.
+  - SSRF & IP confinement in `server/converter.js`: blocks loopback, private IPv4, Carrier-Grade NAT, and cloud metadata (`169.254.169.254`, `metadata.google.internal`).
+  - Strict CORS origin allowlist in `server/index.js` preventing cross-origin localhost port hijacking by third-party websites.
+  - Concurrency limiter in `server/index.js`: enforces `MAX_CONCURRENT_CONVERSIONS = 3` to prevent process fork bombing and memory exhaustion.
+  - Path traversal protection in `/api/stream` and `/api/download`: strictly confines file access within `server/downloads/`.
+  - Replaced `execSync` template string shell invocations in `server/binManager.js` with `execFileSync` argument arrays.
+  - Defensive security headers: `X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN`, `Referrer-Policy: strict-origin-when-cross-origin`.
+  - Documented findings and verification in `docs/SECURITY_AUDIT_REPORT.md`.
+- **Automated Test Suite**: Node.js native test runner (`node:test`) covering converter formatting, binary management, workspace integrity, brand assets, legal pages, technical documentation routing, and security boundaries (25 tests).
 
 ### Planned / Inferred / Unimplemented Features
 - *Inferred*: The Pricing Modal (`PricingModal.jsx`) is a presentation/comparison UI; no external payment processor (Stripe, LemonSqueezy) is integrated.
