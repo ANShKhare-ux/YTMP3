@@ -1,7 +1,6 @@
 import React from 'react';
 import DocsLayout from './DocsLayout';
 import { useDocumentMetadata } from '../legal/useDocumentMetadata';
-import { trackAppDownload } from '../../utils/analytics';
 import {
   Download,
   Terminal,
@@ -115,9 +114,7 @@ export default function InstallGuide({ onNavigate }) {
             <div style={{ margin: '10px 0 16px' }}>
               <a
                 href="/SonicWave-v1.0.0-Windows.zip"
-                download="SonicWave-v1.0.0-Windows.zip"
                 className="cursor-button-primary"
-                onClick={() => trackAppDownload({ source: 'install_guide_step1' })}
                 style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '8px 16px', borderRadius: 8, textDecoration: 'none', color: '#fff', fontWeight: 600, fontSize: 13 }}
               >
                 <Download size={14} /> Download SonicWave v1.0.0 for Windows (.zip)

@@ -64,14 +64,7 @@
   - Replaced `execSync` template string shell invocations in `server/binManager.js` with `execFileSync` argument arrays.
   - Defensive security headers: `X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN`, `Referrer-Policy: strict-origin-when-cross-origin`.
   - Documented findings and verification in `docs/SECURITY_AUDIT_REPORT.md`.
-- **App Download Success Metric & Telemetry Pipeline**:
-  - Implemented centralized telemetry in `client/src/utils/analytics.js` powered by `@vercel/analytics` (`track`), Google Analytics `gtag`, custom DOM event dispatch (`sonicwave:analytics`), and non-blocking beacon dispatch.
-  - Primary Success Metric: `app_download` event recording `source`, `file` (`SonicWave-v1.0.0-Windows.zip`), `platform` (`windows_64bit`), `version` (`1.0.0`), and ISO timestamp.
-  - Funnel Intent Metric: `app_download_intent` recording user engagement across hero (`hero_cta`), header (`nav_header`), mobile drawer (`mobile_nav`), comparison table (`comparison_table`), preview player (`preview_cta`), and bottom CTA (`bottom_cta`).
-  - Instrumented across all download touchpoints: `WindowsDownloadModal` (`modal_primary`), `InstallGuide` (`install_guide_step1`), `DocsLayout` (`docs_header`), `LegalLayout` (`legal_header`), `HalftoneWordmarkFooter` (`footer_link`), and pre-rendered HTML fallback anchors (`prerendered_nav`, `prerendered_hero`).
-  - Added `/api/metrics/event` endpoint in `server/index.js` for development/server telemetry logging.
-  - Automated test coverage in `tests/analytics.test.js` (30/30 suite tests passing).
-- **Automated Test Suite**: Node.js native test runner (`node:test`) covering converter formatting, binary management, workspace integrity, brand assets, legal pages, technical documentation routing, security boundaries, and analytics telemetry (30 tests).
+- **Automated Test Suite**: Node.js native test runner (`node:test`) covering converter formatting, binary management, workspace integrity, brand assets, legal pages, technical documentation routing, and security boundaries (25 tests).
 
 ### Planned / Inferred / Unimplemented Features
 - *Inferred*: The Pricing Modal (`PricingModal.jsx`) is a presentation/comparison UI; no external payment processor (Stripe, LemonSqueezy) is integrated.

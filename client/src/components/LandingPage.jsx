@@ -32,7 +32,6 @@ import {
 } from 'lucide-react';
 import FaqAccordion from './ui/FaqAccordion';
 import HalftoneWordmarkFooter from './ui/halftone-wordmark-footer';
-import { trackAppDownload, trackDownloadIntent } from '../utils/analytics';
 import { gsap } from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -846,9 +845,8 @@ export default function LandingPage({
     return `${mins}:${s < 10 ? '0' : ''}${s}`;
   };
 
-  const handleDownloadClick = (e, source = 'unknown_cta') => {
-    if (e && e.preventDefault) e.preventDefault();
-    trackDownloadIntent(source);
+  const handleDownloadClick = (e) => {
+    if (e) e.preventDefault();
     setIsDownloadModalOpen(true);
   };
 
@@ -916,7 +914,7 @@ export default function LandingPage({
             <button
               type="button"
               className="cursor-button-primary cursor-nav-download-btn"
-              onClick={(e) => handleDownloadClick(e, 'nav_header')}
+              onClick={handleDownloadClick}
               id="nav-download-btn"
               aria-label="Download SonicWave for Windows"
             >
@@ -964,7 +962,7 @@ export default function LandingPage({
               <button
                 type="button"
                 className="cursor-button-primary cursor-mobile-download-btn"
-                onClick={(e) => { setIsMobileMenuOpen(false); handleDownloadClick(e, 'mobile_nav'); }}
+                onClick={(e) => { setIsMobileMenuOpen(false); handleDownloadClick(e); }}
               >
                 <WindowsIcon size={16} />
                 <span>Download for Windows (.zip)</span>
@@ -1023,7 +1021,7 @@ export default function LandingPage({
             <button
               type="button"
               className="cursor-button-primary cursor-btn-lg"
-              onClick={(e) => handleDownloadClick(e, 'hero_cta')}
+              onClick={handleDownloadClick}
               id="hero-download-btn"
               aria-label="Download SonicWave for Windows 64-bit"
             >
@@ -1228,7 +1226,7 @@ export default function LandingPage({
                     <button
                       type="button"
                       className="cursor-button-secondary cursor-btn-sm cursor-vis-cta-bridge"
-                      onClick={(e) => handleDownloadClick(e, 'preview_cta')}
+                      onClick={handleDownloadClick}
                       aria-label="Download SonicWave to convert your own media files"
                     >
                       <span>Convert your own media &rarr;</span>
@@ -1699,7 +1697,7 @@ export default function LandingPage({
               <button
                 type="button"
                 className="cursor-button-primary cursor-btn-lg"
-                onClick={(e) => handleDownloadClick(e, 'bottom_cta')}
+                onClick={handleDownloadClick}
                 id="bottom-download-btn"
                 aria-label="Download SonicWave for Windows 64-bit"
               >
@@ -1732,11 +1730,6 @@ export default function LandingPage({
         grain={theme === 'light' ? 0.25 : 0.4}
         preset={theme === 'light' ? 'paper' : 'night'}
         onNavigate={(href) => {
-          if (href === '/SonicWave-v1.0.0-Windows.zip') {
-            trackAppDownload({ source: 'footer_link' });
-            window.location.href = href;
-            return;
-          }
           if (onNavigate) {
             if (href === '/install') onNavigate('install', '/install');
             else if (href === '/supported-platforms') onNavigate('platforms-guide', '/supported-platforms');
@@ -1800,7 +1793,6 @@ export default function LandingPage({
                 href="/SonicWave-v1.0.0-Windows.zip"
                 download="SonicWave-v1.0.0-Windows.zip"
                 className="cursor-button-primary cursor-modal-download-btn"
-                onClick={() => trackAppDownload({ source: 'modal_primary' })}
               >
                 <Download size={18} />
                 <div className="cursor-modal-btn-label">
