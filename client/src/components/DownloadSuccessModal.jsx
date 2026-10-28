@@ -5,7 +5,7 @@ import {
   Download,
   FolderArchive,
   Terminal,
-  Zap,
+  HelpCircle,
   ShieldCheck,
   X,
   Sparkles,
@@ -241,12 +241,12 @@ export default function DownloadSuccessModal({
               className="cursor-button-secondary cursor-success-studio-btn"
               onClick={() => {
                 onClose();
-                if (onNavigate) onNavigate('app', '/#app');
-                else window.location.hash = '#app';
+                if (onNavigate) onNavigate('troubleshooting', '/troubleshooting');
+                else window.location.href = '/troubleshooting';
               }}
             >
-              <Zap size={14} />
-              <span>Try Web Studio Now</span>
+              <HelpCircle size={14} />
+              <span>Troubleshooting &amp; FAQ</span>
             </button>
           </div>
 

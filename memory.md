@@ -136,7 +136,7 @@
 | `server/converter.js` | Core conversion orchestrator, `yt-dlp` spawn manager, progress parser, TTL disk cleaner. |
 | `server/binManager.js` | Binary locator, auto-downloader for `yt-dlp`, and bridge for `ffmpeg`. |
 | `server/cookies.txt` | Netscape cookie jar for bypassing YouTube/Instagram bot protection. |
-| `client/src/App.jsx` | Web root with `#landing` vs `#app` hash routing and job state orchestration. |
+| `client/src/App.jsx` | Web marketing and documentation router (LandingPage, Docs, Legal, 404, download modals). |
 | `client/src/AppDesktop.jsx` | Dedicated root component for packaged desktop release (no landing page). |
 | `client/src/components/AudioPlayer.jsx` | Audio/video player with range-based stream seeking and download actions. |
 | `client/src/components/CommandPalette.jsx` | `Ctrl+K` quick action menu with format switching, engine updates, and navigation. |

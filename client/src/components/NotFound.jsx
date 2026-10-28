@@ -52,12 +52,12 @@ function WindowsIcon({ size = 16, className = '' }) {
 
 const DESTINATION_CARDS = [
   {
-    title: 'Converter Studio',
-    desc: 'Extract MP3 (up to 320 kbps) or MP4 (1080p) directly in your browser with 16-stream acceleration.',
-    href: '/#app',
-    view: 'app',
-    icon: Zap,
-    badge: 'Live App'
+    title: 'Download Windows Package',
+    desc: 'Get SonicWave v1.0.0 (1.3 MB portable zip) with 1-click start.bat launcher and zero telemetry.',
+    href: '/install',
+    view: 'install',
+    icon: Download,
+    badge: 'Desktop'
   },
   {
     title: 'Installation Guide',
@@ -162,7 +162,7 @@ export default function NotFound({ onNavigate }) {
           <nav className="cursor-nav-links" aria-label="Quick Navigation">
             <a href="/" className="cursor-nav-link" onClick={(e) => handleLinkClick(e, '/', 'landing')}>Home</a>
             <a href="/install" className="cursor-nav-link" onClick={(e) => handleLinkClick(e, '/install', 'install')}>Docs</a>
-            <a href="/#app" className="cursor-nav-link" onClick={(e) => handleLinkClick(e, '/#app', 'app')}>Web Studio</a>
+            <a href="/supported-platforms" className="cursor-nav-link" onClick={(e) => handleLinkClick(e, '/supported-platforms', 'platforms-guide')}>Platforms</a>
             <a href="/contact" className="cursor-nav-link" onClick={(e) => handleLinkClick(e, '/contact', 'contact')}>Support</a>
           </nav>
 
@@ -231,10 +231,10 @@ export default function NotFound({ onNavigate }) {
             <button
               type="button"
               className="cursor-button-secondary cursor-btn-lg not-found-btn"
-              onClick={(e) => handleLinkClick(e, '/#app', 'app')}
+              onClick={(e) => handleLinkClick(e, '/install', 'install')}
             >
-              <Zap size={16} />
-              <span>Launch Web Studio</span>
+              <BookOpen size={16} />
+              <span>Installation Guide</span>
             </button>
 
             <button

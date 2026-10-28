@@ -222,8 +222,6 @@ const FOOTER_COLUMNS = [
 ];
 
 export default function LandingPage({
-  onOpenCmd,
-  onOpenPricing,
   onNavigate
 }) {
   const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
@@ -910,17 +908,6 @@ export default function LandingPage({
 
             <button
               type="button"
-              className="cursor-button-secondary cursor-nav-cmd-btn"
-              onClick={onOpenCmd}
-              title="Open Command Menu (⌘K / Ctrl+K)"
-              aria-label="Open Command Menu"
-            >
-              <CommandIcon size={13} aria-hidden="true" />
-              <span>⌘K</span>
-            </button>
-
-            <button
-              type="button"
               className="cursor-button-primary cursor-nav-download-btn"
               onClick={handleDownloadClick}
               id="nav-download-btn"
@@ -974,14 +961,6 @@ export default function LandingPage({
               >
                 <WindowsIcon size={16} />
                 <span>Download for Windows (.zip)</span>
-              </button>
-              <button
-                type="button"
-                className="cursor-button-secondary cursor-mobile-cmd-btn"
-                onClick={() => { setIsMobileMenuOpen(false); onOpenCmd(); }}
-              >
-                <CommandIcon size={14} />
-                <span>Command Palette (⌘K)</span>
               </button>
               <button
                 type="button"
