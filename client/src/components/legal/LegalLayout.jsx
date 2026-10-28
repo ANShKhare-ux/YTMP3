@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import DownloadSuccessModal, { triggerZipDownload } from '../DownloadSuccessModal';
 import {
   ShieldCheck,
   FileText,
@@ -82,8 +83,12 @@ export default function LegalLayout({
     }
   };
 
-  const handleDownload = () => {
-    window.location.href = '/SonicWave-v1.0.0-Windows.zip';
+  const [isDownloadSuccessOpen, setIsDownloadSuccessOpen] = useState(false);
+
+  const handleDownload = (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    triggerZipDownload();
+    setIsDownloadSuccessOpen(true);
   };
 
   return (
@@ -223,6 +228,13 @@ export default function LegalLayout({
           </div>
         </div>
       </footer>
+
+      {/* SaaS Download Success Dialogbox */}
+      <DownloadSuccessModal
+        isOpen={isDownloadSuccessOpen}
+        onClose={() => setIsDownloadSuccessOpen(false)}
+        onNavigate={onNavigate}
+      />
     </div>
   );
 }

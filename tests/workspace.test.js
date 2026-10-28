@@ -159,4 +159,30 @@ test('workspace - favicon suite and social share assets integrity', () => {
   assert.ok(indexHtml.includes('/og/sonicwave-share.png'), 'index.html must point Open Graph to sonicwave-share.png');
 });
 
+test('workspace - download success dialogbox component and trigger integration', () => {
+  const modalPath = path.join(rootDir, 'client', 'src', 'components', 'DownloadSuccessModal.jsx');
+  assert.ok(fs.existsSync(modalPath), 'DownloadSuccessModal.jsx must exist in client components');
+
+  const modalSrc = fs.readFileSync(modalPath, 'utf8');
+  assert.ok(modalSrc.includes('export function triggerZipDownload'), 'must export triggerZipDownload helper');
+  assert.ok(modalSrc.includes('export default function DownloadSuccessModal'), 'must export DownloadSuccessModal component');
+  assert.ok(modalSrc.includes('Download Started!'), 'modal must contain Download Started header');
+  assert.ok(modalSrc.includes('Extract the ZIP'), 'modal must include Step 1 extraction guide');
+  assert.ok(modalSrc.includes('start.bat'), 'modal must include Step 2 start.bat launcher guide');
+  assert.ok(modalSrc.includes('Windows Defender'), 'modal must provide SmartScreen guidance');
+
+  // Verify LandingPage.jsx integration
+  const landingSrc = fs.readFileSync(path.join(rootDir, 'client', 'src', 'components', 'LandingPage.jsx'), 'utf8');
+  assert.ok(landingSrc.includes('DownloadSuccessModal'), 'LandingPage must import and render DownloadSuccessModal');
+  assert.ok(landingSrc.includes('isDownloadSuccessOpen'), 'LandingPage must track isDownloadSuccessOpen state');
+  assert.ok(landingSrc.includes('triggerZipDownload'), 'LandingPage must use triggerZipDownload');
+
+  // Verify DocsLayout and LegalLayout integration
+  const docsLayoutSrc = fs.readFileSync(path.join(rootDir, 'client', 'src', 'components', 'docs', 'DocsLayout.jsx'), 'utf8');
+  assert.ok(docsLayoutSrc.includes('DownloadSuccessModal'), 'DocsLayout must integrate DownloadSuccessModal');
+  const legalLayoutSrc = fs.readFileSync(path.join(rootDir, 'client', 'src', 'components', 'legal', 'LegalLayout.jsx'), 'utf8');
+  assert.ok(legalLayoutSrc.includes('DownloadSuccessModal'), 'LegalLayout must integrate DownloadSuccessModal');
+});
+
+
 

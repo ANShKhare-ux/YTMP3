@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import DocsLayout from './DocsLayout';
+import DownloadSuccessModal, { triggerZipDownload } from '../DownloadSuccessModal';
 import { useDocumentMetadata } from '../legal/useDocumentMetadata';
 import {
   Download,
@@ -17,6 +18,8 @@ import {
 } from 'lucide-react';
 
 export default function InstallGuide({ onNavigate }) {
+  const [isDownloadSuccessOpen, setIsDownloadSuccessOpen] = useState(false);
+
   useDocumentMetadata({
     title: 'SonicWave Installation Guide — Windows 11 & 10 (64-Bit Setup)',
     description: 'Step-by-step installation instructions for SonicWave on Windows 11 and 10. Learn how to extract the portable zip, launch start.bat, and resolve SmartScreen warnings.',
@@ -114,8 +117,14 @@ export default function InstallGuide({ onNavigate }) {
             <div style={{ margin: '10px 0 16px' }}>
               <a
                 href="/SonicWave-v1.0.0-Windows.zip"
+                download="SonicWave-v1.0.0-Windows.zip"
                 className="cursor-button-primary"
                 style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '8px 16px', borderRadius: 8, textDecoration: 'none', color: '#fff', fontWeight: 600, fontSize: 13 }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  triggerZipDownload();
+                  setIsDownloadSuccessOpen(true);
+                }}
               >
                 <Download size={14} /> Download SonicWave v1.0.0 for Windows (.zip)
               </a>
@@ -250,6 +259,13 @@ export default function InstallGuide({ onNavigate }) {
           ]
         })
       }} />
+
+      {/* SaaS Download Success Dialogbox */}
+      <DownloadSuccessModal
+        isOpen={isDownloadSuccessOpen}
+        onClose={() => setIsDownloadSuccessOpen(false)}
+        onNavigate={onNavigate}
+      />
     </DocsLayout>
   );
 }

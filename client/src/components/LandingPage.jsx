@@ -32,6 +32,7 @@ import {
 } from 'lucide-react';
 import FaqAccordion from './ui/FaqAccordion';
 import HalftoneWordmarkFooter from './ui/halftone-wordmark-footer';
+import DownloadSuccessModal, { triggerZipDownload } from './DownloadSuccessModal';
 import { gsap } from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -226,6 +227,7 @@ export default function LandingPage({
   onNavigate
 }) {
   const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
+  const [isDownloadSuccessOpen, setIsDownloadSuccessOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [theme, setTheme] = useState(() => {
     try {
@@ -845,9 +847,15 @@ export default function LandingPage({
     return `${mins}:${s < 10 ? '0' : ''}${s}`;
   };
 
+  const handleDownloadZip = (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    triggerZipDownload();
+    setIsDownloadModalOpen(false);
+    setIsDownloadSuccessOpen(true);
+  };
+
   const handleDownloadClick = (e) => {
-    if (e) e.preventDefault();
-    setIsDownloadModalOpen(true);
+    handleDownloadZip(e);
   };
 
   return (
@@ -1730,7 +1738,9 @@ export default function LandingPage({
         grain={theme === 'light' ? 0.25 : 0.4}
         preset={theme === 'light' ? 'paper' : 'night'}
         onNavigate={(href) => {
-          if (onNavigate) {
+          if (href === '/SonicWave-v1.0.0-Windows.zip') {
+            handleDownloadZip();
+          } else if (onNavigate) {
             if (href === '/install') onNavigate('install', '/install');
             else if (href === '/supported-platforms') onNavigate('platforms-guide', '/supported-platforms');
             else if (href === '/troubleshooting') onNavigate('troubleshooting', '/troubleshooting');
@@ -1754,9 +1764,7 @@ export default function LandingPage({
         }}
       />
 
-      {/* =========================================================================
-          WINDOWS DOWNLOAD MODAL
-          ========================================================================= */}
+      {/* Windows Download Modal Dialog */}
       {isDownloadModalOpen && (
         <div
           className="cursor-modal-backdrop"
@@ -1793,6 +1801,7 @@ export default function LandingPage({
                 href="/SonicWave-v1.0.0-Windows.zip"
                 download="SonicWave-v1.0.0-Windows.zip"
                 className="cursor-button-primary cursor-modal-download-btn"
+                onClick={handleDownloadZip}
               >
                 <Download size={18} />
                 <div className="cursor-modal-btn-label">
@@ -1836,6 +1845,13 @@ export default function LandingPage({
           </div>
         </div>
       )}
+
+      {/* SaaS Download Success Dialogbox */}
+      <DownloadSuccessModal
+        isOpen={isDownloadSuccessOpen}
+        onClose={() => setIsDownloadSuccessOpen(false)}
+        onNavigate={onNavigate}
+      />
 
       {/* Floating Smooth Scroll to Top Button */}
       {showScrollTop && (
