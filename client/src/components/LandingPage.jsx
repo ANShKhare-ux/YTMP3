@@ -182,21 +182,21 @@ const FOOTER_COLUMNS = [
   {
     title: 'Product',
     links: [
+      { label: 'Installation Guide', href: '/install' },
+      { label: 'Supported Platforms', href: '/supported-platforms' },
+      { label: 'Troubleshooting & FAQ', href: '/troubleshooting' },
       { label: 'Features', href: '#features' },
-      { label: 'Installation', href: '#how-it-works' },
-      { label: 'Platforms', href: '#platforms' },
       { label: 'Speed 16x', href: '#comparison' },
-      { label: 'Specs', href: '#specs' },
-      { label: 'FAQ', href: '#faq' },
+      { label: 'Specifications', href: '#specs' },
     ],
   },
   {
-    title: 'Engine',
+    title: 'Engine & Specs',
     links: [
+      { label: 'Codec Specifications', href: '/supported-platforms' },
       { label: 'yt-dlp 16-Stream', href: '#specs' },
-      { label: 'FFmpeg 7.0 Mux', href: '#specs' },
+      { label: 'FFmpeg Mux Engine', href: '#specs' },
       { label: 'Node.js Local', href: '#specs' },
-      { label: 'React 19 & Vite', href: '#specs' },
       { label: 'ID3 High-Res Art', href: '#features' },
     ],
   },
@@ -213,8 +213,9 @@ const FOOTER_COLUMNS = [
     title: 'Download',
     links: [
       { label: 'Windows (.zip)', href: '/SonicWave-v1.0.0-Windows.zip' },
+      { label: 'Installation Steps', href: '/install' },
       { label: 'Zero Telemetry', href: '#features' },
-      { label: 'Personal Archiving', href: '#how-it-works' },
+      { label: 'Personal Archiving', href: '/copyright-acceptable-use' },
     ],
   },
 ];
@@ -874,6 +875,18 @@ export default function LandingPage({
             <a href="#comparison" className="cursor-nav-link" onClick={(e) => handleSmoothScroll(e, '#comparison')}>Comparison</a>
             <a href="#specs" className="cursor-nav-link" onClick={(e) => handleSmoothScroll(e, '#specs')}>Specs</a>
             <a href="#faq" className="cursor-nav-link" onClick={(e) => handleSmoothScroll(e, '#faq')}>FAQ</a>
+            <a
+              href="/install"
+              className="cursor-nav-link"
+              onClick={(e) => {
+                if (onNavigate) {
+                  e.preventDefault();
+                  onNavigate('install', '/install');
+                }
+              }}
+            >
+              Docs
+            </a>
           </nav>
 
           <div className="cursor-nav-actions">
@@ -931,6 +944,19 @@ export default function LandingPage({
               <a href="#comparison" className="cursor-mobile-nav-link" onClick={(e) => { setIsMobileMenuOpen(false); handleSmoothScroll(e, '#comparison'); }}>Comparison</a>
               <a href="#specs" className="cursor-mobile-nav-link" onClick={(e) => { setIsMobileMenuOpen(false); handleSmoothScroll(e, '#specs'); }}>Specs</a>
               <a href="#faq" className="cursor-mobile-nav-link" onClick={(e) => { setIsMobileMenuOpen(false); handleSmoothScroll(e, '#faq'); }}>FAQ</a>
+              <a
+                href="/install"
+                className="cursor-mobile-nav-link"
+                onClick={(e) => {
+                  setIsMobileMenuOpen(false);
+                  if (onNavigate) {
+                    e.preventDefault();
+                    onNavigate('install', '/install');
+                  }
+                }}
+              >
+                Docs &amp; Guide
+              </a>
             </nav>
             <div className="cursor-mobile-menu-actions">
               <button
@@ -1017,7 +1043,7 @@ export default function LandingPage({
 
           {/* CRO Friction Reduction: Micro-proof directly below primary CTA */}
           <div className="cursor-hero-microproof">
-            <span>Windows 11 &amp; 10 (64-bit) &bull; Standalone 148 KB ZIP &bull; No admin rights required</span>
+            <span>Windows 11 &amp; 10 (64-bit) &bull; Standalone 1.3 MB ZIP &bull; No admin rights required</span>
           </div>
 
           {/* Clean hairline trust strip */}
@@ -1681,7 +1707,7 @@ export default function LandingPage({
               </button>
             </div>
             <span className="cursor-micro-note">
-              Windows 11 &bull; Windows 10 &bull; 64-bit &bull; 100% Free &amp; Open Source &bull; Standalone 148 KB ZIP
+              Windows 11 &bull; Windows 10 &bull; 64-bit &bull; 100% Free &amp; Open Source &bull; Standalone 1.3 MB ZIP
             </span>
           </div>
         </div>
@@ -1705,7 +1731,10 @@ export default function LandingPage({
         preset={theme === 'light' ? 'paper' : 'night'}
         onNavigate={(href) => {
           if (onNavigate) {
-            if (href === '/privacy') onNavigate('privacy', '/privacy');
+            if (href === '/install') onNavigate('install', '/install');
+            else if (href === '/supported-platforms') onNavigate('platforms-guide', '/supported-platforms');
+            else if (href === '/troubleshooting') onNavigate('troubleshooting', '/troubleshooting');
+            else if (href === '/privacy') onNavigate('privacy', '/privacy');
             else if (href === '/terms') onNavigate('terms', '/terms');
             else if (href === '/copyright-acceptable-use') onNavigate('copyright', '/copyright-acceptable-use');
             else if (href === '/contact') onNavigate('contact', '/contact');

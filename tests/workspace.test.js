@@ -82,6 +82,35 @@ test('workspace - legal & support pages and sitemap integrity', () => {
   assert.ok(sitemapContent.includes('/terms'), 'sitemap.xml must include /terms');
   assert.ok(sitemapContent.includes('/copyright-acceptable-use'), 'sitemap.xml must include /copyright-acceptable-use');
   assert.ok(sitemapContent.includes('/contact'), 'sitemap.xml must include /contact');
+  assert.ok(sitemapContent.includes('/install'), 'sitemap.xml must include /install');
+  assert.ok(sitemapContent.includes('/supported-platforms'), 'sitemap.xml must include /supported-platforms');
+  assert.ok(sitemapContent.includes('/troubleshooting'), 'sitemap.xml must include /troubleshooting');
+});
+
+test('workspace - documentation pages and routing integrity', () => {
+  const docsFiles = [
+    'InstallGuide.jsx',
+    'SupportedPlatforms.jsx',
+    'TroubleshootingGuide.jsx',
+    'DocsLayout.jsx'
+  ];
+  for (const f of docsFiles) {
+    const filePath = path.join(rootDir, 'client', 'src', 'components', 'docs', f);
+    assert.ok(fs.existsSync(filePath), `Documentation component ${f} must exist`);
+  }
+
+  // Verify App.jsx router includes docs routes
+  const appJsx = fs.readFileSync(path.join(rootDir, 'client', 'src', 'App.jsx'), 'utf8');
+  assert.ok(appJsx.includes("pathname === '/install'"), 'App.jsx must route /install');
+  assert.ok(appJsx.includes("pathname === '/supported-platforms'"), 'App.jsx must route /supported-platforms');
+  assert.ok(appJsx.includes("pathname === '/troubleshooting'"), 'App.jsx must route /troubleshooting');
+
+  // Verify pre-rendered index.html includes links to docs in header and footer
+  const indexHtml = fs.readFileSync(path.join(rootDir, 'client', 'index.html'), 'utf8');
+  assert.ok(indexHtml.includes('href="/install"'), 'index.html must link to /install');
+  assert.ok(indexHtml.includes('href="/supported-platforms"'), 'index.html must link to /supported-platforms');
+  assert.ok(indexHtml.includes('href="/troubleshooting"'), 'index.html must link to /troubleshooting');
+  assert.ok(indexHtml.includes('<nav aria-label="Documentation and Legal Links">'), 'index.html must contain pre-rendered footer links');
 });
 
 test('workspace - favicon suite and social share assets integrity', () => {

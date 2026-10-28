@@ -200,6 +200,9 @@ export default function LegalLayout({
             </div>
             <div className="legal-footer-links">
               <a href="/" onClick={(e) => handleLinkClick(e, '/', 'landing')}>Home</a>
+              <a href="/install" onClick={(e) => handleLinkClick(e, '/install', 'install')}>Installation</a>
+              <a href="/supported-platforms" onClick={(e) => handleLinkClick(e, '/supported-platforms', 'platforms-guide')}>Platforms &amp; Formats</a>
+              <a href="/troubleshooting" onClick={(e) => handleLinkClick(e, '/troubleshooting', 'troubleshooting')}>Troubleshooting</a>
               <a href="/privacy" onClick={(e) => handleLinkClick(e, '/privacy', 'privacy')}>Privacy Policy</a>
               <a href="/terms" onClick={(e) => handleLinkClick(e, '/terms', 'terms')}>Terms of Use</a>
               <a href="/copyright-acceptable-use" onClick={(e) => handleLinkClick(e, '/copyright-acceptable-use', 'copyright')}>Copyright &amp; Abuse</a>

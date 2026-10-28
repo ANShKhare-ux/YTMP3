@@ -31,6 +31,13 @@ SonicWave is a local desktop application and in-browser media converter studio f
 
 ## Canonical URLs
 - Homepage: https://ytmp-3-five.vercel.app/
-- Windows Portable ZIP: https://ytmp-3-five.vercel.app/SonicWave-v1.0.0-Windows.zip
+- Windows Portable ZIP (1.3 MB): https://ytmp-3-five.vercel.app/SonicWave-v1.0.0-Windows.zip
+- Installation Guide: https://ytmp-3-five.vercel.app/install
+- Supported Platforms & Codecs: https://ytmp-3-five.vercel.app/supported-platforms
+- Troubleshooting & FAQ: https://ytmp-3-five.vercel.app/troubleshooting
+- Privacy Policy: https://ytmp-3-five.vercel.app/privacy
+- Terms of Use: https://ytmp-3-five.vercel.app/terms
+- Copyright & Acceptable Use Policy: https://ytmp-3-five.vercel.app/copyright-acceptable-use
+- Contact & Support: https://ytmp-3-five.vercel.app/contact
 - Sitemap: https://ytmp-3-five.vercel.app/sitemap.xml
 - Robots Directives: https://ytmp-3-five.vercel.app/robots.txt

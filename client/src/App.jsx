@@ -28,6 +28,9 @@ import PrivacyPolicy from './components/legal/PrivacyPolicy';
 import TermsOfUse from './components/legal/TermsOfUse';
 import CopyrightPolicy from './components/legal/CopyrightPolicy';
 import ContactSupport from './components/legal/ContactSupport';
+import InstallGuide from './components/docs/InstallGuide';
+import SupportedPlatforms from './components/docs/SupportedPlatforms';
+import TroubleshootingGuide from './components/docs/TroubleshootingGuide';
 import { Crown, Command as CommandIcon } from 'lucide-react';
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
@@ -36,6 +39,9 @@ function getInitialRoute() {
   const pathname = window.location.pathname.replace(/\/$/, '') || '/';
   const hash = window.location.hash;
 
+  if (pathname === '/install' || hash === '#install' || hash === '#/install') return 'install';
+  if (pathname === '/supported-platforms' || hash === '#supported-platforms' || hash === '#/supported-platforms') return 'platforms-guide';
+  if (pathname === '/troubleshooting' || hash === '#troubleshooting' || hash === '#/troubleshooting') return 'troubleshooting';
   if (pathname === '/privacy' || hash === '#privacy' || hash === '#/privacy') return 'privacy';
   if (pathname === '/terms' || hash === '#terms' || hash === '#/terms') return 'terms';
   if (pathname === '/copyright-acceptable-use' || hash === '#copyright-acceptable-use' || hash === '#/copyright-acceptable-use') return 'copyright';
@@ -74,7 +80,13 @@ export default function App() {
       const pathname = window.location.pathname.replace(/\/$/, '') || '/';
       const hash = window.location.hash;
 
-      if (pathname === '/privacy' || hash === '#privacy' || hash === '#/privacy') {
+      if (pathname === '/install' || hash === '#install' || hash === '#/install') {
+        setCurrentView('install');
+      } else if (pathname === '/supported-platforms' || hash === '#supported-platforms' || hash === '#/supported-platforms') {
+        setCurrentView('platforms-guide');
+      } else if (pathname === '/troubleshooting' || hash === '#troubleshooting' || hash === '#/troubleshooting') {
+        setCurrentView('troubleshooting');
+      } else if (pathname === '/privacy' || hash === '#privacy' || hash === '#/privacy') {
         setCurrentView('privacy');
       } else if (pathname === '/terms' || hash === '#terms' || hash === '#/terms') {
         setCurrentView('terms');
@@ -499,6 +511,17 @@ export default function App() {
       localStorage.removeItem('sonicwave_history');
     } catch {}
   };
+
+  // Render Documentation Pages
+  if (currentView === 'install') {
+    return <InstallGuide onNavigate={navigateTo} />;
+  }
+  if (currentView === 'platforms-guide') {
+    return <SupportedPlatforms onNavigate={navigateTo} />;
+  }
+  if (currentView === 'troubleshooting') {
+    return <TroubleshootingGuide onNavigate={navigateTo} />;
+  }
 
   // Render Legal Pages
   if (currentView === 'privacy') {

@@ -49,7 +49,13 @@
   - `client/public/og-image.png`: Mirrored for backwards compatibility with legacy crawlers.
   - `scripts/generate-assets.mjs` & `npm run generate:assets`: Automated generator leveraging Chrome headless with GDI+ bicubic downsampling.
   - `client/index.html`: Fully updated with standard `<link rel="icon">`, `<link rel="apple-touch-icon">`, Open Graph, Twitter Cards, and Schema.org metadata.
-- **Automated Test Suite**: Node.js native test runner (`node:test`) covering converter formatting, binary management, workspace integrity, and brand assets.
+- **Organic Visibility Growth Plan & Technical Documentation Architecture**:
+  - Three dedicated, indexable technical documentation hubs: Installation Guide (`/install`), Supported Platforms & Codecs (`/supported-platforms`), and Troubleshooting & FAQ Hub (`/troubleshooting`).
+  - Pre-rendered semantic footer navigation inside `<div id="root">` in `client/index.html` allowing crawlers to discover all 7 subpages on the very first byte without waiting for JavaScript execution.
+  - Schema.org structured data expansions (`HowTo`, `TechArticle`, `FAQPage`) with explicit step and diagnostic definitions.
+  - Full sitemap coverage in `client/public/sitemap.xml` with priority weighting (1.0, 0.9, 0.8) and `client/public/llms.txt` synchronization.
+  - Standardized honest file size claims across all UI components and metadata to **1.3 MB** (matching the actual `SonicWave-v1.0.0-Windows.zip`).
+- **Automated Test Suite**: Node.js native test runner (`node:test`) covering converter formatting, binary management, workspace integrity, brand assets, legal pages, and technical documentation routing.
 
 ### Planned / Inferred / Unimplemented Features
 - *Inferred*: The Pricing Modal (`PricingModal.jsx`) is a presentation/comparison UI; no external payment processor (Stripe, LemonSqueezy) is integrated.
