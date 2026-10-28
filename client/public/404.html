@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>404: Page Not Found — SonicWave</title>
+  <meta name="description" content="The requested page or media frequency could not be found. Return to the SonicWave homepage or launch the converter studio.">
+  <meta name="robots" content="noindex, follow">
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <style>
+    :root {
+      --bg-base: #010102;
+      --surface-1: #0d0f12;
+      --surface-2: #16191e;
+      --ink: #f0f3f6;
+      --ink-muted: #9fa6b2;
+      --ink-subtle: #626a79;
+      --hairline: rgba(255, 255, 255, 0.08);
+      --hairline-strong: rgba(255, 255, 255, 0.16);
+      --primary: #5e6ad2;
+      --primary-text: #96a1ff;
+      --spotify-green: #1ed760;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg-base);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 30px 20px;
+      text-align: center;
+      -webkit-font-smoothing: antialiased;
+    }
+    .nf-container {
+      max-width: 680px;
+      width: 100%;
+      background: var(--surface-1);
+      border: 1px solid var(--hairline-strong);
+      border-radius: 16px;
+      padding: 48px 32px;
+      box-shadow: 0 32px 80px rgba(0, 0, 0, 0.85);
+    }
+    .nf-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: 20px;
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: #f87171;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      margin-bottom: 20px;
+    }
+    .nf-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #ef4444;
+      box-shadow: 0 0 8px rgba(239, 68, 68, 0.8);
+    }
+    .nf-code {
+      font-size: clamp(76px, 16vw, 120px);
+      font-weight: 800;
+      line-height: 0.95;
+      letter-spacing: -4px;
+      background: linear-gradient(180deg, var(--ink) 0%, rgba(150, 161, 255, 0.35) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 12px;
+    }
+    .nf-title {
+      font-size: clamp(20px, 4vw, 26px);
+      font-weight: 700;
+      color: var(--ink);
+      letter-spacing: -0.3px;
+      margin-bottom: 12px;
+    }
+    .nf-desc {
+      font-size: 14.5px;
+      color: var(--ink-muted);
+      line-height: 1.6;
+      margin-bottom: 32px;
+    }
+    .nf-actions {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 22px;
+      border-radius: 8px;
+      font-size: 13.5px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.18s ease;
+      cursor: pointer;
+    }
+    .btn-primary {
+      background: var(--spotify-green);
+      color: #000;
+      border: 1px solid var(--spotify-green);
+    }
+    .btn-primary:hover {
+      background: #1fdf64;
+      transform: translateY(-1px);
+    }
+    .btn-secondary {
+      background: var(--surface-2);
+      color: var(--ink);
+      border: 1px solid var(--hairline-strong);
+    }
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.25);
+    }
+    .nf-footer {
+      margin-top: 32px;
+      font-size: 12px;
+      color: var(--ink-subtle);
+    }
+    .nf-footer a {
+      color: var(--primary-text);
+      text-decoration: none;
+    }
+    .nf-footer a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="nf-container">
+    <div class="nf-badge">
+      <span class="nf-dot"></span>
+      <span>HTTP 404 &bull; Page Not Found</span>
+    </div>
+    <div class="nf-code">404</div>
+    <h1 class="nf-title">Audio Frequency Lost</h1>
+    <p class="nf-desc">The requested page or frequency could not be found. Return to the SonicWave homepage or launch the Web Converter Studio.</p>
+    <div class="nf-actions">
+      <a href="/" class="btn btn-primary">Return to Homepage</a>
+      <a href="/#app" class="btn btn-secondary">Launch Web Studio</a>
+      <a href="/install" class="btn btn-secondary">Installation Guide</a>
+    </div>
+    <div class="nf-footer">
+      SonicWave &bull; Open Source Windows &amp; Web Media Utility &bull; <a href="/contact">Support</a>
+    </div>
+  </div>
+</body>
+</html>

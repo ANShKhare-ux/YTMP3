@@ -184,5 +184,30 @@ test('workspace - download success dialogbox component and trigger integration',
   assert.ok(legalLayoutSrc.includes('DownloadSuccessModal'), 'LegalLayout must integrate DownloadSuccessModal');
 });
 
+test('workspace - custom 404 error page and routing fallback integrity', () => {
+  const notFoundPath = path.join(rootDir, 'client', 'src', 'components', 'NotFound.jsx');
+  assert.ok(fs.existsSync(notFoundPath), 'NotFound.jsx must exist in client components');
+
+  const notFoundSrc = fs.readFileSync(notFoundPath, 'utf8');
+  assert.ok(notFoundSrc.includes('export default function NotFound'), 'must export NotFound component');
+  assert.ok(notFoundSrc.includes('404'), 'must display 404 code');
+  assert.ok(notFoundSrc.includes('Audio Frequency Lost'), 'must include audio/frequency themed 404 copy');
+  assert.ok(notFoundSrc.includes('DESTINATION_CARDS'), 'must render quick navigation cards');
+
+  // Verify App.jsx router fallback to NotFound
+  const appSrc = fs.readFileSync(path.join(rootDir, 'client', 'src', 'App.jsx'), 'utf8');
+  assert.ok(appSrc.includes("import NotFound from './components/NotFound'"), 'App.jsx must import NotFound');
+  assert.ok(appSrc.includes("currentView === 'not-found'"), 'App.jsx must route to not-found view');
+  assert.ok(appSrc.includes("return 'not-found'"), 'App.jsx getInitialRoute must return not-found for unknown paths');
+
+  // Verify static 404.html fallback
+  const static404Path = path.join(rootDir, 'client', 'public', '404.html');
+  assert.ok(fs.existsSync(static404Path), 'client/public/404.html must exist as static host fallback');
+  const static404Src = fs.readFileSync(static404Path, 'utf8');
+  assert.ok(static404Src.includes('404'), 'static 404 must contain 404');
+  assert.ok(static404Src.includes('noindex'), 'static 404 must have noindex');
+});
+
+
 
 

@@ -4,7 +4,7 @@ import { useEffect } from 'react';
  * Custom hook to update document title, meta description, and canonical URL
  * dynamically on route mount, restoring previous metadata on unmount.
  */
-export function useDocumentMetadata({ title, description, canonical }) {
+export function useDocumentMetadata({ title, description, canonical, noindex = false }) {
   useEffect(() => {
     const originalTitle = document.title;
     if (title) {
@@ -33,6 +33,17 @@ export function useDocumentMetadata({ title, description, canonical }) {
       canonicalLink.setAttribute('href', canonical);
     }
 
+    let robotsMeta = document.querySelector('meta[name="robots"]');
+    const originalRobots = robotsMeta ? robotsMeta.getAttribute('content') : null;
+    if (noindex) {
+      if (!robotsMeta) {
+        robotsMeta = document.createElement('meta');
+        robotsMeta.setAttribute('name', 'robots');
+        document.head.appendChild(robotsMeta);
+      }
+      robotsMeta.setAttribute('content', 'noindex, follow');
+    }
+
     // Scroll to top upon route mount
     window.scrollTo(0, 0);
 
@@ -40,6 +51,13 @@ export function useDocumentMetadata({ title, description, canonical }) {
       document.title = originalTitle;
       if (metaDesc && originalDesc) metaDesc.setAttribute('content', originalDesc);
       if (canonicalLink && originalCanonical) canonicalLink.setAttribute('href', originalCanonical);
+      if (robotsMeta) {
+        if (originalRobots) {
+          robotsMeta.setAttribute('content', originalRobots);
+        } else {
+          robotsMeta.remove();
+        }
+      }
     };
-  }, [title, description, canonical]);
+  }, [title, description, canonical, noindex]);
 }

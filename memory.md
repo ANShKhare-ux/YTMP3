@@ -58,6 +58,11 @@
   - Quick action buttons ("View Full Installation Guide" -> `/install`, "Try Web Studio Now" -> `#app`, and "Click here to retry" link).
   - Full keyboard accessibility (`Escape` key dismiss, backdrop click, focus trap, `role="dialog"`, `aria-modal="true"`, `aria-labelledby`).
   - Integrated across `LandingPage.jsx`, `InstallGuide.jsx`, `DocsLayout.jsx`, and `LegalLayout.jsx`.
+- **Custom 404 Error Experience (Not Found)**:
+  - `client/src/components/NotFound.jsx`: High-polish acoustic-themed error page ("Audio Frequency Lost in Static") featuring stylized typography, 5-bar equalizer visual, quick navigation cards (Converter Studio, Install Guide, Platforms, Troubleshooting, Privacy, Support), and theme toggle.
+  - Dynamically injects `meta[name="robots"] content="noindex, follow"` via `useDocumentMetadata` to maintain technical SEO hygiene.
+  - SPA router in `client/src/App.jsx` cleanly catches all unknown routes (and explicit `/404`), rendering `NotFound` without page crashes or blank views.
+  - `client/public/404.html`: Lightweight static fallback page for static hosting edge cases and non-JS clients.
 - **Organic Visibility Growth Plan & Technical Documentation Architecture**:
   - Three dedicated, indexable technical documentation hubs: Installation Guide (`/install`), Supported Platforms & Codecs (`/supported-platforms`), and Troubleshooting & FAQ Hub (`/troubleshooting`).
   - Pre-rendered semantic footer navigation inside `<div id="root">` in `client/index.html` allowing crawlers to discover all 7 subpages on the very first byte without waiting for JavaScript execution.
@@ -73,7 +78,7 @@
   - Replaced `execSync` template string shell invocations in `server/binManager.js` with `execFileSync` argument arrays.
   - Defensive security headers: `X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN`, `Referrer-Policy: strict-origin-when-cross-origin`.
   - Documented findings and verification in `docs/SECURITY_AUDIT_REPORT.md`.
-- **Automated Test Suite**: Node.js native test runner (`node:test`) covering converter formatting, binary management, workspace integrity, brand assets, legal pages, technical documentation routing, download success dialogbox, and security boundaries (26 tests).
+- **Automated Test Suite**: Node.js native test runner (`node:test`) covering converter formatting, binary management, workspace integrity, brand assets, legal pages, technical documentation routing, download success dialogbox, custom 404 error page, and security boundaries (27 tests).
 
 ### Planned / Inferred / Unimplemented Features
 - *Inferred*: The Pricing Modal (`PricingModal.jsx`) is a presentation/comparison UI; no external payment processor (Stripe, LemonSqueezy) is integrated.

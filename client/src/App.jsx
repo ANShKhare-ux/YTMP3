@@ -31,6 +31,7 @@ import ContactSupport from './components/legal/ContactSupport';
 import InstallGuide from './components/docs/InstallGuide';
 import SupportedPlatforms from './components/docs/SupportedPlatforms';
 import TroubleshootingGuide from './components/docs/TroubleshootingGuide';
+import NotFound from './components/NotFound';
 import { Crown, Command as CommandIcon } from 'lucide-react';
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
@@ -46,8 +47,10 @@ function getInitialRoute() {
   if (pathname === '/terms' || hash === '#terms' || hash === '#/terms') return 'terms';
   if (pathname === '/copyright-acceptable-use' || hash === '#copyright-acceptable-use' || hash === '#/copyright-acceptable-use') return 'copyright';
   if (pathname === '/contact' || hash === '#contact' || hash === '#/contact') return 'contact';
+  if (pathname === '/404' || hash === '#404' || hash === '#/404') return 'not-found';
   if (hash === '#app') return 'app';
-  return 'landing';
+  if (pathname === '/' || pathname === '') return 'landing';
+  return 'not-found';
 }
 
 export default function App() {
@@ -94,10 +97,14 @@ export default function App() {
         setCurrentView('copyright');
       } else if (pathname === '/contact' || hash === '#contact' || hash === '#/contact') {
         setCurrentView('contact');
+      } else if (pathname === '/404' || hash === '#404' || hash === '#/404') {
+        setCurrentView('not-found');
       } else if (hash === '#app') {
         setCurrentView('app');
-      } else {
+      } else if (pathname === '/' || pathname === '') {
         setCurrentView('landing');
+      } else {
+        setCurrentView('not-found');
       }
     };
 
@@ -535,6 +542,11 @@ export default function App() {
   }
   if (currentView === 'contact') {
     return <ContactSupport onNavigate={navigateTo} />;
+  }
+
+  // Render Custom 404 Error Page
+  if (currentView === 'not-found') {
+    return <NotFound onNavigate={navigateTo} />;
   }
 
   // Render Landing Page if currentView is 'landing'
