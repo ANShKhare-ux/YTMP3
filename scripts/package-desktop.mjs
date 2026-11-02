@@ -32,7 +32,8 @@ try {
   fs.copyFileSync(appDesktopPath, appMainPath);
 
   // Run client build
-  execSync('npm --prefix client run build', {
+  const npmCmd = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+  execSync(`${npmCmd} --prefix client run build`, {
     cwd: rootDir,
     stdio: 'inherit'
   });

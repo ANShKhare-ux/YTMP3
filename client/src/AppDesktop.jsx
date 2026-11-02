@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import confetti from 'canvas-confetti';
 import {
   Music2,
@@ -12,7 +12,8 @@ import {
   Library,
   ChevronLeft,
   ChevronRight,
-  Headphones
+  Headphones,
+  Loader2
 } from 'lucide-react';
 import UrlInput from './components/UrlInput';
 import VideoPreview from './components/VideoPreview';
@@ -27,7 +28,7 @@ import { Crown, Command as CommandIcon } from 'lucide-react';
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
-export default function App() {
+export default function App({ onNavigate }) {
   const [url, setUrl] = useState('');
   const [videoInfo, setVideoInfo] = useState(null);
   const [bitrate, setBitrate] = useState('320k');
@@ -54,7 +55,7 @@ export default function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  const [systemStatus, setSystemStatus] = useState({ ready: true });
+  const [systemStatus, setSystemStatus] = useState({ ready: false, checking: true });
   const [history, setHistory] = useState(() => {
     try {
       const saved = localStorage.getItem('sonicwave_history');
@@ -64,9 +65,9 @@ export default function App() {
     }
   });
 
-  // Check backend health, binaries, and hydrate persistent history on mount
-  useEffect(() => {
-    fetch(`${API_BASE}/api/status`)
+  // Reusable backend health and binary check
+  const checkStatus = useCallback(() => {
+    return fetch(`${API_BASE}/api/status`)
       .then((res) => {
         const ct = res.headers.get('content-type') || '';
         if (!res.ok || ct.includes('text/html')) {
@@ -77,14 +78,40 @@ export default function App() {
       .then((data) => {
         if (data && data.status) {
           setSystemStatus(data.status);
+          return data.status;
         }
+        return null;
       })
       .catch((err) => {
         console.warn('Backend status check warning:', err);
         setSystemStatus({ ready: false, disconnected: true });
+        return { ready: false, disconnected: true };
       });
+  }, []);
 
-    // Hydrate persistent history from backend
+  // Poll status on mount and auto-reconnect when server comes online
+  useEffect(() => {
+    let intervalId = null;
+
+    const runPoll = async () => {
+      const status = await checkStatus();
+      if (status && status.ready) {
+        // Once ready, reduce polling frequency to 30s keepalive
+        if (intervalId) clearInterval(intervalId);
+        intervalId = setInterval(checkStatus, 30000);
+      }
+    };
+
+    runPoll();
+    intervalId = setInterval(runPoll, 3000);
+
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [checkStatus]);
+
+  // Hydrate persistent history from backend whenever ready
+  useEffect(() => {
     fetch(`${API_BASE}/api/history`)
       .then((res) => res.json())
       .then((data) => {
@@ -100,7 +127,7 @@ export default function App() {
         }
       })
       .catch(() => {});
-  }, []);
+  }, [systemStatus?.ready]);
 
   // Save history to localStorage
   useEffect(() => {
@@ -588,10 +615,50 @@ export default function App() {
               <span>Studio Pro</span>
             </button>
 
-            <div className="status-indicator-pill">
-              <Zap size={12} fill="var(--spotify-green)" />
-              <span>Universal 16x Multi-Stream Active</span>
-            </div>
+            {onNavigate && (
+              <button
+                type="button"
+                className="top-bar-action-pill"
+                onClick={() => onNavigate('landing', '/landing')}
+                title="Go to SonicWave Overview"
+                style={{ background: 'rgba(255, 255, 255, 0.04)', borderColor: 'rgba(255, 255, 255, 0.12)', color: 'var(--text-subdued)' }}
+              >
+                <span>Overview &amp; Docs</span>
+              </button>
+            )}
+
+            {systemStatus?.disconnected ? (
+              <div
+                className="status-indicator-pill"
+                style={{
+                  backgroundColor: 'rgba(243, 114, 127, 0.12)',
+                  borderColor: 'rgba(243, 114, 127, 0.35)',
+                  color: 'var(--text-negative)'
+                }}
+                title="Local backend server is unreachable"
+              >
+                <AlertTriangle size={12} />
+                <span>Engine Disconnected</span>
+              </div>
+            ) : !systemStatus?.ready ? (
+              <div
+                className="status-indicator-pill"
+                style={{
+                  backgroundColor: 'rgba(255, 164, 43, 0.12)',
+                  borderColor: 'rgba(255, 164, 43, 0.35)',
+                  color: 'var(--text-warning)'
+                }}
+                title="Initializing yt-dlp & FFmpeg binaries"
+              >
+                <Loader2 size={12} className="spinner" />
+                <span>Engine Initializing...</span>
+              </div>
+            ) : (
+              <div className="status-indicator-pill" title="16-Stream Turbo Acceleration Active">
+                <Zap size={12} fill="var(--spotify-green)" />
+                <span>Universal 16x Multi-Stream Active</span>
+              </div>
+            )}
           </div>
         </header>
 
@@ -614,14 +681,43 @@ export default function App() {
         {/* Converter Workspace */}
         <div className="spotify-workspace">
           <section className="spotify-card" aria-label="Audio Converter Card">
-            {systemStatus?.disconnected && (
-              <div className="alert-box alert-warning" style={{ marginBottom: '16px' }}>
-                <AlertTriangle size={16} />
+            {systemStatus?.disconnected ? (
+              <div className="alert-box alert-warning" style={{ marginBottom: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                  <AlertTriangle size={16} />
+                  <span>
+                    <strong>Backend Offline:</strong> Cannot connect to local server on port 3001. Please run <code>start.bat</code> to launch the backend.
+                  </span>
+                </div>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  <button
+                    type="button"
+                    className="btn-dark-pill"
+                    onClick={checkStatus}
+                    style={{ fontSize: '11px', padding: '4px 10px', borderColor: 'var(--text-warning)', color: 'var(--text-warning)' }}
+                  >
+                    Retry Connection
+                  </button>
+                  {onNavigate && (
+                    <button
+                      type="button"
+                      className="btn-dark-pill"
+                      onClick={() => onNavigate('landing', '/landing')}
+                      style={{ fontSize: '11px', padding: '4px 10px' }}
+                    >
+                      Download App
+                    </button>
+                  )}
+                </div>
+              </div>
+            ) : !systemStatus?.ready ? (
+              <div className="alert-box alert-warning" style={{ marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Loader2 size={16} className="spinner" style={{ color: 'var(--text-warning)' }} />
                 <span>
-                  <strong>Backend Offline:</strong> Cannot connect to local server on port 3001. Please run <code>npm run dev</code> or <code>start.bat</code> to launch the backend.
+                  <strong>Bootstrapping Engine:</strong> Verifying local yt-dlp &amp; FFmpeg binaries. This takes just a moment on first launch...
                 </span>
               </div>
-            )}
+            ) : null}
 
             <UrlInput
               url={url}
@@ -659,15 +755,23 @@ export default function App() {
                     type="button"
                     className="btn-spotify-green"
                     onClick={handleStartConversion}
-                    disabled={isConverting}
+                    disabled={isConverting || systemStatus?.disconnected || !systemStatus?.ready}
+                    style={{
+                      opacity: (systemStatus?.disconnected || !systemStatus?.ready) ? 0.6 : 1,
+                      cursor: (systemStatus?.disconnected || !systemStatus?.ready) ? 'not-allowed' : 'pointer'
+                    }}
                   >
                     {format === 'mp4' ? <Video size={16} /> : <Music2 size={16} />}
                     <span>
                       {isConverting
                         ? 'CONVERTING...'
-                        : format === 'mp4'
-                          ? `DOWNLOAD MP4 VIDEO (${bitrate})`
-                          : `CONVERT TO ${format.toUpperCase()} (${bitrate})`}
+                        : systemStatus?.disconnected
+                          ? 'BACKEND OFFLINE'
+                          : !systemStatus?.ready
+                            ? 'BOOTSTRAPPING ENGINE...'
+                            : format === 'mp4'
+                              ? `DOWNLOAD MP4 VIDEO (${bitrate})`
+                              : `CONVERT TO ${format.toUpperCase()} (${bitrate})`}
                     </span>
                   </button>
                 </div>
@@ -693,8 +797,17 @@ export default function App() {
           {/* Footer */}
           <footer className="spotify-footer">
             <p>
-              SonicWave &bull; Spotify-Vibe Studio Converter &bull; Powered by yt-dlp & FFmpeg
+              SonicWave &bull; Spotify-Vibe Studio Converter &bull; Powered by yt-dlp &amp; FFmpeg
             </p>
+            <div className="spotify-footer-links" style={{ display: 'flex', gap: '16px', justifyContent: 'center', marginTop: '10px', flexWrap: 'wrap' }}>
+              <a href="/landing" onClick={(e) => { e.preventDefault(); if (onNavigate) onNavigate('landing', '/landing'); else window.location.href = '/landing'; }}>Overview</a>
+              <a href="/install" onClick={(e) => { e.preventDefault(); if (onNavigate) onNavigate('install', '/install'); else window.location.href = '/install'; }}>Setup Guide</a>
+              <a href="/supported-platforms" onClick={(e) => { e.preventDefault(); if (onNavigate) onNavigate('platforms-guide', '/supported-platforms'); else window.location.href = '/supported-platforms'; }}>Platforms</a>
+              <a href="/troubleshooting" onClick={(e) => { e.preventDefault(); if (onNavigate) onNavigate('troubleshooting', '/troubleshooting'); else window.location.href = '/troubleshooting'; }}>Troubleshooting</a>
+              <a href="/privacy" onClick={(e) => { e.preventDefault(); if (onNavigate) onNavigate('privacy', '/privacy'); else window.location.href = '/privacy'; }}>Privacy</a>
+              <a href="/terms" onClick={(e) => { e.preventDefault(); if (onNavigate) onNavigate('terms', '/terms'); else window.location.href = '/terms'; }}>Terms</a>
+              <a href="/contact" onClick={(e) => { e.preventDefault(); if (onNavigate) onNavigate('contact', '/contact'); else window.location.href = '/contact'; }}>Contact</a>
+            </div>
           </footer>
         </div>
       </main>
@@ -737,6 +850,9 @@ export default function App() {
             .catch((err) => alert(`Update request error: ${err.message}`));
         }}
         onOpenPricing={() => setIsPricingOpen(true)}
+        onNavigateStudio={() => { if (onNavigate) onNavigate('app', '/#app'); }}
+        onNavigateLanding={() => { if (onNavigate) onNavigate('landing', '/'); }}
+        currentView="app"
       />
 
       {/* SaaS Studio Capabilities & Tier Comparison Modal */}

@@ -241,12 +241,12 @@ export default function DownloadSuccessModal({
               className="cursor-button-secondary cursor-success-studio-btn"
               onClick={() => {
                 onClose();
-                if (onNavigate) onNavigate('troubleshooting', '/troubleshooting');
-                else window.location.href = '/troubleshooting';
+                if (onNavigate) onNavigate('app', '/#app');
+                else window.location.hash = '#app';
               }}
             >
-              <HelpCircle size={14} />
-              <span>Troubleshooting &amp; FAQ</span>
+              <Zap size={14} style={{ color: 'var(--spotify-green)' }} />
+              <span>Try Web Studio Now</span>
             </button>
           </div>
 

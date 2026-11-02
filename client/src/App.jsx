@@ -8,11 +8,15 @@ import InstallGuide from './components/docs/InstallGuide';
 import SupportedPlatforms from './components/docs/SupportedPlatforms';
 import TroubleshootingGuide from './components/docs/TroubleshootingGuide';
 import NotFound from './components/NotFound';
+import AppDesktop from './AppDesktop';
 
-function getInitialRoute() {
-  const pathname = window.location.pathname.replace(/\/$/, '') || '/';
-  const hash = window.location.hash;
+function isLocalHost() {
+  if (typeof window === 'undefined') return false;
+  const hostname = window.location.hostname || '';
+  return hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '0.0.0.0';
+}
 
+function resolveRoute(pathname, hash) {
   if (pathname === '/install' || hash === '#install' || hash === '#/install') return 'install';
   if (pathname === '/supported-platforms' || hash === '#supported-platforms' || hash === '#/supported-platforms') return 'platforms-guide';
   if (pathname === '/troubleshooting' || hash === '#troubleshooting' || hash === '#/troubleshooting') return 'troubleshooting';
@@ -20,9 +24,21 @@ function getInitialRoute() {
   if (pathname === '/terms' || hash === '#terms' || hash === '#/terms') return 'terms';
   if (pathname === '/copyright-acceptable-use' || hash === '#copyright-acceptable-use' || hash === '#/copyright-acceptable-use') return 'copyright';
   if (pathname === '/contact' || hash === '#contact' || hash === '#/contact') return 'contact';
+  if (pathname === '/landing' || hash === '#landing' || hash === '#/landing') return 'landing';
+  if (pathname === '/app' || hash === '#app' || hash === '#/app' || hash === '#studio' || hash === '#/studio') return 'app';
   if (pathname === '/404' || hash === '#404' || hash === '#/404') return 'not-found';
-  if (pathname === '/' || pathname === '') return 'landing';
+  if (pathname === '/' || pathname === '') {
+    // When running locally (via start.bat or local dev server), default to Converter Studio.
+    // When running on remote web hosting (e.g., Vercel marketing portal), default to LandingPage.
+    return isLocalHost() ? 'app' : 'landing';
+  }
   return 'not-found';
+}
+
+function getInitialRoute() {
+  const pathname = window.location.pathname.replace(/\/$/, '') || '/';
+  const hash = window.location.hash;
+  return resolveRoute(pathname, hash);
 }
 
 export default function App() {
@@ -41,28 +57,7 @@ export default function App() {
     const handleRouteSync = () => {
       const pathname = window.location.pathname.replace(/\/$/, '') || '/';
       const hash = window.location.hash;
-
-      if (pathname === '/install' || hash === '#install' || hash === '#/install') {
-        setCurrentView('install');
-      } else if (pathname === '/supported-platforms' || hash === '#supported-platforms' || hash === '#/supported-platforms') {
-        setCurrentView('platforms-guide');
-      } else if (pathname === '/troubleshooting' || hash === '#troubleshooting' || hash === '#/troubleshooting') {
-        setCurrentView('troubleshooting');
-      } else if (pathname === '/privacy' || hash === '#privacy' || hash === '#/privacy') {
-        setCurrentView('privacy');
-      } else if (pathname === '/terms' || hash === '#terms' || hash === '#/terms') {
-        setCurrentView('terms');
-      } else if (pathname === '/copyright-acceptable-use' || hash === '#copyright-acceptable-use' || hash === '#/copyright-acceptable-use') {
-        setCurrentView('copyright');
-      } else if (pathname === '/contact' || hash === '#contact' || hash === '#/contact') {
-        setCurrentView('contact');
-      } else if (pathname === '/404' || hash === '#404' || hash === '#/404') {
-        setCurrentView('not-found');
-      } else if (pathname === '/' || pathname === '') {
-        setCurrentView('landing');
-      } else {
-        setCurrentView('not-found');
-      }
+      setCurrentView(resolveRoute(pathname, hash));
     };
 
     window.addEventListener('popstate', handleRouteSync);
@@ -72,6 +67,11 @@ export default function App() {
       window.removeEventListener('hashchange', handleRouteSync);
     };
   }, []);
+
+  // Converter Studio Application (Full feature mode)
+  if (currentView === 'app') {
+    return <AppDesktop onNavigate={navigateTo} />;
+  }
 
   // Technical Documentation Hubs
   if (currentView === 'install') {

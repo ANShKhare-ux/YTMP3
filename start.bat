@@ -27,11 +27,32 @@ if errorlevel 1 (
     exit /b 1
 )
 
-if not exist "server\node_modules\" (
+set "BACKEND_DEPS=0"
+if exist "server\node_modules\" set "BACKEND_DEPS=1"
+if exist "node_modules\" set "BACKEND_DEPS=1"
+if "%BACKEND_DEPS%"=="0" (
     echo [Setup] Installing backend dependencies...
     cd /d "%~dp0server"
     call npm install
     cd /d "%~dp0"
+)
+
+:: Standalone Packaged Distribution: use pre-compiled client/dist on port 3001 directly
+if exist "client\dist\index.html" (
+    if not exist "client\node_modules\" (
+        echo [Mode] Standalone Desktop Package detected.
+        echo Starting SonicWave Engine on Port 3001...
+        start "SonicWave Backend (Port 3001)" cmd /k "cd /d ""%~dp0server"" && npm start"
+        echo.
+        echo ===================================================
+        echo   SonicWave Converter Studio is launching!
+        echo   Opening Converter Studio: http://localhost:3001/#app
+        echo ===================================================
+        echo.
+        ping 127.0.0.1 -n 4 >nul
+        start http://localhost:3001/#app
+        exit /b 0
+    )
 )
 
 if not exist "client\node_modules\" (
@@ -50,9 +71,9 @@ start "SonicWave Frontend (Port 5173)" cmd /k "cd /d ""%~dp0client"" && npm run 
 echo.
 echo ===================================================
 echo   Both services are launching!
-echo   Opening Browser: http://localhost:5173
+echo   Opening SonicWave Converter Studio: http://localhost:5173/#app
 echo ===================================================
 echo.
 
 ping 127.0.0.1 -n 4 >nul
-start http://localhost:5173
+start http://localhost:5173/#app

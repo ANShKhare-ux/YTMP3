@@ -208,6 +208,36 @@ test('workspace - custom 404 error page and routing fallback integrity', () => {
   assert.ok(static404Src.includes('noindex'), 'static 404 must have noindex');
 });
 
+test('workspace - converter studio AppDesktop integration and launcher integrity', () => {
+  // 1. Verify AppDesktop.jsx exists and exports App
+  const appDesktopPath = path.join(rootDir, 'client', 'src', 'AppDesktop.jsx');
+  assert.ok(fs.existsSync(appDesktopPath), 'client/src/AppDesktop.jsx must exist');
+  const appDesktopSrc = fs.readFileSync(appDesktopPath, 'utf8');
+  assert.ok(appDesktopSrc.includes('export default function App'), 'AppDesktop.jsx must export App component');
+
+  // 2. Verify App.jsx routes /app, #app, and localhost root to AppDesktop
+  const appSrc = fs.readFileSync(path.join(rootDir, 'client', 'src', 'App.jsx'), 'utf8');
+  assert.ok(appSrc.includes('AppDesktop'), 'App.jsx must import AppDesktop');
+  assert.ok(appSrc.includes("pathname === '/app'") || appSrc.includes("hash === '#app'"), 'App.jsx must route /app to converter studio');
+  assert.ok(appSrc.includes('/landing'), 'App.jsx must support explicit /landing routing');
+  assert.ok(appSrc.includes('isLocalHost'), 'App.jsx must detect local environment for studio defaulting');
+
+  // 3. Verify start.bat targets Converter Studio URL and checks backend deps safely
+  const startBat = fs.readFileSync(path.join(rootDir, 'start.bat'), 'utf8');
+  assert.ok(startBat.includes('/#app'), 'start.bat must target /#app converter studio route');
+  assert.ok(startBat.includes('BACKEND_DEPS'), 'start.bat must verify backend dependencies without redundant installs');
+
+  // 4. Verify server/index.js syntax validity and SSE cancellation support
+  const serverIndexPath = path.join(rootDir, 'server', 'index.js');
+  assert.ok(fs.existsSync(serverIndexPath), 'server/index.js must exist');
+  const serverIndexSrc = fs.readFileSync(serverIndexPath, 'utf8');
+  assert.doesNotThrow(() => {
+    new Function(serverIndexSrc.replace(/^#!.*\n/, ''));
+  }, 'server/index.js must have valid JavaScript syntax');
+  assert.ok(serverIndexSrc.includes("job.status === 'cancelled'"), 'server/index.js must clean up SSE stream on job cancellation');
+});
+
+
 
 
 

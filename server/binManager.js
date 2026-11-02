@@ -123,7 +123,7 @@ async function verifyBinaries() {
       if (!isWin) {
         try { fs.chmodSync(ffmpegPath, 0o755); } catch {}
       }
-      const output = execFileSync(ffmpegPath, ['-version'], { encoding: 'utf8' }).split('\n')[0];
+      const output = execFileSync(ffmpegPath, ['-version'], { encoding: 'utf8' }).split(/\r?\n/)[0].trim();
       status.ffmpeg = true;
       status.ffmpegVersion = output;
       console.log(`[binManager] ffmpeg verified: ${output}`);
@@ -133,7 +133,7 @@ async function verifyBinaries() {
   } else {
     // Check if system ffmpeg is available
     try {
-      const output = execFileSync('ffmpeg', ['-version'], { encoding: 'utf8' }).split('\n')[0];
+      const output = execFileSync('ffmpeg', ['-version'], { encoding: 'utf8' }).split(/\r?\n/)[0].trim();
       ffmpegPath = 'ffmpeg';
       status.ffmpeg = true;
       status.ffmpegVersion = output;

@@ -31,10 +31,14 @@ app.use(cors({
   origin: (origin, callback) => {
     // Allow non-browser requests (null/undefined origin like desktop app, curl, electron)
     if (!origin) return callback(null, true);
-    if (ALLOWED_ORIGINS.has(origin) || origin.endsWith('.vercel.app')) {
+    if (
+      ALLOWED_ORIGINS.has(origin) ||
+      origin.endsWith('.vercel.app') ||
+      /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)
+    ) {
       return callback(null, true);
     }
-    return callback(new Error('Cross-Origin Request Blocked by SonicWave Security Policy'));
+    return callback(null, false);
   },
   methods: ['GET', 'POST', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Range']
@@ -61,6 +65,13 @@ app.get('/api/status', (req, res) => {
 
 // Fetch Media Metadata (YouTube, Instagram, TikTok, Twitter/X, SoundCloud, etc.)
 app.post('/api/info', async (req, res) => {
+  if (!systemStatus.ready) {
+    return res.status(503).json({
+      success: false,
+      error: 'SonicWave media engine is currently bootstrapping binaries (yt-dlp / FFmpeg). Please wait a few seconds and try again.'
+    });
+  }
+
   const { url } = req.body;
   if (!url) {
     return res.status(400).json({ success: false, error: 'Media URL is required' });
@@ -76,6 +87,13 @@ app.post('/api/info', async (req, res) => {
 
 // Start Audio/Video Conversion
 app.post('/api/convert', (req, res) => {
+  if (!systemStatus.ready) {
+    return res.status(503).json({
+      success: false,
+      error: 'SonicWave media engine is currently bootstrapping binaries (yt-dlp / FFmpeg). Please wait a few seconds and try again.'
+    });
+  }
+
   const { url, format = 'mp3', quality = '320k', title = '', artist = '', thumbnail = '', turbo = true } = req.body;
 
   if (!url) {
@@ -149,7 +167,7 @@ app.get('/api/progress/:jobId', (req, res) => {
 
     res.write(`data: ${JSON.stringify(job)}\n\n`);
 
-    if (job.status === 'completed' || job.status === 'failed') {
+    if (job.status === 'completed' || job.status === 'failed' || job.status === 'cancelled') {
       clearInterval(interval);
       res.end();
     }
@@ -188,7 +206,10 @@ app.get('/api/stream/:jobId', (req, res) => {
   // Strict Path Traversal Prevention: Confinement to authorized DOWNLOADS_DIR
   const resolvedPath = path.resolve(job.filePath);
   const resolvedDownloads = path.resolve(DOWNLOADS_DIR);
-  if (!resolvedPath.startsWith(resolvedDownloads + path.sep)) {
+  const isWin = process.platform === 'win32';
+  const pathToCheck = isWin ? resolvedPath.toLowerCase() : resolvedPath;
+  const downloadsToCheck = isWin ? (resolvedDownloads + path.sep).toLowerCase() : (resolvedDownloads + path.sep);
+  if (!pathToCheck.startsWith(downloadsToCheck)) {
     return res.status(403).send('Access denied: file path is outside authorized downloads directory.');
   }
 
@@ -244,7 +265,10 @@ app.get('/api/download/:jobId', (req, res) => {
   // Strict Path Traversal Prevention: Confinement to authorized DOWNLOADS_DIR
   const resolvedPath = path.resolve(job.filePath);
   const resolvedDownloads = path.resolve(DOWNLOADS_DIR);
-  if (!resolvedPath.startsWith(resolvedDownloads + path.sep)) {
+  const isWin = process.platform === 'win32';
+  const pathToCheck = isWin ? resolvedPath.toLowerCase() : resolvedPath;
+  const downloadsToCheck = isWin ? (resolvedDownloads + path.sep).toLowerCase() : (resolvedDownloads + path.sep);
+  if (!pathToCheck.startsWith(downloadsToCheck)) {
     return res.status(403).send('Access denied: file path is outside authorized downloads directory.');
   }
 
@@ -255,12 +279,6 @@ app.get('/api/download/:jobId', (req, res) => {
 
   res.setHeader('Content-Disposition', `attachment; filename="${asciiFallback}"; filename*=UTF-8''${utf8Encoded}`);
   res.sendFile(resolvedPath, (err) => {
-    if (err && !res.headersSent) {
-      console.error('[server] Download error:', err.message);
-      res.status(500).send('Error downloading file.');
-    }
-  });
-});
     if (err && !res.headersSent) {
       console.error('[server] Download error:', err.message);
       res.status(500).send('Error downloading file.');
@@ -287,17 +305,22 @@ if (fs.existsSync(clientDist)) {
 
 // Initialize server
 async function startServer() {
-  console.log('[server] Bootstrapping binaries...');
-  const binStatus = await verifyBinaries();
-  systemStatus = {
-    ready: binStatus.ytDlp && binStatus.ffmpeg,
-    ...binStatus
-  };
-
   app.listen(PORT, () => {
     console.log(`[server] Server listening on http://localhost:${PORT}`);
-    console.log(`[server] Status: ${systemStatus.ready ? 'Ready' : 'Binaries Pending'}`);
+    console.log(`[server] Status: ${systemStatus.ready ? 'Ready' : 'Bootstrapping Binaries'}`);
   });
+
+  console.log('[server] Bootstrapping binaries...');
+  try {
+    const binStatus = await verifyBinaries();
+    systemStatus = {
+      ready: Boolean(binStatus.ytDlp && binStatus.ffmpeg),
+      ...binStatus
+    };
+    console.log(`[server] Status: ${systemStatus.ready ? 'Ready' : 'Binaries Pending'}`);
+  } catch (err) {
+    console.error('[server] Error bootstrapping binaries:', err.message);
+  }
 }
 
 startServer();

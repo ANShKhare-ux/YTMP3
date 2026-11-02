@@ -78,7 +78,16 @@
   - Replaced `execSync` template string shell invocations in `server/binManager.js` with `execFileSync` argument arrays.
   - Defensive security headers: `X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN`, `Referrer-Policy: strict-origin-when-cross-origin`.
   - Documented findings and verification in `docs/SECURITY_AUDIT_REPORT.md`.
-- **Automated Test Suite**: Node.js native test runner (`node:test`) covering converter formatting, binary management, workspace integrity, brand assets, legal pages, technical documentation routing, download success dialogbox, custom 404 error page, and security boundaries (27 tests).
+- **Converter Studio Desktop & Localhost Integration**:
+  - `start.bat` boots directly into Converter Studio mode without forcing marketing landing page views on local Windows environments.
+  - Smart dependency resolution in `start.bat`: checks both `server/node_modules/` and root hoisted `node_modules/` to avoid redundant 45-second npm installations.
+  - Server boot optimization: `app.listen()` binds immediately to port 3001, allowing instant health checks while binary verification proceeds in background.
+  - Auto-reconnecting frontend status polling: `AppDesktop.jsx` polls `/api/status` every 3s during startup or disconnects, automatically hydrating history and unlocking studio actions once ready.
+  - Fixed SSE stream cancellation interval leak in `/api/progress/:jobId` when jobs are cancelled.
+  - Windows path containment normalization: case-insensitive downloads directory verification in `/api/stream` and `/api/download`.
+  - CORS localhost resilience: permits arbitrary local dev ports (5173, 5174, etc.) without throwing unhandled server errors.
+  - Fixed audio player padding: `.spotify-app-layout.has-bottom-player` now properly dynamically applied, preventing docked bottom player from cutting off main content.
+- **Automated Test Suite**: Node.js native test runner (`node:test`) covering converter formatting, binary management, workspace integrity, brand assets, legal pages, technical documentation routing, download success dialogbox, custom 404 error page, security boundaries, and converter studio launcher integration (28 tests).
 
 ### Planned / Inferred / Unimplemented Features
 - *Inferred*: The Pricing Modal (`PricingModal.jsx`) is a presentation/comparison UI; no external payment processor (Stripe, LemonSqueezy) is integrated.
@@ -203,9 +212,11 @@
 
 ## 9. Known Issues & Limitations
 1. **Background Cleanup Interval in Converter**: (Resolved) `server/converter.js` uses `setInterval(...).unref()`, allowing clean process termination.
-2. **PowerShell Script Execution**: Running `npm` directly in PowerShell fails if execution policies are restricted (`PSSecurityException`). Always use `npm.cmd`.
-3. **Platform Bot Verification**: YouTube intermittently flags cloud server IPs or datacenter IPs. The application mitigates this with `--extractor-args "youtube:player_client=android,web"` and `--cookies`, but fresh cookies may be required if YouTube alters detection algorithms.
-4. **Vercel Limitations**: Vercel configuration deploys only the frontend (`client/dist`). The backend converter requires a persistent Node.js runtime with binary execution support (`server/bin`).
+2. **Backend Server Syntax Error**: (Resolved) Removed duplicate callback closure in `server/index.js` `/api/download` route that previously prevented server bootstrapping.
+3. **Desktop Launcher Routing**: (Resolved) `start.bat` updated to launch `#app` converter studio route and natively serve pre-compiled `client/dist` in standalone package mode without requiring client `node_modules` installation.
+4. **PowerShell Script Execution**: Running `npm` directly in PowerShell fails if execution policies are restricted (`PSSecurityException`). Always use `npm.cmd`.
+5. **Platform Bot Verification**: YouTube intermittently flags cloud server IPs or datacenter IPs. The application mitigates this with `--extractor-args "youtube:player_client=android,web"` and `--cookies`, but fresh cookies may be required if YouTube alters detection algorithms.
+6. **Vercel Limitations**: Vercel configuration deploys only the frontend (`client/dist`). The backend converter requires a persistent Node.js runtime with binary execution support (`server/bin`).
 
 ---
 
