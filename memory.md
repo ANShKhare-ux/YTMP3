@@ -78,8 +78,10 @@
   - Replaced `execSync` template string shell invocations in `server/binManager.js` with `execFileSync` argument arrays.
   - Defensive security headers: `X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN`, `Referrer-Policy: strict-origin-when-cross-origin`.
   - Documented findings and verification in `docs/SECURITY_AUDIT_REPORT.md`.
-- **Converter Studio Desktop & Localhost Integration**:
-  - `start.bat` boots directly into Converter Studio mode without forcing marketing landing page views on local Windows environments.
+- **Converter Studio Desktop & Localhost Launcher Routing**:
+  - `start.bat` launches both backend and frontend services, opening the SonicWave website directly at `http://localhost:5173`.
+  - `client/src/App.jsx` default route (`/` or `''`) displays the website (`LandingPage.jsx`) with prominent "Web Studio" and "Launch Studio" buttons enabling seamless one-click transition into the Converter Studio (`/#app`).
+  - Standalone portable desktop package (`SonicWave-v1.0.0-Windows.zip`) distribution continues to run in dedicated Converter Studio mode (`AppDesktop.jsx` without marketing landing dependencies).
   - Smart dependency resolution in `start.bat`: checks both `server/node_modules/` and root hoisted `node_modules/` to avoid redundant 45-second npm installations.
   - Server boot optimization: `app.listen()` binds immediately to port 3001, allowing instant health checks while binary verification proceeds in background.
   - Auto-reconnecting frontend status polling: `AppDesktop.jsx` polls `/api/status` every 3s during startup or disconnects, automatically hydrating history and unlocking studio actions once ready.
@@ -87,7 +89,7 @@
   - Windows path containment normalization: case-insensitive downloads directory verification in `/api/stream` and `/api/download`.
   - CORS localhost resilience: permits arbitrary local dev ports (5173, 5174, etc.) without throwing unhandled server errors.
   - Fixed audio player padding: `.spotify-app-layout.has-bottom-player` now properly dynamically applied, preventing docked bottom player from cutting off main content.
-- **Automated Test Suite**: Node.js native test runner (`node:test`) covering converter formatting, binary management, workspace integrity, brand assets, legal pages, technical documentation routing, download success dialogbox, custom 404 error page, security boundaries, and converter studio launcher integration (28 tests).
+- **Automated Test Suite**: Node.js native test runner (`node:test`) covering converter formatting, binary management, workspace integrity, brand assets, legal pages, technical documentation routing, download success dialogbox, custom 404 error page, security boundaries, and website localhost launcher integration (28 tests).
 
 ### Planned / Inferred / Unimplemented Features
 - *Inferred*: The Pricing Modal (`PricingModal.jsx`) is a presentation/comparison UI; no external payment processor (Stripe, LemonSqueezy) is integrated.

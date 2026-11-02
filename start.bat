@@ -71,9 +71,9 @@ start "SonicWave Frontend (Port 5173)" cmd /k "cd /d ""%~dp0client"" && npm run 
 echo.
 echo ===================================================
 echo   Both services are launching!
-echo   Opening SonicWave Converter Studio: http://localhost:5173/#app
+echo   Opening SonicWave Website: http://localhost:5173
 echo ===================================================
 echo.
 
 ping 127.0.0.1 -n 4 >nul
-start http://localhost:5173/#app
+start http://localhost:5173

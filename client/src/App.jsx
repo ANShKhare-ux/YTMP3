@@ -10,12 +10,6 @@ import TroubleshootingGuide from './components/docs/TroubleshootingGuide';
 import NotFound from './components/NotFound';
 import AppDesktop from './AppDesktop';
 
-function isLocalHost() {
-  if (typeof window === 'undefined') return false;
-  const hostname = window.location.hostname || '';
-  return hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '0.0.0.0';
-}
-
 function resolveRoute(pathname, hash) {
   if (pathname === '/install' || hash === '#install' || hash === '#/install') return 'install';
   if (pathname === '/supported-platforms' || hash === '#supported-platforms' || hash === '#/supported-platforms') return 'platforms-guide';
@@ -27,11 +21,7 @@ function resolveRoute(pathname, hash) {
   if (pathname === '/landing' || hash === '#landing' || hash === '#/landing') return 'landing';
   if (pathname === '/app' || hash === '#app' || hash === '#/app' || hash === '#studio' || hash === '#/studio') return 'app';
   if (pathname === '/404' || hash === '#404' || hash === '#/404') return 'not-found';
-  if (pathname === '/' || pathname === '') {
-    // When running locally (via start.bat or local dev server), default to Converter Studio.
-    // When running on remote web hosting (e.g., Vercel marketing portal), default to LandingPage.
-    return isLocalHost() ? 'app' : 'landing';
-  }
+  if (pathname === '/' || pathname === '') return 'landing';
   return 'not-found';
 }
 

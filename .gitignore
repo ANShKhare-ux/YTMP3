@@ -10,6 +10,7 @@ client/dist/
 # Binaries and downloaded media files
 server/bin/
 server/downloads/
+server/data/
 *.mp3
 *.mp4
 *.webm
