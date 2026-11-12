@@ -33,6 +33,7 @@ import {
 import FaqAccordion from './ui/FaqAccordion';
 import HalftoneWordmarkFooter from './ui/halftone-wordmark-footer';
 import DownloadSuccessModal, { triggerZipDownload } from './DownloadSuccessModal';
+import HeroIntro from './HeroIntro';
 import { gsap } from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -103,37 +104,6 @@ function CursorBrandLogo({ size = 28 }) {
     </div>
   );
 }
-
-// Demo tracks for interactive preview
-const DEMO_TRACKS = [
-  {
-    id: 1,
-    title: 'Neon Horizon',
-    artist: 'Synthwave Odyssey',
-    format: 'MP3',
-    quality: '320 kbps',
-    duration: 184,
-    waveform: [40, 65, 85, 55, 95, 75, 100, 80, 60, 90, 70, 85, 50, 95, 80, 60, 75, 90, 65, 80, 55, 70, 85, 60]
-  },
-  {
-    id: 2,
-    title: 'Midnight Rain Lofi',
-    artist: 'ChillHop Sessions',
-    format: 'FLAC',
-    quality: 'Lossless 24-bit',
-    duration: 142,
-    waveform: [30, 45, 60, 40, 70, 55, 65, 80, 50, 75, 60, 70, 45, 60, 55, 40, 65, 50, 45, 55, 40, 50, 60, 35]
-  },
-  {
-    id: 3,
-    title: 'Acoustic Sunset',
-    artist: 'Live Studio Session',
-    format: 'MP4',
-    quality: '1080p HD',
-    duration: 215,
-    waveform: [50, 70, 90, 60, 85, 95, 80, 100, 75, 90, 85, 95, 70, 85, 90, 65, 80, 95, 70, 85, 60, 75, 90, 55]
-  }
-];
 
 // Supported Platforms
 const PLATFORMS = [
@@ -244,19 +214,11 @@ export default function LandingPage({
       return next;
     });
   };
-  const [selectedDemoTrack, setSelectedDemoTrack] = useState(DEMO_TRACKS[0]);
-  const [isPlayingDemo, setIsPlayingDemo] = useState(false);
-  const [demoProgress, setDemoProgress] = useState(32);
-  const [isMuted, setIsMuted] = useState(false);
-  const [openFaqIndex, setOpenFaqIndex] = useState(0);
-  const progressTimerRef = useRef(null);
 
-  // GSAP Animation Scoping & Interactive Element Refs
+  const [openFaqIndex, setOpenFaqIndex] = useState(0);
+
+  // GSAP Animation Scoping Ref
   const containerRef = useRef(null);
-  const cardRef = useRef(null);
-  const wrapRef = useRef(null);
-  const knobRef = useRef(null);
-  const trackRef = useRef(null);
 
   // Close modal on Escape key press
   useEffect(() => {
@@ -269,23 +231,6 @@ export default function LandingPage({
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isDownloadModalOpen]);
-
-  // Simulated playback timer for the demo preview widget
-  useEffect(() => {
-    if (isPlayingDemo) {
-      progressTimerRef.current = setInterval(() => {
-        setDemoProgress((prev) => {
-          if (prev >= 100) return 0;
-          return prev + 1;
-        });
-      }, 500);
-    } else {
-      if (progressTimerRef.current) clearInterval(progressTimerRef.current);
-    }
-    return () => {
-      if (progressTimerRef.current) clearInterval(progressTimerRef.current);
-    };
-  }, [isPlayingDemo]);
 
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -340,16 +285,7 @@ export default function LandingPage({
     // Accessibility: Honor reduced motion preference immediately
     const prefersReducedMotion = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (prefersReducedMotion) {
-      gsap.set([
-        ".cursor-top-nav",
-        ".cursor-eyebrow-pill",
-        ".cursor-display-xl",
-        ".cursor-body-lg",
-        ".cursor-hero-cta-row > *",
-        ".cursor-hero-microproof",
-        ".cursor-trust-cell",
-        wrapRef.current
-      ], { clearProps: "all" });
+      gsap.set(".cursor-top-nav", { clearProps: "all" });
       return;
     }
 
@@ -361,157 +297,19 @@ export default function LandingPage({
     CustomBounce.create("btnBounce", { strength: 0.5, squash: 2 });
     CustomWiggle.create("waveformWiggle", { wiggles: 8, type: "random" });
 
-    // 2. SplitText on hero title
-    const splitTarget = document.querySelector(".cursor-hero-split");
-    if (splitTarget) {
-      const split = new SplitText(splitTarget, { type: "words,chars" });
-      gsap.from(split.chars, {
-        opacity: 0,
-        y: 16,
-        rotateX: -25,
-        stagger: 0.015,
-        duration: 0.55,
-        ease: "appleSpring",
-        onComplete: () => split.revert()
-      });
-    }
-
-    // 3. DrawSVG on Brand Logo & vector outlines
+    // 2. DrawSVG on Brand Logo & vector outlines in Top Nav
     gsap.fromTo(".cursor-brand-logo svg rect", 
       { scaleY: 0, transformOrigin: "bottom" },
       { scaleY: 1, stagger: 0.06, duration: 0.6, ease: "punchSpring" }
     );
 
-    // 4. Master Hero Entrance Timeline (crisp, snappy 1.1s total with automatic clearProps)
-    const heroTl = gsap.timeline({
-      defaults: { ease: "appleSpring" },
-      onComplete: () => {
-        gsap.set([
-          ".cursor-top-nav",
-          ".cursor-eyebrow-pill",
-          ".cursor-display-xl",
-          ".cursor-body-lg",
-          ".cursor-hero-cta-row > *",
-          ".cursor-hero-microproof",
-          ".cursor-trust-cell",
-          wrapRef.current
-        ], { clearProps: "opacity,transform" });
-      }
-    });
+    // 3. Top Nav Entrance Timeline
+    gsap.fromTo(".cursor-top-nav", 
+      { y: -20, opacity: 0 }, 
+      { y: 0, opacity: 1, duration: 0.45, ease: "appleSpring" }
+    );
 
-    heroTl
-      .fromTo(".cursor-top-nav", 
-        { y: -20, opacity: 0 }, 
-        { y: 0, opacity: 1, duration: 0.45 }
-      )
-      .fromTo(".cursor-eyebrow-pill", 
-        { y: 15, opacity: 0, scale: 0.95 }, 
-        { y: 0, opacity: 1, scale: 1, duration: 0.45, ease: "punchSpring" }, 
-        "-=0.3"
-      )
-      .fromTo(".cursor-display-xl", 
-        { y: 25, opacity: 0 }, 
-        { y: 0, opacity: 1, duration: 0.55, ease: "appleSpring" }, 
-        "-=0.3"
-      )
-      .fromTo(".cursor-body-lg", 
-        { y: 15, opacity: 0 }, 
-        { y: 0, opacity: 1, duration: 0.45 }, 
-        "-=0.35"
-      )
-      .fromTo(".cursor-hero-cta-row > *", 
-        { y: 15, opacity: 0, scale: 0.95 }, 
-        { y: 0, opacity: 1, scale: 1, stagger: 0.06, duration: 0.45, ease: "punchSpring" }, 
-        "-=0.3"
-      )
-      .fromTo(".cursor-hero-microproof", 
-        { opacity: 0, y: 8 }, 
-        { opacity: 1, y: 0, duration: 0.35 }, 
-        "-=0.25"
-      )
-      .fromTo(".cursor-trust-cell", 
-        { y: 12, opacity: 0 }, 
-        { y: 0, opacity: 1, stagger: 0.05, duration: 0.35 }, 
-        "-=0.25"
-      );
-
-    if (wrapRef.current) {
-      heroTl.fromTo(wrapRef.current, 
-        { y: 40, opacity: 0, rotateX: 5, transformPerspective: 1200 }, 
-        { y: 0, opacity: 1, rotateX: 0, duration: 0.65, ease: "appleSpring" }, 
-        "-=0.35"
-      );
-    }
-
-    // 5. ScrambleText Terminal Status Loop
-    const statusPhrases = [
-      "PORT 3001 • READY",
-      "16-STREAM ENGINE ACTIVE",
-      "FFMPEG 7.0 HARDWARE ACCEL",
-      "LOSSLESS 320 KBPS PIPELINE",
-      "ZERO ADS • ZERO TELEMETRY"
-    ];
-    let phraseIdx = 0;
-    const statusEl = document.querySelector(".cursor-mono-status");
-    let statusTimer = null;
-    if (statusEl) {
-      statusTimer = setInterval(() => {
-        phraseIdx = (phraseIdx + 1) % statusPhrases.length;
-        gsap.to(statusEl, {
-          duration: 0.85,
-          scrambleText: {
-            text: statusPhrases[phraseIdx],
-            chars: "01X#_/*-+$%",
-            speed: 0.45
-          },
-          ease: "power2.out"
-        });
-      }, 3000);
-    }
-
-    // 6. 3D Gyro / Cursor Parallax Tilt on the Hero Card (Observer & quickTo)
-    if (cardRef.current && wrapRef.current) {
-      const setRotateX = gsap.quickTo(cardRef.current, "rotateX", { duration: 0.45, ease: "power2.out" });
-      const setRotateY = gsap.quickTo(cardRef.current, "rotateY", { duration: 0.45, ease: "power2.out" });
-
-      const onPointerMove = (e) => {
-        const rect = wrapRef.current.getBoundingClientRect();
-        const x = e.clientX - rect.left - rect.width / 2;
-        const y = e.clientY - rect.top - rect.height / 2;
-        setRotateY((x / (rect.width / 2)) * 4.5);
-        setRotateX(-(y / (rect.height / 2)) * 4.5);
-      };
-
-      const onPointerLeave = () => {
-        gsap.to(cardRef.current, { rotateX: 0, rotateY: 0, duration: 0.8, ease: "power3.out" });
-      };
-
-      const wrapEl = wrapRef.current;
-      wrapEl.addEventListener("pointermove", onPointerMove);
-      wrapEl.addEventListener("pointerleave", onPointerLeave);
-    }
-
-    // 7. Draggable Seeker Knob with Inertia (GSAP Draggable + Inertia)
-    if (knobRef.current && trackRef.current) {
-      Draggable.create(knobRef.current, {
-        type: "x",
-        bounds: trackRef.current,
-        inertia: true,
-        edgeResistance: 0.75,
-        onDrag: function () {
-          const width = trackRef.current.offsetWidth;
-          const pct = Math.max(0, Math.min(100, (this.x / width) * 100));
-          setDemoProgress(pct);
-        },
-        onThrowUpdate: function () {
-          const width = trackRef.current.offsetWidth;
-          const pct = Math.max(0, Math.min(100, (this.x / width) * 100));
-          setDemoProgress(pct);
-        }
-      });
-    }
-
-    // 8. Magnetic CTA buttons (quickTo)
+    // 4. Magnetic CTA buttons (quickTo)
     const magneticBtns = gsap.utils.toArray(".cursor-button-primary");
     magneticBtns.forEach((btn) => {
       const xTo = gsap.quickTo(btn, "x", { duration: 0.35, ease: "power2.out" });
@@ -807,32 +605,7 @@ export default function LandingPage({
         }
       }
     );
-
-    // Clean up timers on unmount
-    return () => {
-      if (statusTimer) clearInterval(statusTimer);
-    };
   }, { scope: containerRef });
-
-  // Dynamic equalizer physics with CustomWiggle when playing
-  useEffect(() => {
-    if (isPlayingDemo) {
-      gsap.to(".cursor-waveform-col", {
-        scaleY: "random(0.35, 1.35)",
-        duration: 0.4,
-        ease: "waveformWiggle",
-        repeat: -1,
-        yoyo: true,
-        stagger: {
-          each: 0.025,
-          from: "center"
-        }
-      });
-    } else {
-      gsap.killTweensOf(".cursor-waveform-col");
-      gsap.to(".cursor-waveform-col", { scaleY: 1, duration: 0.25, ease: "power2.out" });
-    }
-  }, [isPlayingDemo]);
 
   const handleSmoothScroll = (e, targetHref) => {
     if (!targetHref || !targetHref.startsWith('#')) return;
@@ -847,36 +620,8 @@ export default function LandingPage({
     }
   };
 
-  const handleTogglePlayDemo = () => {
-    setIsPlayingDemo((prev) => !prev);
-  };
-
-  const handleSelectTrack = (track) => {
-    const trackContainer = document.querySelector('.cursor-demo-tracks');
-    const state = trackContainer ? Flip.getState('.cursor-track-row') : null;
-    setSelectedDemoTrack(track);
-    setDemoProgress(0);
-    setIsPlayingDemo(true);
-    if (state) {
-      requestAnimationFrame(() => {
-        Flip.from(state, {
-          duration: 0.35,
-          ease: "power2.out",
-          fade: true
-        });
-      });
-    }
-    // Smooth GSAP punch on track switch
-    gsap.fromTo('.cursor-vis-head', 
-      { opacity: 0, y: 8 }, 
-      { opacity: 1, y: 0, duration: 0.35, ease: 'power2.out' }
-    );
-  };
-
-  const formatSeconds = (sec) => {
-    const mins = Math.floor(sec / 60);
-    const s = Math.floor(sec % 60);
-    return `${mins}:${s < 10 ? '0' : ''}${s}`;
+  const scrollToSection = (targetId) => {
+    handleSmoothScroll(null, targetId);
   };
 
   const handleDownloadZip = (e) => {
@@ -1142,258 +887,14 @@ export default function LandingPage({
       <main id="main-content" tabIndex={-1} aria-label="SonicWave Product Overview">
 
       {/* =========================================================================
-          HERO SECTION (Near-black canvas, display-xl with negative tracking, lavender CTA)
+          HERO INTRO SECTION (3D Perspective, Redaction 50, Motion Physics, Intact Brand Logo)
           ========================================================================= */}
-      <section className="cursor-hero-section" id="hero">
-        <div className="cursor-hero-container">
-          {/* Eyebrow badge (13px, weight 500, letter-spacing +0.4px) */}
-          <div className="cursor-eyebrow-pill">
-            <span className="cursor-status-dot" aria-hidden="true" />
-            <span className="cursor-eyebrow-text">WINDOWS 11 &amp; 10 &bull; 64-BIT NATIVE &bull; AD-FREE &bull; OPEN SOURCE</span>
-          </div>
-
-          <h1 className="cursor-display-xl">
-            <span className="cursor-hero-split">High-speed media downloader</span> &amp;<br />
-            <span className="cursor-gradient-accent">offline audio player for Windows</span>
-          </h1>
-
-          <p className="cursor-body-lg">
-            Extract audio and video from YouTube, Instagram, TikTok, Twitter/X, SoundCloud,
-            and 1,000+ sources directly to your PC. Accelerated by a 16-stream parallel turbo
-            engine with embedded FFmpeg.
-          </p>
-
-          <div className="cursor-hero-cta-row">
-            <button
-              type="button"
-              className="cursor-button-primary cursor-btn-lg"
-              onClick={handleDownloadClick}
-              id="hero-download-btn"
-              aria-label="Download SonicWave for Windows 64-bit"
-            >
-              <WindowsIcon size={16} />
-              <span>Download for Windows (64-bit)</span>
-              <Download size={15} className="cursor-cta-icon" aria-hidden="true" />
-            </button>
-
-            <a
-              href="#how-it-works"
-              className="cursor-button-secondary cursor-btn-lg"
-              onClick={(e) => handleSmoothScroll(e, '#how-it-works')}
-              aria-label="View 3-step installation guide"
-            >
-              <Terminal size={14} aria-hidden="true" />
-              <span>Installation guide</span>
-            </a>
-          </div>
-
-          {/* CRO Friction Reduction: Micro-proof directly below primary CTA */}
-          <div className="cursor-hero-microproof">
-            <span>Windows 11 &amp; 10 (64-bit) &bull; Standalone 1.3 MB ZIP &bull; No admin rights required</span>
-          </div>
-
-          {/* Clean hairline trust strip */}
-          <div className="cursor-trust-strip">
-            <div className="cursor-trust-cell">
-              <ShieldCheck size={14} className="cursor-trust-icon" aria-hidden="true" />
-              <span>Zero ads or telemetry</span>
-            </div>
-            <span className="cursor-trust-sep">&bull;</span>
-            <div className="cursor-trust-cell">
-              <Zap size={14} className="cursor-trust-icon" aria-hidden="true" />
-              <span>16-stream multi-thread</span>
-            </div>
-            <span className="cursor-trust-sep">&bull;</span>
-            <div className="cursor-trust-cell">
-              <HardDrive size={14} className="cursor-trust-icon" aria-hidden="true" />
-              <span>Executes 100% on PC</span>
-            </div>
-            <span className="cursor-trust-sep">&bull;</span>
-            <div className="cursor-trust-cell">
-              <Music2 size={14} className="cursor-trust-icon" aria-hidden="true" />
-              <span>320 kbps &amp; 1080p HD</span>
-            </div>
-          </div>
-        </div>
-
-        {/* =========================================================================
-            PRODUCT UI SCREENSHOT / INTERACTIVE APP WINDOW
-            (DESIGN-cursor.md: surface-1 #0f1011, rounded.xl 16px, hairline #23252a)
-            ========================================================================= */}
-        <div className="cursor-product-panel-wrap" ref={wrapRef}>
-          <div className="cursor-product-screenshot-card" ref={cardRef} aria-label="SonicWave Desktop Software Preview">
-            {/* Window title bar */}
-            <div className="cursor-window-bar">
-              <div className="cursor-window-left">
-                <div className="cursor-window-dots" aria-hidden="true">
-                  <span className="cursor-window-dot dot-red" />
-                  <span className="cursor-window-dot dot-yellow" />
-                  <span className="cursor-window-dot dot-green" />
-                </div>
-                <span className="cursor-window-title">SonicWave Studio &mdash; Windows x64 [16x Multi-Stream Engine]</span>
-              </div>
-              <div className="cursor-window-right">
-                <span className="cursor-mono-status">PORT 3001 &bull; READY</span>
-              </div>
-            </div>
-
-            {/* In-app workspace preview */}
-            <div className="cursor-window-content">
-              {/* Internal header bar */}
-              <div className="cursor-preview-top-strip">
-                <div className="cursor-preview-status">
-                  <span className="cursor-accent-indicator" />
-                  <span>Real-time audio extraction &amp; frequency analyzer</span>
-                </div>
-                <div className="cursor-preview-tags">
-                  <span className="cursor-spec-tag active">320 KBPS MP3</span>
-                  <span className="cursor-spec-tag">FLAC 24-BIT</span>
-                  <span className="cursor-spec-tag">1080P MP4</span>
-                </div>
-              </div>
-
-              {/* Player Grid */}
-              <div className="cursor-demo-grid">
-                {/* Track Selector Column */}
-                <div className="cursor-demo-tracks">
-                  <span className="cursor-micro-label">SAMPLE MEDIA PRESETS</span>
-                  {DEMO_TRACKS.map((t) => (
-                    <button
-                      key={t.id}
-                      type="button"
-                      className={`cursor-track-row ${selectedDemoTrack.id === t.id ? 'active' : ''}`}
-                      onClick={() => handleSelectTrack(t)}
-                      aria-pressed={selectedDemoTrack.id === t.id}
-                      aria-label={`Audition sample preset: ${t.title} by ${t.artist} (${t.quality})`}
-                    >
-                      <div className="cursor-track-icon">
-                        {t.format === 'MP4' ? <Video size={13} aria-hidden="true" /> : <Music2 size={13} aria-hidden="true" />}
-                      </div>
-                      <div className="cursor-track-details">
-                        <span className="cursor-track-title">{t.title}</span>
-                        <span className="cursor-track-artist">{t.artist} &bull; {t.quality}</span>
-                      </div>
-                      {selectedDemoTrack.id === t.id && isPlayingDemo && (
-                        <div className="cursor-mini-eq" aria-hidden="true">
-                          <span className="eq-bar b1" />
-                          <span className="eq-bar b2" />
-                          <span className="eq-bar b3" />
-                        </div>
-                      )}
-                    </button>
-                  ))}
-                </div>
-
-                {/* Main Visualizer Panel */}
-                <div className="cursor-visualizer-surface">
-                  <div className="cursor-vis-head">
-                    <div>
-                      <p className="cursor-vis-title">{selectedDemoTrack.title}</p>
-                      <p className="cursor-vis-sub">{selectedDemoTrack.artist} &bull; Embedded ID3 Tags</p>
-                    </div>
-                    <span className="cursor-vis-badge">{selectedDemoTrack.format} &bull; {selectedDemoTrack.quality}</span>
-                  </div>
-
-                  {/* Frequency Spectrum (Lavender #5e6ad2) */}
-                  <div className="cursor-waveform-spectrum" aria-hidden="true">
-                    {selectedDemoTrack.waveform.map((val, idx) => {
-                      const isActive = (idx / selectedDemoTrack.waveform.length) * 100 <= demoProgress;
-                      const animatedHeight = isPlayingDemo
-                        ? Math.min(100, Math.max(15, val + Math.sin(idx + Date.now() / 200) * 18))
-                        : val * 0.5;
-                      return (
-                        <div
-                          key={idx}
-                          className={`cursor-waveform-col ${isActive ? 'active' : ''}`}
-                          style={{
-                            height: `${animatedHeight}%`,
-                            transition: 'height 0.18s var(--ease-hover)'
-                          }}
-                          aria-hidden="true"
-                        />
-                      );
-                    })}
-                  </div>
-
-                  {/* Keyboard-Accessible Scrubber Slider (WCAG 2.1 AA) */}
-                  <div className="cursor-scrubber-row">
-                    <span className="cursor-mono-time">
-                      {formatSeconds(Math.floor((demoProgress / 100) * selectedDemoTrack.duration))}
-                    </span>
-                    <div
-                      className="cursor-track-bar"
-                      ref={trackRef}
-                      role="slider"
-                      tabIndex={0}
-                      aria-label="Demo audio scrubber"
-                      aria-valuemin={0}
-                      aria-valuemax={100}
-                      aria-valuenow={Math.round(demoProgress)}
-                      aria-valuetext={`${formatSeconds(Math.floor((demoProgress / 100) * selectedDemoTrack.duration))} of ${formatSeconds(selectedDemoTrack.duration)}`}
-                      onKeyDown={(e) => {
-                        if (e.key === 'ArrowRight' || e.key === 'ArrowUp') {
-                          e.preventDefault();
-                          setDemoProgress((p) => Math.min(100, p + 5));
-                        } else if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') {
-                          e.preventDefault();
-                          setDemoProgress((p) => Math.max(0, p - 5));
-                        } else if (e.key === 'Home') {
-                          e.preventDefault();
-                          setDemoProgress(0);
-                        } else if (e.key === 'End') {
-                          e.preventDefault();
-                          setDemoProgress(100);
-                        }
-                      }}
-                      onClick={(e) => {
-                        const rect = e.currentTarget.getBoundingClientRect();
-                        const clickX = e.clientX - rect.left;
-                        const pct = Math.max(0, Math.min(100, (clickX / rect.width) * 100));
-                        setDemoProgress(pct);
-                      }}
-                    >
-                      <div className="cursor-track-bar-fill" style={{ width: `${demoProgress}%` }} />
-                      <div className="cursor-track-knob" ref={knobRef} style={{ left: `${demoProgress}%` }} />
-                    </div>
-                    <span className="cursor-mono-time">{formatSeconds(selectedDemoTrack.duration)}</span>
-                  </div>
-
-                  {/* Controls & CRO Bridge CTA */}
-                  <div className="cursor-controls-row">
-                    <button
-                      type="button"
-                      className="cursor-play-btn"
-                      onClick={handleTogglePlayDemo}
-                      aria-label={isPlayingDemo ? 'Pause Demo Audio' : 'Play Demo Audio'}
-                    >
-                      {isPlayingDemo ? <Pause size={16} fill="#ffffff" /> : <Play size={16} fill="#ffffff" style={{ marginLeft: '1px' }} />}
-                    </button>
-
-                    <button
-                      type="button"
-                      className="cursor-button-secondary cursor-btn-sm cursor-vis-cta-bridge"
-                      onClick={handleDownloadClick}
-                      aria-label="Download SonicWave to convert your own media files"
-                    >
-                      <span>Convert your own media &rarr;</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      className="cursor-icon-btn"
-                      onClick={() => setIsMuted(!isMuted)}
-                      title={isMuted ? 'Unmute' : 'Mute'}
-                      aria-label={isMuted ? 'Unmute demo audio' : 'Mute demo audio'}
-                    >
-                      {isMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      <HeroIntro
+        onDownload={() => handleDownloadClick('Windows (x64)')}
+        onNavigate={onNavigate}
+        onSmoothScroll={(targetId) => scrollToSection(targetId)}
+        theme={theme}
+      />
 
       {/* =========================================================================
           SUPPORTED PLATFORMS (DESIGN-cursor.md: surface-1 cards, hairline borders)
