@@ -217,7 +217,7 @@
 2. **Backend Server Syntax Error**: (Resolved) Removed duplicate callback closure in `server/index.js` `/api/download` route that previously prevented server bootstrapping.
 3. **Desktop Launcher Routing**: (Resolved) `start.bat` updated to launch `#app` converter studio route and natively serve pre-compiled `client/dist` in standalone package mode without requiring client `node_modules` installation.
 4. **PowerShell Script Execution**: Running `npm` directly in PowerShell fails if execution policies are restricted (`PSSecurityException`). Always use `npm.cmd`.
-5. **Platform Bot Verification**: YouTube intermittently flags cloud server IPs or datacenter IPs. The application mitigates this with `--extractor-args "youtube:player_client=android,web"` and `--cookies`, but fresh cookies may be required if YouTube alters detection algorithms.
+5. **Platform Bot Verification**: YouTube intermittently flags cloud server IPs or datacenter IPs. The application mitigates this with `--extractor-args "youtube:player_client=ios,android"` (bypassing web player n-sig throttling) and `--cookies`, but fresh cookies may be required if YouTube alters detection algorithms.
 6. **Vercel Limitations**: Vercel configuration deploys only the frontend (`client/dist`). The backend converter requires a persistent Node.js runtime with binary execution support (`server/bin`).
 
 ---
@@ -225,6 +225,7 @@
 ## 10. Important Decisions & Constraints
 - **Direct Stream Copy**: Video (`MP4`) and AAC (`M4A`) formats utilize stream copy (`-c copy`) when possible to avoid re-encoding latency.
 - **16-Stream Turbo Acceleration**: Uses `-N 16` concurrent fragment downloads with 16MB buffer sizes for fast downloads.
+- **Backend Engine Optimizations**: YouTube extractor client updated to `youtube:player_client=ios,android` to bypass n-sig throttling; integrates `aria2c` external multi-connection downloader (`-s 16 -x 16 -k 1M -j 16`) with automatic fallback to yt-dlp native downloader; `--http-chunk-size` optimized to 5M to prevent TCP window stalls.
 - **Zero-Dependency Testing**: Tests run directly on Node's native test runner (`node:test`) to avoid altering testing dependencies.
 - **Continuous Integration**: Lightweight multi-platform GitHub Actions workflow (`.github/workflows/test.yml`) runs tests on Node 20 and 22.
 - **Decoupled Desktop App**: Desktop distribution automatically replaces `App.jsx` with `AppDesktop.jsx` to eliminate marketing overhead for installed desktop users.

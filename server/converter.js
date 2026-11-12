@@ -1,4 +1,4 @@
-const { spawn, execFile } = require('child_process');
+const { spawn, execFile, execFileSync } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 const { getYtDlpPath, getFfmpegPath, getFfmpegLocation, getBinDir } = require('./binManager');
@@ -236,7 +236,8 @@ function getVideoInfo(rawUrl) {
       return reject(err);
     }
 
-    const isYouTube = url.includes('youtube.com') || url.includes('youtu.be');
+    const lowerUrl = typeof url === 'string' ? url.toLowerCase() : '';
+    const isYouTube = lowerUrl.includes('youtube.com') || lowerUrl.includes('youtu.be');
     const ytDlp = getYtDlpPath();
     const cookiePath = getCookiePath();
     const cookieFlags = cookiePath ? ['--cookies', cookiePath] : [];
@@ -246,7 +247,7 @@ function getVideoInfo(rawUrl) {
       '--no-warnings',
       '--no-playlist',
       '--no-check-certificates',
-      ...(isYouTube && !cookiePath ? ['--extractor-args', 'youtube:player_client=android,web'] : []),
+      ...(isYouTube && !cookiePath ? ['--extractor-args', 'youtube:player_client=ios,android'] : []),
       ...cookieFlags,
       '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
       '--js-runtimes', 'node',
@@ -316,15 +317,61 @@ function getVideoInfo(rawUrl) {
   });
 }
 
-/**
- * Start Conversion Job with 16-Stream Turbo Acceleration
- */
-function startConversion({ url, format = 'mp3', quality = '320k', jobId, turbo = true }) {
-  const ytDlp = getYtDlpPath();
-  const ffmpeg = getFfmpegPath();
+let aria2Cache = null;
 
+/**
+ * Check if aria2c external downloader is available on system or in bin directory
+ */
+function isAria2Available(forceRecheck = false) {
+  if (!forceRecheck && aria2Cache !== null) {
+    return aria2Cache;
+  }
+
+  // 1. Check local bin directory (server/bin)
+  try {
+    const binDir = getBinDir();
+    const localAria2 = path.join(binDir, process.platform === 'win32' ? 'aria2c.exe' : 'aria2c');
+    if (fs.existsSync(localAria2)) {
+      execFileSync(localAria2, ['-v'], { stdio: 'ignore', timeout: 3000 });
+      aria2Cache = true;
+      return true;
+    }
+  } catch {}
+
+  // 2. Check system PATH
+  try {
+    execFileSync('aria2c', ['-v'], { stdio: 'ignore', timeout: 3000 });
+    aria2Cache = true;
+    return true;
+  } catch {
+    aria2Cache = false;
+    return false;
+  }
+}
+
+/**
+ * Manually set aria2 availability cache (useful for testing fallback paths)
+ */
+function setAria2Available(available) {
+  aria2Cache = available;
+}
+
+/**
+ * Build yt-dlp CLI arguments for audio or video conversion
+ */
+function buildConversionArgs({
+  url,
+  format = 'mp3',
+  quality = '320k',
+  outputTemplate,
+  cookiePath = null,
+  ffmpegLocation = null,
+  useAria2 = null,
+  turbo = true
+}) {
   const validFormats = ['mp3', 'm4a', 'wav', 'flac', 'mp4'];
-  const targetFormat = validFormats.includes(format.toLowerCase()) ? format.toLowerCase() : 'mp3';
+  const safeFormat = typeof format === 'string' ? format.toLowerCase() : 'mp3';
+  const targetFormat = validFormats.includes(safeFormat) ? safeFormat : 'mp3';
   const isVideo = targetFormat === 'mp4';
 
   // Sanitize and whitelist quality values
@@ -337,52 +384,23 @@ function startConversion({ url, format = 'mp3', quality = '320k', jobId, turbo =
     targetQuality = validAudioQualities.includes(quality) ? quality : '320k';
   }
 
-  // Output filename template
-  const outputTemplate = path.join(DOWNLOADS_DIR, `${jobId}.%(ext)s`);
-
-  const jobState = {
-    id: jobId,
-    url,
-    format: targetFormat,
-    quality: targetQuality,
-    isVideo,
-    turbo: true,
-    parallelStreams: 16,
-    fragmentInfo: null,
-    status: 'starting', // starting, downloading, converting, completed, failed
-    progress: 0,
-    speed: '0 KiB/s',
-    eta: '--:--',
-    totalSize: 'Calculating...',
-    title: '',
-    artist: '',
-    thumbnail: '',
-    duration: 0,
-    filePath: null,
-    fileName: null,
-    error: null,
-    createdAt: Date.now()
-  };
-
-  jobs.set(jobId, jobState);
-
-  const binDir = getBinDir();
-
-  const isYouTube = url.includes('youtube.com') || url.includes('youtu.be');
-
-  const cookiePath = getCookiePath();
+  const lowerUrl = typeof url === 'string' ? url.toLowerCase() : '';
+  const isYouTube = lowerUrl.includes('youtube.com') || lowerUrl.includes('youtu.be');
   const cookieFlags = cookiePath ? ['--cookies', cookiePath] : [];
-
-  const ffmpegLocation = getFfmpegLocation();
   const ffmpegFlags = ffmpegLocation ? ['--ffmpeg-location', ffmpegLocation] : [];
+
+  const aria2Active = useAria2 !== null ? Boolean(useAria2) : (turbo ? isAria2Available() : false);
+  const aria2Flags = aria2Active ? [
+    '--downloader', 'aria2c',
+    '--downloader-args', 'aria2c:-s 16 -x 16 -k 1M -j 16'
+  ] : [];
 
   // High-speed multi-threaded acceleration flags (16 parallel chunk streams, 16MB buffer)
   const speedFlags = [
-    '-N', '16', // 16 concurrent fragments for DASH/HLS
-    '--buffer-size', '16M',
-    '--http-chunk-size', '10M',
-    ...(isYouTube && !cookiePath ? ['--extractor-args', 'youtube:player_client=android,web'] : []),
+    ...(turbo ? ['-N', '16', '--buffer-size', '16M', '--http-chunk-size', '5M'] : []),
+    ...(isYouTube && !cookiePath ? ['--extractor-args', 'youtube:player_client=ios,android'] : []),
     ...cookieFlags,
+    ...aria2Flags,
     '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
     '--js-runtimes', 'node',
     '--retries', '10',
@@ -396,11 +414,11 @@ function startConversion({ url, format = 'mp3', quality = '320k', jobId, turbo =
   if (isVideo) {
     // Video download with resolution filter & Direct Stream Copy MP4 merge
     let formatFilter = 'bv*[ext=mp4]+ba[ext=m4a]/b[ext=mp4] / bv*+ba/b';
-    if (quality === '1080p') {
+    if (targetQuality === '1080p') {
       formatFilter = 'bv*[height<=1080][ext=mp4]+ba[ext=m4a]/bv*[height<=1080]+ba/b[height<=1080] / bv*+ba/b';
-    } else if (quality === '720p') {
+    } else if (targetQuality === '720p') {
       formatFilter = 'bv*[height<=720][ext=mp4]+ba[ext=m4a]/bv*[height<=720]+ba/b[height<=720] / bv*+ba/b';
-    } else if (quality === '480p') {
+    } else if (targetQuality === '480p') {
       formatFilter = 'bv*[height<=480][ext=mp4]+ba[ext=m4a]/bv*[height<=480]+ba/b[height<=480] / bv*+ba/b';
     }
 
@@ -453,56 +471,151 @@ function startConversion({ url, format = 'mp3', quality = '320k', jobId, turbo =
     ];
   }
 
-  console.log(`[converter] Starting job ${jobId} (Turbo 16x): ${url} (${targetFormat}, ${quality})`);
+  return {
+    args,
+    targetFormat,
+    targetQuality,
+    isVideo,
+    useAria2: aria2Active
+  };
+}
 
-  const child = spawn(ytDlp, args);
+/**
+ * Parse a single stdout line from yt-dlp or aria2c to update job state
+ */
+function parseProgress(line, jobState) {
+  if (!line || !jobState) return;
+
+  // Examples:
+  // [download]   5.4% of   10.23MiB at    1.24MiB/s ETA 00:08
+  // [download] 100% of   10.23MiB in 00:03
+  // [#123456 2.5MiB/23.4MiB(10%) CN:16 DL:2.8MiB ETA:7s]
+  // [#366579 0B/23.4MiB CN:1 DL:0B]
+  // [ExtractAudio] Destination: ...
+  // [Metadata] Adding metadata...
+  // [ThumbnailsConvertor] Converting thumbnail...
+
+  const isYtDlpDownload = line.includes('[download]');
+  const isAria2Download = line.includes('[#') && (line.includes('(') || line.includes('CN:') || line.includes('DL:'));
+
+  if (isYtDlpDownload || isAria2Download) {
+    jobState.status = 'downloading';
+    const percentMatch = line.match(/(\d+(?:\.\d+)?)%/);
+    if (percentMatch) {
+      jobState.progress = Math.min(Math.round(parseFloat(percentMatch[1])), 95);
+    }
+
+    // Match high speeds (e.g., 28.5MiB/s, 1.2GiB/s, 450KiB/s, aria2 DL:2.8MiB or DL:2.8MiB/s, or initial DL:0B)
+    const speedMatch = line.match(/(?:at|DL:)\s*([\d.]+\s*(?:[KMGTkmgt]i?)?B(?:\/s)?)/i);
+    if (speedMatch) {
+      const rawSpeed = speedMatch[1].trim();
+      jobState.speed = rawSpeed.endsWith('/s') ? rawSpeed : `${rawSpeed}/s`;
+    }
+
+    // Match ETA (e.g., ETA 03:45, ETA:7s, ETA 01:23:45)
+    const etaMatch = line.match(/ETA:?\s*([\d:smhd]+)/i);
+    if (etaMatch) {
+      jobState.eta = etaMatch[1];
+    }
+
+    // Match multi-gigabyte and multi-megabyte file sizes
+    const sizeMatch = line.match(/(?:of\s+~?|\/)([\d.]+\s*(?:[KMGTkmgt]i?)?B)/i);
+    if (sizeMatch) {
+      jobState.totalSize = sizeMatch[1];
+    }
+
+    // Match fragment download progress (e.g. frag 250/1800)
+    const fragMatch = line.match(/frag\s+(\d+\/\d+)/i);
+    if (fragMatch) {
+      jobState.fragmentInfo = fragMatch[1];
+    }
+  } else if (line.includes('[ExtractAudio]') || line.includes('[ffmpeg]') || line.includes('[Merger]')) {
+    jobState.status = 'converting';
+    jobState.progress = Math.max(jobState.progress, 92);
+  } else if (line.includes('[Metadata]') || line.includes('[ThumbnailsConvertor]') || line.includes('[EmbedThumbnail]')) {
+    jobState.status = 'tagging';
+    jobState.progress = 98;
+  }
+}
+
+/**
+ * Start Conversion Job with 16-Stream Turbo Acceleration
+ */
+function startConversion({ url, format = 'mp3', quality = '320k', jobId, turbo = true }) {
+  const ytDlp = getYtDlpPath();
+  const ffmpeg = getFfmpegPath();
+
+  // Output filename template
+  const outputTemplate = path.join(DOWNLOADS_DIR, `${jobId}.%(ext)s`);
+
+  const cookiePath = getCookiePath();
+  const ffmpegLocation = getFfmpegLocation();
+
+  const {
+    args,
+    targetFormat,
+    targetQuality,
+    isVideo,
+    useAria2: activeAria2
+  } = buildConversionArgs({
+    url,
+    format,
+    quality,
+    outputTemplate,
+    cookiePath,
+    ffmpegLocation,
+    turbo
+  });
+
+  const jobState = {
+    id: jobId,
+    url,
+    format: targetFormat,
+    quality: targetQuality,
+    isVideo,
+    turbo: Boolean(turbo),
+    downloader: activeAria2 ? 'aria2c' : 'builtin',
+    parallelStreams: turbo ? 16 : 1,
+    fragmentInfo: null,
+    status: 'starting', // starting, downloading, converting, completed, failed
+    progress: 0,
+    speed: '0 KiB/s',
+    eta: '--:--',
+    totalSize: 'Calculating...',
+    title: '',
+    artist: '',
+    thumbnail: '',
+    duration: 0,
+    filePath: null,
+    fileName: null,
+    error: null,
+    createdAt: Date.now()
+  };
+
+  jobs.set(jobId, jobState);
+
+  console.log(`[converter] Starting job ${jobId} (Turbo: ${Boolean(turbo)}, downloader: ${activeAria2 ? 'aria2c' : 'builtin'}): ${url} (${targetFormat}, ${targetQuality})`);
+
+  // Ensure binDir is in PATH so yt-dlp can locate local aria2c or ffmpeg
+  const binDir = getBinDir();
+  const env = { ...process.env };
+  const envPathKey = Object.keys(env).find(k => k.toLowerCase() === 'path') || (process.platform === 'win32' ? 'Path' : 'PATH');
+  const currentPath = env[envPathKey] || '';
+  if (binDir && !currentPath.includes(binDir)) {
+    const updatedPath = `${binDir}${path.delimiter}${currentPath}`;
+    for (const key of Object.keys(env)) {
+      if (key.toLowerCase() === 'path') {
+        env[key] = updatedPath;
+      }
+    }
+    env[envPathKey] = updatedPath;
+  }
+
+  const child = spawn(ytDlp, args, { env });
   jobState.process = child;
 
   const parseProgressLine = (line) => {
-    // Examples:
-    // [download]   5.4% of   10.23MiB at    1.24MiB/s ETA 00:08
-    // [download] 100% of   10.23MiB in 00:03
-    // [ExtractAudio] Destination: ...
-    // [Metadata] Adding metadata...
-    // [ThumbnailsConvertor] Converting thumbnail...
-
-    if (line.includes('[download]')) {
-      jobState.status = 'downloading';
-      const percentMatch = line.match(/(\d+(?:\.\d+)?)%/);
-      if (percentMatch) {
-        jobState.progress = Math.min(Math.round(parseFloat(percentMatch[1])), 95);
-      }
-
-      // Match high speeds (e.g., 28.5MiB/s, 1.2GiB/s, 450KiB/s)
-      const speedMatch = line.match(/at\s+([\d.]+\s*[KMGTkmgt]i?B\/s)/i);
-      if (speedMatch) {
-        jobState.speed = speedMatch[1];
-      }
-
-      // Match ETA (e.g., 03:45, 01:23:45)
-      const etaMatch = line.match(/ETA\s+([\d:]+)/i);
-      if (etaMatch) {
-        jobState.eta = etaMatch[1];
-      }
-
-      // Match multi-gigabyte and multi-megabyte file sizes
-      const sizeMatch = line.match(/of\s+~?([\d.]+\s*[KMGTkmgt]i?B)/i);
-      if (sizeMatch) {
-        jobState.totalSize = sizeMatch[1];
-      }
-
-      // Match fragment download progress (e.g. frag 250/1800)
-      const fragMatch = line.match(/frag\s+(\d+\/\d+)/i);
-      if (fragMatch) {
-        jobState.fragmentInfo = fragMatch[1];
-      }
-    } else if (line.includes('[ExtractAudio]') || line.includes('[ffmpeg]') || line.includes('[Merger]')) {
-      jobState.status = 'converting';
-      jobState.progress = Math.max(jobState.progress, 92);
-    } else if (line.includes('[Metadata]') || line.includes('[ThumbnailsConvertor]') || line.includes('[EmbedThumbnail]')) {
-      jobState.status = 'tagging';
-      jobState.progress = 98;
-    }
+    parseProgress(line, jobState);
   };
 
   child.stdout.on('data', (chunk) => {
@@ -660,5 +773,9 @@ module.exports = {
   formatDuration,
   getActiveJobCount,
   normalizeUrl,
-  DOWNLOADS_DIR
+  DOWNLOADS_DIR,
+  isAria2Available,
+  setAria2Available,
+  buildConversionArgs,
+  parseProgress
 };
