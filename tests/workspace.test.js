@@ -215,10 +215,9 @@ test('workspace - converter studio AppDesktop integration and launcher integrity
   const appDesktopSrc = fs.readFileSync(appDesktopPath, 'utf8');
   assert.ok(appDesktopSrc.includes('export default function App'), 'AppDesktop.jsx must export App component');
 
-  // 2. Verify App.jsx routes /app, #app to converter studio and root to landing website
+  // 2. Verify App.jsx is cleanly decoupled from AppDesktop (web is pure landing & marketing portal)
   const appSrc = fs.readFileSync(path.join(rootDir, 'client', 'src', 'App.jsx'), 'utf8');
-  assert.ok(appSrc.includes('AppDesktop'), 'App.jsx must import AppDesktop');
-  assert.ok(appSrc.includes("pathname === '/app'") || appSrc.includes("hash === '#app'"), 'App.jsx must route /app to converter studio');
+  assert.strictEqual(appSrc.includes('AppDesktop'), false, 'App.jsx must not bundle AppDesktop on the website');
   assert.ok(appSrc.includes('/landing'), 'App.jsx must support explicit /landing routing');
   assert.ok(
     appSrc.includes("pathname === '/' || pathname === ''") && appSrc.includes("return 'landing'"),

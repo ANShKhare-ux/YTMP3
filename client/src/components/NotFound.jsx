@@ -52,14 +52,6 @@ function WindowsIcon({ size = 16, className = '' }) {
 
 const DESTINATION_CARDS = [
   {
-    title: 'Converter Studio',
-    desc: 'Launch the high-speed multi-platform converter and in-browser audio player.',
-    href: '/#app',
-    view: 'app',
-    icon: Zap,
-    badge: 'Studio'
-  },
-  {
     title: 'Download Windows Package',
     desc: 'Get SonicWave v1.0.0 (1.3 MB portable zip) with 1-click start.bat launcher and zero telemetry.',
     href: '/install',

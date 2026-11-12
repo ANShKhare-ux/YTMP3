@@ -8,7 +8,6 @@ import InstallGuide from './components/docs/InstallGuide';
 import SupportedPlatforms from './components/docs/SupportedPlatforms';
 import TroubleshootingGuide from './components/docs/TroubleshootingGuide';
 import NotFound from './components/NotFound';
-import AppDesktop from './AppDesktop';
 
 function resolveRoute(pathname, hash) {
   if (pathname === '/install' || hash === '#install' || hash === '#/install') return 'install';
@@ -19,7 +18,6 @@ function resolveRoute(pathname, hash) {
   if (pathname === '/copyright-acceptable-use' || hash === '#copyright-acceptable-use' || hash === '#/copyright-acceptable-use') return 'copyright';
   if (pathname === '/contact' || hash === '#contact' || hash === '#/contact') return 'contact';
   if (pathname === '/landing' || hash === '#landing' || hash === '#/landing') return 'landing';
-  if (pathname === '/app' || hash === '#app' || hash === '#/app' || hash === '#studio' || hash === '#/studio') return 'app';
   if (pathname === '/404' || hash === '#404' || hash === '#/404') return 'not-found';
   if (pathname === '/' || pathname === '') return 'landing';
   return 'not-found';
@@ -57,11 +55,6 @@ export default function App() {
       window.removeEventListener('hashchange', handleRouteSync);
     };
   }, []);
-
-  // Converter Studio Application (Full feature mode)
-  if (currentView === 'app') {
-    return <AppDesktop onNavigate={navigateTo} />;
-  }
 
   // Technical Documentation Hubs
   if (currentView === 'install') {

@@ -143,7 +143,7 @@ export default function InstallGuide({ onNavigate }) {
               <li>Checks for a valid Node.js and npm environment on your machine.</li>
               <li>Installs necessary dependencies if first launched.</li>
               <li>Calls <code>server/binManager.js</code> to locate or automatically fetch the official <code>yt-dlp</code> and <code>ffmpeg</code> executables.</li>
-              <li>Launches the local conversion server (port 3001) and web studio interface (port 5173).</li>
+              <li>Launches the local conversion server (port 3001) and application interface (port 5173).</li>
             </ul>
           </li>
 
@@ -252,7 +252,7 @@ export default function InstallGuide({ onNavigate }) {
             },
             {
               "@type": "HowToStep",
-              "name": "Open Web Studio",
+              "name": "Start Converting",
               "text": "Open your browser to http://localhost:5173 to convert and audition media.",
               "url": "https://ytmp-3-five.vercel.app/install#step4"
             }

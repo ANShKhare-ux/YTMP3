@@ -908,21 +908,6 @@ export default function LandingPage({
 
             <button
               type="button"
-              className="cursor-button-secondary cursor-nav-studio-btn"
-              onClick={() => {
-                if (onNavigate) onNavigate('app', '/#app');
-                else window.location.hash = '#app';
-              }}
-              title="Launch SonicWave Converter Studio"
-              aria-label="Open Converter Studio"
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
-            >
-              <Zap size={14} style={{ color: 'var(--spotify-green)' }} aria-hidden="true" />
-              <span>Web Studio</span>
-            </button>
-
-            <button
-              type="button"
               className="cursor-button-primary cursor-nav-download-btn"
               onClick={handleDownloadClick}
               id="nav-download-btn"
@@ -969,19 +954,6 @@ export default function LandingPage({
               </a>
             </nav>
             <div className="cursor-mobile-menu-actions">
-              <button
-                type="button"
-                className="cursor-button-secondary cursor-mobile-studio-btn"
-                onClick={() => {
-                  setIsMobileMenuOpen(false);
-                  if (onNavigate) onNavigate('app', '/#app');
-                  else window.location.hash = '#app';
-                }}
-                style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px', width: '100%', marginBottom: '8px' }}
-              >
-                <Zap size={15} style={{ color: 'var(--spotify-green)' }} />
-                <span>Open Converter Studio</span>
-              </button>
               <button
                 type="button"
                 className="cursor-button-primary cursor-mobile-download-btn"
@@ -1054,20 +1026,6 @@ export default function LandingPage({
               <Terminal size={14} aria-hidden="true" />
               <span>Installation guide</span>
             </a>
-
-            <button
-              type="button"
-              className="cursor-button-secondary cursor-btn-lg cursor-hero-studio-btn"
-              onClick={() => {
-                if (onNavigate) onNavigate('app', '/#app');
-                else window.location.hash = '#app';
-              }}
-              aria-label="Launch Converter Studio directly"
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}
-            >
-              <Zap size={15} style={{ color: 'var(--spotify-green)' }} aria-hidden="true" />
-              <span>Launch Studio</span>
-            </button>
           </div>
 
           {/* CRO Friction Reduction: Micro-proof directly below primary CTA */}
