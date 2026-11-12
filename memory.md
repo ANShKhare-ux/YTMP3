@@ -228,7 +228,7 @@
 - **Backend Engine Optimizations**: YouTube extractor client updated to `youtube:player_client=ios,android` to bypass n-sig throttling; integrates `aria2c` external multi-connection downloader (`-s 16 -x 16 -k 1M -j 16`) with automatic fallback to yt-dlp native downloader; `--http-chunk-size` optimized to 5M to prevent TCP window stalls.
 - **Zero-Dependency Testing**: Tests run directly on Node's native test runner (`node:test`) to avoid altering testing dependencies.
 - **Continuous Integration**: Lightweight multi-platform GitHub Actions workflow (`.github/workflows/test.yml`) runs tests on Node 20 and 22.
-- **Decoupled Desktop App**: Desktop distribution automatically replaces `App.jsx` with `AppDesktop.jsx` to eliminate marketing overhead for installed desktop users.
+- **Decoupled Desktop App & Clean Website**: Desktop distribution automatically replaces `App.jsx` with `AppDesktop.jsx` to package the full converter studio. The website (`client/src/App.jsx`) is strictly decoupled from the converter application, serving only the marketing landing page, legal, documentation, and download hubs with zero Web Studio buttons or converter app chunks in the web bundle.
 
 ---
 
