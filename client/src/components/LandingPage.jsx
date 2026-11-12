@@ -288,18 +288,52 @@ export default function LandingPage({
   }, [isPlayingDemo]);
 
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [scrollProgress, setScrollProgress] = useState(0);
+  const [activeSection, setActiveSection] = useState('');
+  const [ctaElevated, setCtaElevated] = useState(false);
 
-  // Track scroll position to show/hide the floating scroll-to-top button
+  // Dynamic navbar scroll state, reading progress, and IntersectionObserver scroll-spy
   useEffect(() => {
     const handleScroll = () => {
-      setShowScrollTop(window.scrollY > 400);
+      const scrollY = window.scrollY;
+      setIsScrolled(scrollY > 20);
+      setCtaElevated(scrollY > 450);
+      setShowScrollTop(scrollY > 400);
+
+      const winHeight = window.innerHeight;
+      const docHeight = document.documentElement.scrollHeight - winHeight;
+      const progress = docHeight > 0 ? Math.min(100, Math.max(0, (scrollY / docHeight) * 100)) : 0;
+      setScrollProgress(progress);
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     handleScroll();
 
+    const sectionIds = ['platforms', 'how-it-works', 'features', 'comparison', 'specs', 'faq'];
+    const sections = sectionIds.map((id) => document.getElementById(id)).filter(Boolean);
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visibleEntries = entries.filter((e) => e.isIntersecting);
+        if (visibleEntries.length > 0) {
+          visibleEntries.sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+          setActiveSection(visibleEntries[0].target.id);
+        } else if (window.scrollY < 300) {
+          setActiveSection('');
+        }
+      },
+      {
+        rootMargin: '-20% 0px -50% 0px',
+        threshold: [0, 0.2, 0.5, 0.8]
+      }
+    );
+
+    sections.forEach((sec) => observer.observe(sec));
+
     return () => {
       window.removeEventListener('scroll', handleScroll);
+      observer.disconnect();
     };
   }, []);
   useGSAP(() => {
@@ -864,23 +898,88 @@ export default function LandingPage({
       </a>
 
       {/* =========================================================================
-          TOP NAV (DESIGN-cursor.md: height 56px, background #010102, hairline border)
+          TOP NAV (Dynamic Frosted Glass, Reading Progress, Active Section Spy)
           ========================================================================= */}
-      <header className="cursor-top-nav" role="banner">
+      <header className={`cursor-top-nav ${isScrolled ? 'is-scrolled' : ''}`} role="banner">
+        {/* Dynamic Reading / Scroll Progress Bar */}
+        <div className="cursor-nav-progress-bar" style={{ width: `${scrollProgress}%` }} aria-hidden="true" />
+
         <div className="cursor-nav-container">
-          <div className="cursor-nav-brand">
+          <a
+            href="#"
+            className="cursor-nav-brand"
+            onClick={(e) => {
+              e.preventDefault();
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            title="SonicWave - Back to Top"
+          >
             <CursorBrandLogo size={24} />
             <span className="cursor-brand-title">SonicWave</span>
             <span className="cursor-nav-version-badge">v1.0.0</span>
-          </div>
+          </a>
 
           <nav className="cursor-nav-links" aria-label="Main Navigation">
-            <a href="#features" className="cursor-nav-link" onClick={(e) => handleSmoothScroll(e, '#features')}>Features</a>
-            <a href="#how-it-works" className="cursor-nav-link" onClick={(e) => handleSmoothScroll(e, '#how-it-works')}>How it works</a>
-            <a href="#platforms" className="cursor-nav-link" onClick={(e) => handleSmoothScroll(e, '#platforms')}>Platforms</a>
-            <a href="#comparison" className="cursor-nav-link" onClick={(e) => handleSmoothScroll(e, '#comparison')}>Comparison</a>
-            <a href="#specs" className="cursor-nav-link" onClick={(e) => handleSmoothScroll(e, '#specs')}>Specs</a>
-            <a href="#faq" className="cursor-nav-link" onClick={(e) => handleSmoothScroll(e, '#faq')}>FAQ</a>
+            <a
+              href="#features"
+              className={`cursor-nav-link ${activeSection === 'features' ? 'is-active' : ''}`}
+              onClick={(e) => {
+                setActiveSection('features');
+                handleSmoothScroll(e, '#features');
+              }}
+            >
+              Features
+            </a>
+            <a
+              href="#how-it-works"
+              className={`cursor-nav-link ${activeSection === 'how-it-works' ? 'is-active' : ''}`}
+              onClick={(e) => {
+                setActiveSection('how-it-works');
+                handleSmoothScroll(e, '#how-it-works');
+              }}
+            >
+              How it works
+            </a>
+            <a
+              href="#platforms"
+              className={`cursor-nav-link ${activeSection === 'platforms' ? 'is-active' : ''}`}
+              onClick={(e) => {
+                setActiveSection('platforms');
+                handleSmoothScroll(e, '#platforms');
+              }}
+            >
+              Platforms
+            </a>
+            <a
+              href="#comparison"
+              className={`cursor-nav-link ${activeSection === 'comparison' ? 'is-active' : ''}`}
+              onClick={(e) => {
+                setActiveSection('comparison');
+                handleSmoothScroll(e, '#comparison');
+              }}
+            >
+              Comparison
+            </a>
+            <a
+              href="#specs"
+              className={`cursor-nav-link ${activeSection === 'specs' ? 'is-active' : ''}`}
+              onClick={(e) => {
+                setActiveSection('specs');
+                handleSmoothScroll(e, '#specs');
+              }}
+            >
+              Specs
+            </a>
+            <a
+              href="#faq"
+              className={`cursor-nav-link ${activeSection === 'faq' ? 'is-active' : ''}`}
+              onClick={(e) => {
+                setActiveSection('faq');
+                handleSmoothScroll(e, '#faq');
+              }}
+            >
+              FAQ
+            </a>
             <a
               href="/install"
               className="cursor-nav-link"
@@ -908,7 +1007,7 @@ export default function LandingPage({
 
             <button
               type="button"
-              className="cursor-button-primary cursor-nav-download-btn"
+              className={`cursor-button-primary cursor-nav-download-btn ${ctaElevated ? 'is-elevated' : ''}`}
               onClick={handleDownloadClick}
               id="nav-download-btn"
               aria-label="Download SonicWave for Windows"
@@ -933,12 +1032,72 @@ export default function LandingPage({
         {isMobileMenuOpen && (
           <div className="cursor-mobile-menu-drawer" role="dialog" aria-label="Mobile Navigation">
             <nav className="cursor-mobile-nav-links" aria-label="Mobile Navigation Links">
-              <a href="#features" className="cursor-mobile-nav-link" onClick={(e) => { setIsMobileMenuOpen(false); handleSmoothScroll(e, '#features'); }}>Features</a>
-              <a href="#how-it-works" className="cursor-mobile-nav-link" onClick={(e) => { setIsMobileMenuOpen(false); handleSmoothScroll(e, '#how-it-works'); }}>How it works</a>
-              <a href="#platforms" className="cursor-mobile-nav-link" onClick={(e) => { setIsMobileMenuOpen(false); handleSmoothScroll(e, '#platforms'); }}>Platforms</a>
-              <a href="#comparison" className="cursor-mobile-nav-link" onClick={(e) => { setIsMobileMenuOpen(false); handleSmoothScroll(e, '#comparison'); }}>Comparison</a>
-              <a href="#specs" className="cursor-mobile-nav-link" onClick={(e) => { setIsMobileMenuOpen(false); handleSmoothScroll(e, '#specs'); }}>Specs</a>
-              <a href="#faq" className="cursor-mobile-nav-link" onClick={(e) => { setIsMobileMenuOpen(false); handleSmoothScroll(e, '#faq'); }}>FAQ</a>
+              <a
+                href="#features"
+                className={`cursor-mobile-nav-link ${activeSection === 'features' ? 'is-active' : ''}`}
+                onClick={(e) => {
+                  setIsMobileMenuOpen(false);
+                  setActiveSection('features');
+                  handleSmoothScroll(e, '#features');
+                }}
+              >
+                Features
+              </a>
+              <a
+                href="#how-it-works"
+                className={`cursor-mobile-nav-link ${activeSection === 'how-it-works' ? 'is-active' : ''}`}
+                onClick={(e) => {
+                  setIsMobileMenuOpen(false);
+                  setActiveSection('how-it-works');
+                  handleSmoothScroll(e, '#how-it-works');
+                }}
+              >
+                How it works
+              </a>
+              <a
+                href="#platforms"
+                className={`cursor-mobile-nav-link ${activeSection === 'platforms' ? 'is-active' : ''}`}
+                onClick={(e) => {
+                  setIsMobileMenuOpen(false);
+                  setActiveSection('platforms');
+                  handleSmoothScroll(e, '#platforms');
+                }}
+              >
+                Platforms
+              </a>
+              <a
+                href="#comparison"
+                className={`cursor-mobile-nav-link ${activeSection === 'comparison' ? 'is-active' : ''}`}
+                onClick={(e) => {
+                  setIsMobileMenuOpen(false);
+                  setActiveSection('comparison');
+                  handleSmoothScroll(e, '#comparison');
+                }}
+              >
+                Comparison
+              </a>
+              <a
+                href="#specs"
+                className={`cursor-mobile-nav-link ${activeSection === 'specs' ? 'is-active' : ''}`}
+                onClick={(e) => {
+                  setIsMobileMenuOpen(false);
+                  setActiveSection('specs');
+                  handleSmoothScroll(e, '#specs');
+                }}
+              >
+                Specs
+              </a>
+              <a
+                href="#faq"
+                className={`cursor-mobile-nav-link ${activeSection === 'faq' ? 'is-active' : ''}`}
+                onClick={(e) => {
+                  setIsMobileMenuOpen(false);
+                  setActiveSection('faq');
+                  handleSmoothScroll(e, '#faq');
+                }}
+              >
+                FAQ
+              </a>
               <a
                 href="/install"
                 className="cursor-mobile-nav-link"
