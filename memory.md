@@ -92,6 +92,18 @@
 - **Automated Test Suite**: Node.js native test runner (`node:test`) covering converter formatting, binary management, workspace integrity, brand assets, legal pages, technical documentation routing, download success dialogbox, custom 404 error page, security boundaries, and website localhost launcher integration (38 tests).
 - **Go-To-Market & Marketing Launch Kit**:
   - `docs/MARKETING_LAUNCH_KIT.md`: Multi-audience marketing launch pack spanning Product Hunt listing specs, maker comment, image gallery storyboard, TikTok/Reels/Shorts video scripts (Video Editors, Music Producers, General Public), community seeding templates for Reddit/X/AlternativeTo, and social graphics specs.
+- **Programmatic Video Generation Pipeline (Remotion v4.0.543)**:
+  - Scaffolded dedicated `video/` workspace with `@remotion/cli` and React 19.
+  - Re-architected video into high-energy 15-second creator workflow demo (`video/src/WorkflowPromo.tsx`):
+    - **Combined Video Track (`CombinedVideoTrack.tsx`)**: Unified all visual scenes (Hook, Workflow, Timeline Payoff, Outro, Dynamic Camera, and Cursor) into a single continuous video layer on the timeline.
+    - **Split Text Layers (`TextCaptionPill.tsx`)**: Decoupled each caption phrase into its own independent editable track on the Remotion Studio timeline (`[Text] 01 - Stop Gatekeeping`, `[Text] 02 - Paste Any Link`, `[Text] 03 - 16-Stream Speed`, `[Text] 04 - Drag to Timeline`, `[Text] 05 - Link in Bio CTA`) with relative-frame word timing synchronized to neural voice.
+    - **Hook (0-3s)**: "Video editors: stop gatekeeping this" headline overlay with bass drop and whip-pan transition.
+    - **Dynamic Camera Tracking**: Smooth camera punch-in to 1.32x zoom on link paste, tracking across 16-stream turbo speed gauge, and zoom-out to timeline.
+    - **Mock Editing Timeline (`MockEditingTimeline.tsx`)**: Simulates dropping the converted 320k audio file directly into a video editor timeline (V1, A1, A2 tracks) with visual waveform lock and checkmark.
+    - **Animated Hands-on Cursor (`AnimatedCursor.tsx`)**: Realistic cursor gliding, clicking Convert button, and dragging files into editing software.
+    - **Viral Word-by-Word Kinetic Captions (`KineticCaptions.tsx`)**: Compact stadium-pill captions (downscaled from 44px to 20-23px) with exact microsecond word boundaries extracted from neural audio; active words pop and highlight in vibrant Spotify green (`#1ed760`) and lavender in frame-perfect sync with speech.
+    - **Audio Atmosphere**: High-energy Phonk beat (`bgm-phonk.mp3`, 130 BPM with distorted 808 glide) + tactile SFX (`sfx-keyboard.mp3`, `sfx-click.mp3`, `sfx-drop-impact.mp3`, `sfx-whoosh-fast.mp3`) and ultra-punchy neural human voiceover (`vo-hook.mp3` through `vo-timeline.mp3`).
+  - Dual compositions in `Root.tsx`: `SonicWaveShort` (1080x1920 vertical) and `SonicWavePromo` (1920x1080 landscape) running at 450 frames (15.0s @ 30fps), hot-reloading on port 3333.
 
 ### Planned / Inferred / Unimplemented Features
 - *Inferred*: The Pricing Modal (`PricingModal.jsx`) is a presentation/comparison UI; no external payment processor (Stripe, LemonSqueezy) is integrated.
