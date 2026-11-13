@@ -229,6 +229,7 @@
 - **Zero-Dependency Testing**: Tests run directly on Node's native test runner (`node:test`) to avoid altering testing dependencies.
 - **Continuous Integration**: Lightweight multi-platform GitHub Actions workflow (`.github/workflows/test.yml`) runs tests on Node 20 and 22.
 - **Decoupled Desktop App & Clean Website**: Desktop distribution automatically replaces `App.jsx` with `AppDesktop.jsx` to package the full converter studio. The website (`client/src/App.jsx`) is strictly decoupled from the converter application, serving only the marketing landing page, legal, documentation, and download hubs with zero Web Studio buttons or converter app chunks in the web bundle.
+- **Persistent Floating Navigation**: `.cursor-top-nav` is configured with `position: fixed; top: 0; left: 0; right: 0; width: 100%; z-index: 1000;`, paired with `.cursor-canvas-root { padding-top: 56px; overflow-x: clip; }`. This ensures the dynamic navbar (frosted glass, reading progress bar, and active section tracking) persistently follows the user as they scroll without being clipped by overflow containers or causing hero content shifts.
 
 ---
 

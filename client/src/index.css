@@ -2525,7 +2525,7 @@ button:active {
   flex: 1;
   width: 100%;
   max-width: 100%;
-  overflow-x: hidden;
+  overflow-x: clip;
   display: flex;
   flex-direction: column;
   background-color: var(--cursor-canvas);
@@ -2533,6 +2533,7 @@ button:active {
   font-family: var(--cursor-font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  padding-top: 56px;
 }
 
 .cursor-container {
@@ -2551,9 +2552,12 @@ button:active {
 
 /* --- Top Navigation (DESIGN-cursor.md: height 56px, background #010102, hairline #23252a) --- */
 .cursor-top-nav {
-  position: sticky;
+  position: fixed;
   top: 0;
-  z-index: 100;
+  left: 0;
+  right: 0;
+  width: 100%;
+  z-index: 1000;
   height: 56px;
   background: rgba(1, 1, 2, 0.72);
   backdrop-filter: blur(14px);
