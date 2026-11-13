@@ -89,7 +89,9 @@
   - Windows path containment normalization: case-insensitive downloads directory verification in `/api/stream` and `/api/download`.
   - CORS localhost resilience: permits arbitrary local dev ports (5173, 5174, etc.) without throwing unhandled server errors.
   - Fixed audio player padding: `.spotify-app-layout.has-bottom-player` now properly dynamically applied, preventing docked bottom player from cutting off main content.
-- **Automated Test Suite**: Node.js native test runner (`node:test`) covering converter formatting, binary management, workspace integrity, brand assets, legal pages, technical documentation routing, download success dialogbox, custom 404 error page, security boundaries, and website localhost launcher integration (28 tests).
+- **Automated Test Suite**: Node.js native test runner (`node:test`) covering converter formatting, binary management, workspace integrity, brand assets, legal pages, technical documentation routing, download success dialogbox, custom 404 error page, security boundaries, and website localhost launcher integration (38 tests).
+- **Go-To-Market & Marketing Launch Kit**:
+  - `docs/MARKETING_LAUNCH_KIT.md`: Multi-audience marketing launch pack spanning Product Hunt listing specs, maker comment, image gallery storyboard, TikTok/Reels/Shorts video scripts (Video Editors, Music Producers, General Public), community seeding templates for Reddit/X/AlternativeTo, and social graphics specs.
 
 ### Planned / Inferred / Unimplemented Features
 - *Inferred*: The Pricing Modal (`PricingModal.jsx`) is a presentation/comparison UI; no external payment processor (Stripe, LemonSqueezy) is integrated.
