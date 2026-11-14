@@ -239,6 +239,58 @@ test('workspace - converter studio AppDesktop integration and launcher integrity
   assert.ok(serverIndexSrc.includes("job.status === 'cancelled'"), 'server/index.js must clean up SSE stream on job cancellation');
 });
 
+test('workspace - AI-SEO machine-readable files and programmatic conversion guides integrity', () => {
+  // 1. Verify pricing.md
+  const pricingPath = path.join(rootDir, 'client', 'public', 'pricing.md');
+  assert.ok(fs.existsSync(pricingPath), 'client/public/pricing.md must exist');
+  const pricingContent = fs.readFileSync(pricingPath, 'utf8');
+  assert.ok(pricingContent.includes('$0.00'), 'pricing.md must specify $0.00 pricing tier');
+  assert.ok(pricingContent.includes('SonicWave'), 'pricing.md must reference SonicWave');
+
+  // 2. Verify llms.txt enhancements
+  const llmsPath = path.join(rootDir, 'client', 'public', 'llms.txt');
+  assert.ok(fs.existsSync(llmsPath), 'client/public/llms.txt must exist');
+  const llmsContent = fs.readFileSync(llmsPath, 'utf8');
+  assert.ok(llmsContent.includes('/pricing.md'), 'llms.txt must link to /pricing.md');
+  assert.ok(llmsContent.includes('/convert/youtube-to-mp3'), 'llms.txt must link to programmatic conversion guides');
+
+  // 3. Verify robots.txt AI bots
+  const robotsPath = path.join(rootDir, 'client', 'public', 'robots.txt');
+  assert.ok(fs.existsSync(robotsPath), 'client/public/robots.txt must exist');
+  const robotsContent = fs.readFileSync(robotsPath, 'utf8');
+  assert.ok(robotsContent.includes('GPTBot'), 'robots.txt must allow GPTBot');
+  assert.ok(robotsContent.includes('ChatGPT-User'), 'robots.txt must allow ChatGPT-User');
+  assert.ok(robotsContent.includes('PerplexityBot'), 'robots.txt must allow PerplexityBot');
+  assert.ok(robotsContent.includes('ClaudeBot'), 'robots.txt must allow ClaudeBot');
+
+  // 4. Verify programmatic conversion components
+  const converterDataPath = path.join(rootDir, 'client', 'src', 'components', 'convert', 'converterData.js');
+  const converterGuidePath = path.join(rootDir, 'client', 'src', 'components', 'convert', 'ConverterGuide.jsx');
+  assert.ok(fs.existsSync(converterDataPath), 'converterData.js must exist');
+  assert.ok(fs.existsSync(converterGuidePath), 'ConverterGuide.jsx must exist');
+
+  // 5. Verify sitemap.xml coverage for all 4 conversion guides
+  const sitemapPath = path.join(rootDir, 'client', 'public', 'sitemap.xml');
+  const sitemapContent = fs.readFileSync(sitemapPath, 'utf8');
+  assert.ok(sitemapContent.includes('/convert/youtube-to-mp3'), 'sitemap.xml must include /convert/youtube-to-mp3');
+  assert.ok(sitemapContent.includes('/convert/youtube-to-wav'), 'sitemap.xml must include /convert/youtube-to-wav');
+  assert.ok(sitemapContent.includes('/convert/soundcloud-to-mp3'), 'sitemap.xml must include /convert/soundcloud-to-mp3');
+  assert.ok(sitemapContent.includes('/convert/instagram-reels-to-mp4'), 'sitemap.xml must include /convert/instagram-reels-to-mp4');
+
+  // 6. Verify App.jsx router includes conversion routes
+  const appJsx = fs.readFileSync(path.join(rootDir, 'client', 'src', 'App.jsx'), 'utf8');
+  assert.ok(appJsx.includes('/convert/youtube-to-mp3'), 'App.jsx must route /convert/youtube-to-mp3');
+  assert.ok(appJsx.includes('/convert/youtube-to-wav'), 'App.jsx must route /convert/youtube-to-wav');
+  assert.ok(appJsx.includes('/convert/soundcloud-to-mp3'), 'App.jsx must route /convert/soundcloud-to-mp3');
+  assert.ok(appJsx.includes('/convert/instagram-reels-to-mp4'), 'App.jsx must route /convert/instagram-reels-to-mp4');
+
+  // 7. Verify index.html includes pre-rendered crawlable links
+  const indexHtml = fs.readFileSync(path.join(rootDir, 'client', 'index.html'), 'utf8');
+  assert.ok(indexHtml.includes('href="/convert/youtube-to-mp3"'), 'index.html must link to /convert/youtube-to-mp3');
+  assert.ok(indexHtml.includes('href="/pricing.md"'), 'index.html must link to /pricing.md');
+});
+
+
 
 
 

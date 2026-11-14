@@ -7,12 +7,18 @@ import ContactSupport from './components/legal/ContactSupport';
 import InstallGuide from './components/docs/InstallGuide';
 import SupportedPlatforms from './components/docs/SupportedPlatforms';
 import TroubleshootingGuide from './components/docs/TroubleshootingGuide';
+import ConverterGuide from './components/convert/ConverterGuide';
 import NotFound from './components/NotFound';
 
 function resolveRoute(pathname, hash) {
   if (pathname === '/install' || hash === '#install' || hash === '#/install') return 'install';
   if (pathname === '/supported-platforms' || hash === '#supported-platforms' || hash === '#/supported-platforms') return 'platforms-guide';
   if (pathname === '/troubleshooting' || hash === '#troubleshooting' || hash === '#/troubleshooting') return 'troubleshooting';
+  if (pathname === '/convert/youtube-to-mp3' || hash === '#convert/youtube-to-mp3' || hash === '#/convert/youtube-to-mp3') return 'convert-youtube-to-mp3';
+  if (pathname === '/convert/youtube-to-wav' || hash === '#convert/youtube-to-wav' || hash === '#/convert/youtube-to-wav') return 'convert-youtube-to-wav';
+  if (pathname === '/convert/soundcloud-to-mp3' || hash === '#convert/soundcloud-to-mp3' || hash === '#/convert/soundcloud-to-mp3') return 'convert-soundcloud-to-mp3';
+  if (pathname === '/convert/instagram-reels-to-mp4' || hash === '#convert/instagram-reels-to-mp4' || hash === '#/convert/instagram-reels-to-mp4') return 'convert-instagram-reels-to-mp4';
+  if (pathname === '/convert' || hash === '#convert' || hash === '#/convert') return 'convert-youtube-to-mp3';
   if (pathname === '/privacy' || hash === '#privacy' || hash === '#/privacy') return 'privacy';
   if (pathname === '/terms' || hash === '#terms' || hash === '#/terms') return 'terms';
   if (pathname === '/copyright-acceptable-use' || hash === '#copyright-acceptable-use' || hash === '#/copyright-acceptable-use') return 'copyright';
@@ -65,6 +71,20 @@ export default function App() {
   }
   if (currentView === 'troubleshooting') {
     return <TroubleshootingGuide onNavigate={navigateTo} />;
+  }
+
+  // Programmatic Conversion Guides
+  if (currentView === 'convert-youtube-to-mp3') {
+    return <ConverterGuide slug="youtube-to-mp3" onNavigate={navigateTo} />;
+  }
+  if (currentView === 'convert-youtube-to-wav') {
+    return <ConverterGuide slug="youtube-to-wav" onNavigate={navigateTo} />;
+  }
+  if (currentView === 'convert-soundcloud-to-mp3') {
+    return <ConverterGuide slug="soundcloud-to-mp3" onNavigate={navigateTo} />;
+  }
+  if (currentView === 'convert-instagram-reels-to-mp4') {
+    return <ConverterGuide slug="instagram-reels-to-mp4" onNavigate={navigateTo} />;
   }
 
   // Legal & Compliance Pages

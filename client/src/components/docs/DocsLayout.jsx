@@ -13,7 +13,8 @@ import {
   Scale,
   HelpCircle,
   CheckCircle2,
-  BookOpen
+  BookOpen,
+  Music2
 } from 'lucide-react';
 
 function WindowsIcon({ size = 16, className = '' }) {
@@ -49,6 +50,7 @@ function CursorBrandLogo({ size = 26 }) {
 const DOCS_TABS = [
   { id: 'install', label: 'Installation Guide', path: '/install', icon: Download },
   { id: 'platforms', label: 'Supported Platforms & Formats', path: '/supported-platforms', icon: Layers },
+  { id: 'converters', label: 'Conversion Guides', path: '/convert/youtube-to-mp3', icon: Music2 },
   { id: 'troubleshooting', label: 'Troubleshooting & FAQ', path: '/troubleshooting', icon: Terminal },
 ];
 
@@ -151,7 +153,11 @@ export default function DocsLayout({
             {DOCS_TABS.map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
-              const viewName = tab.id === 'platforms' ? 'platforms-guide' : tab.id;
+              const viewName = tab.id === 'platforms'
+                ? 'platforms-guide'
+                : tab.id === 'converters'
+                  ? 'convert-youtube-to-mp3'
+                  : tab.id;
               return (
                 <a
                   key={tab.id}

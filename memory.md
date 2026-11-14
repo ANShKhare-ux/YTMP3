@@ -78,6 +78,17 @@
   - Replaced `execSync` template string shell invocations in `server/binManager.js` with `execFileSync` argument arrays.
   - Defensive security headers: `X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN`, `Referrer-Policy: strict-origin-when-cross-origin`.
   - Documented findings and verification in `docs/SECURITY_AUDIT_REPORT.md`.
+- **AI Search Engine Optimization (GEO/LLMO) & Programmatic Conversion Guides Architecture**:
+  - `client/public/pricing.md`: Standardized machine-readable pricing and license specifications for autonomous purchasing and recommendation AI agents (ChatGPT, Perplexity, Claude, Copilot), highlighting $0/mo free MIT license, unlimited conversions, 16-thread speed, and zero telemetry/ads.
+  - `client/public/llms.txt`: Enhanced with citable answers, clear 40-60 word definition blocks, and query fan-out mappings across YouTube to 320k MP3, YouTube to WAV, SoundCloud to MP3, and Instagram Reels to MP4.
+  - `client/public/robots.txt`: Added explicit crawler permissions for `ChatGPT-User` and `anthropic-ai` alongside `GPTBot`, `PerplexityBot`, `ClaudeBot`, and `Google-Extended`.
+  - Programmatic Conversion Hub (`client/src/components/convert/ConverterGuide.jsx` & `converterData.js`):
+    - 4 high-intent conversion guides: `/convert/youtube-to-mp3`, `/convert/youtube-to-wav`, `/convert/soundcloud-to-mp3`, and `/convert/instagram-reels-to-mp4`.
+    - Features 40-60 word extractable summaries, technical specifications tables (codecs, bitrates, sample rates, FFmpeg arguments), side-by-side benchmark comparison tables against ad-ridden web converters, 4-step actionable tutorials, and natural-language FAQs.
+    - Dual JSON-LD Schema.org graphs: `HowTo` + `FAQPage` + `TechArticle` structured data dynamically injected per guide.
+    - Integrated conversion guide switcher and Windows 1-click ZIP download CTA with celebratory modal.
+  - Full sitemap coverage in `client/public/sitemap.xml` referencing all 4 conversion guides with 0.9 priority.
+  - Pre-rendered crawler links in `client/index.html` inside `<div id="root">` ensuring zero-JS discovery by AI bots and search engine spiders.
 - **Converter Studio Desktop & Localhost Launcher Routing**:
   - `start.bat` launches both backend and frontend services, opening the SonicWave website directly at `http://localhost:5173`.
   - `client/src/App.jsx` default route (`/` or `''`) displays the website (`LandingPage.jsx`) with prominent "Web Studio" and "Launch Studio" buttons enabling seamless one-click transition into the Converter Studio (`/#app`).
@@ -89,7 +100,7 @@
   - Windows path containment normalization: case-insensitive downloads directory verification in `/api/stream` and `/api/download`.
   - CORS localhost resilience: permits arbitrary local dev ports (5173, 5174, etc.) without throwing unhandled server errors.
   - Fixed audio player padding: `.spotify-app-layout.has-bottom-player` now properly dynamically applied, preventing docked bottom player from cutting off main content.
-- **Automated Test Suite**: Node.js native test runner (`node:test`) covering converter formatting, binary management, workspace integrity, brand assets, legal pages, technical documentation routing, download success dialogbox, custom 404 error page, security boundaries, and website localhost launcher integration (38 tests).
+- **Automated Test Suite**: Node.js native test runner (`node:test`) covering converter formatting, binary management, workspace integrity, brand assets, legal pages, technical documentation routing, download success dialogbox, custom 404 error page, security boundaries, AI-SEO / programmatic conversion guides, and website localhost launcher integration (39 tests).
 - **Go-To-Market & Marketing Launch Kit**:
   - `docs/MARKETING_LAUNCH_KIT.md`: Multi-audience marketing launch pack spanning Product Hunt listing specs, maker comment, image gallery storyboard, TikTok/Reels/Shorts video scripts (Video Editors, Music Producers, General Public), community seeding templates for Reddit/X/AlternativeTo, and social graphics specs.
 - **Programmatic Video Generation Pipeline (Remotion v4.0.543)**:
