@@ -1,7 +1,7 @@
 const path = require('path');
 const fs = require('fs');
 const https = require('https');
-const { execFileSync } = require('child_process');
+const { execFileSync, execFile } = require('child_process');
 
 const isWin = process.platform === 'win32';
 const BIN_DIR = path.join(__dirname, 'bin');
@@ -28,18 +28,30 @@ if (!fs.existsSync(BIN_DIR)) {
  */
 function downloadFile(url, dest) {
   return new Promise((resolve, reject) => {
-    const file = fs.createWriteStream(dest);
+    let file = fs.createWriteStream(dest);
+
+    const cleanupAndReject = (err) => {
+      try {
+        file.close(() => {
+          fs.unlink(dest, () => {});
+        });
+      } catch {
+        fs.unlink(dest, () => {});
+      }
+      reject(err);
+    };
 
     const get = (targetUrl) => {
       https.get(targetUrl, {
         headers: { 'User-Agent': 'Mozilla/5.0' }
       }, (response) => {
         if (response.statusCode >= 300 && response.statusCode < 400 && response.headers.location) {
-          return get(response.headers.location);
+          const redirectUrl = new URL(response.headers.location, targetUrl).href;
+          return get(redirectUrl);
         }
 
         if (response.statusCode !== 200) {
-          return reject(new Error(`Download failed with HTTP ${response.statusCode}`));
+          return cleanupAndReject(new Error(`Download failed with HTTP ${response.statusCode}`));
         }
 
         response.pipe(file);
@@ -54,8 +66,7 @@ function downloadFile(url, dest) {
           });
         });
       }).on('error', (err) => {
-        fs.unlink(dest, () => {});
-        reject(err);
+        cleanupAndReject(err);
       });
     };
 
@@ -64,9 +75,28 @@ function downloadFile(url, dest) {
 }
 
 /**
- * Ensures yt-dlp and ffmpeg are ready
+ * Detects and removes 0-byte corrupt binary files
+ * @param {string} filePath
+ * @returns {boolean} True if a 0-byte file was unlinked, false otherwise
  */
-async function verifyBinaries() {
+function cleanCorruptBinary(filePath) {
+  if (fs.existsSync(filePath)) {
+    try {
+      if (fs.statSync(filePath).size === 0) {
+        fs.unlinkSync(filePath);
+        return true;
+      }
+    } catch {}
+  }
+  return false;
+}
+
+/**
+ * Ensures yt-dlp and ffmpeg are ready
+ * @param {Object} [options]
+ * @param {boolean} [options.skipDownload=false]
+ */
+async function verifyBinaries(options = {}) {
   const status = {
     ytDlp: false,
     ytDlpVersion: null,
@@ -76,7 +106,9 @@ async function verifyBinaries() {
   };
 
   // 1. Check / Download yt-dlp
-  if (!fs.existsSync(YT_DLP_PATH)) {
+  cleanCorruptBinary(YT_DLP_PATH);
+
+  if (!fs.existsSync(YT_DLP_PATH) && !options.skipDownload) {
     console.log(`[binManager] ${YT_DLP_NAME} not found, downloading latest release...`);
     try {
       await downloadFile(YT_DLP_URL, YT_DLP_PATH);
@@ -170,16 +202,18 @@ function getBinDir() {
  */
 function updateYtDlp() {
   return new Promise((resolve) => {
-    try {
-      if (!fs.existsSync(YT_DLP_PATH)) {
-        return resolve({ success: false, message: 'yt-dlp binary not installed' });
-      }
-      const output = execFileSync(YT_DLP_PATH, ['-U'], { encoding: 'utf8', timeout: 45000 });
-      const version = execFileSync(YT_DLP_PATH, ['--version'], { encoding: 'utf8' }).trim();
-      resolve({ success: true, output: output.trim(), version });
-    } catch (err) {
-      resolve({ success: false, error: err.message });
+    if (!fs.existsSync(YT_DLP_PATH)) {
+      return resolve({ success: false, message: 'yt-dlp binary not installed' });
     }
+    execFile(YT_DLP_PATH, ['-U'], { encoding: 'utf8', timeout: 45000 }, (updateErr, updateStdout) => {
+      if (updateErr) {
+        return resolve({ success: false, error: updateErr.message });
+      }
+      execFile(YT_DLP_PATH, ['--version'], { encoding: 'utf8' }, (verErr, verStdout) => {
+        const version = verErr ? null : (verStdout || '').trim();
+        resolve({ success: true, output: (updateStdout || '').trim(), version });
+      });
+    });
   });
 }
 
@@ -190,6 +224,7 @@ module.exports = {
   getFfmpegPath,
   getFfmpegLocation,
   getBinDir,
+  cleanCorruptBinary,
   YT_DLP_PATH,
   BIN_DIR
 };

@@ -2,8 +2,7 @@ import React from 'react';
 
 /**
  * SonicWave Logo Component
- * Features an interactive soundwave crest, play vector, futuristic obsidian squircle,
- * and high-intensity neon glow effects that run regardless of system motion settings.
+ * Brand icon featuring stylized soundwave equalizer bars and play symbol.
  *
  * @param {('sm'|'md'|'lg'|number)} size - Size preset or pixel dimension
  * @param {('full'|'icon')} variant - 'full' includes wordmark & tag, 'icon' is emblem only
@@ -29,7 +28,7 @@ export default function Logo({
       className={`sonicwave-logo-container sonicwave-size-${typeof size === 'string' ? size : 'custom'} ${className}`}
       data-testid="sonicwave-logo"
     >
-      {/* Ambient Neon Glow Backlight Aura */}
+      {/* Background glow */}
       <div className="sonicwave-glow-aura" aria-hidden="true" />
 
       {/* Emblem Badge */}
@@ -87,7 +86,7 @@ export default function Logo({
             opacity="0.55"
           />
 
-          {/* Core Squircle Vessel */}
+          {/* Rounded background */}
           <rect
             x="8"
             y="8"
@@ -100,7 +99,7 @@ export default function Logo({
             strokeWidth="2"
           />
 
-          {/* Sound Radar Acoustics Wave Arcs */}
+          {/* Sound radar wave arcs */}
           <path
             d="M21 35 A 35 35 0 0 0 21 65"
             className="sonic-radar-arc arc-left"
@@ -169,7 +168,7 @@ export default function Logo({
             fill="url(#swWaveGradComp)"
           />
 
-          {/* Integrated Play Vector / Forward Audio Emitter */}
+          {/* Play triangle */}
           <path
             d="M48 41.5 L64 50 L48 58.5 Z"
             className="sonic-play-vector"
@@ -177,7 +176,7 @@ export default function Logo({
             filter="url(#swInnerGlow)"
           />
 
-          {/* Central Pulsing Photonic Core */}
+          {/* Center accent */}
           <circle cx="50" cy="50" r="2" className="sonic-core-sparkle" fill="#00f5a0" />
         </svg>
       </div>

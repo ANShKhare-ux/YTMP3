@@ -5,7 +5,7 @@ import { Scale, AlertCircle, Shield, CheckCircle, FileText, Ban } from 'lucide-r
 
 export default function CopyrightPolicy({ onNavigate }) {
   useDocumentMetadata({
-    title: 'Copyright & Acceptable Use Policy — SonicWave',
+    title: 'Copyright & Acceptable Use Policy : SonicWave',
     description: 'Guidelines on authorized media downloading, personal archiving, copyright compliance, and acceptable use of the SonicWave conversion utility.',
     canonical: 'https://ytmp-3-five.vercel.app/copyright-acceptable-use'
   });

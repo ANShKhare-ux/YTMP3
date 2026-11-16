@@ -16,8 +16,8 @@ import {
 
 export default function SupportedPlatforms({ onNavigate }) {
   useDocumentMetadata({
-    title: 'Supported Platforms & Media Formats — SonicWave Audio & Video Specs',
-    description: 'Comprehensive guide to supported platforms (YouTube, SoundCloud, TikTok, Instagram, and 1,000+ sources), 320 kbps MP3, FLAC, WAV, AAC, and 1080p MP4 specs in SonicWave.',
+    title: 'Supported Platforms & Media Formats : SonicWave Audio & Video Specs',
+    description: 'Technical guide to supported platforms (YouTube, SoundCloud, TikTok, Instagram, and 1,000+ sources), 320 kbps MP3, FLAC, WAV, AAC, and 1080p MP4 specs in SonicWave.',
     canonical: 'https://ytmp-3-five.vercel.app/supported-platforms'
   });
 
@@ -36,7 +36,7 @@ export default function SupportedPlatforms({ onNavigate }) {
       <div className="legal-callout-card">
         <h2 className="legal-callout-title">Architectural Summary: Lossless Extraction &amp; Local Multiplexing</h2>
         <p className="legal-callout-text">
-          SonicWave bypasses cloud server bottlenecks by running the media extraction and transcode pipeline locally on your machine. All audio encoding is performed by an embedded FFmpeg binary utilizing <code>libmp3lame</code>, <code>flac</code>, and native stream copy demuxers.
+          SonicWave bypasses cloud server bottlenecks by running the media extraction and transcode pipeline locally on your machine. All audio encoding is performed by an embedded FFmpeg binary using <code>libmp3lame</code>, <code>flac</code>, and native stream copy demuxers.
         </p>
         <ul className="legal-summary-points">
           <li><strong>Audio formats:</strong> MP3 (128k to 320k CBR/VBR), AAC (M4A stream copy), Lossless FLAC, and Uncompressed WAV.</li>
@@ -102,7 +102,7 @@ export default function SupportedPlatforms({ onNavigate }) {
       <section className="legal-section">
         <h2>2. Video Demuxing &amp; Multiplexing Specifications</h2>
         <p>
-          Unlike simple downloaders that grab low-quality 720p streams with embedded low-bitrate audio, SonicWave uses local FFmpeg to independently pull the highest available video stream and the highest available audio stream, seamlessly multiplexing them into a clean container:
+          Unlike simple downloaders that grab low-quality 720p streams with embedded low-bitrate audio, SonicWave uses local FFmpeg to independently pull the highest available video stream and the highest available audio stream, multiplexing them into a clean container:
         </p>
 
         <div className="legal-grid-two">
@@ -245,7 +245,7 @@ export default function SupportedPlatforms({ onNavigate }) {
           "@context": "https://schema.org",
           "@type": "TechArticle",
           "headline": "SonicWave Supported Media Platforms and Format Specifications",
-          "description": "Comprehensive specifications for audio bitrates (320 kbps MP3, FLAC, WAV, AAC), 1080p MP4 demuxing, and 1,000+ supported media sources in SonicWave.",
+          "description": "Detailed specifications for audio bitrates (320 kbps MP3, FLAC, WAV, AAC), 1080p MP4 demuxing, and 1,000+ supported media sources in SonicWave.",
           "author": {
             "@type": "Organization",
             "name": "SonicWave Contributors"

@@ -122,8 +122,8 @@ export default function NotFound({ onNavigate }) {
   };
 
   useDocumentMetadata({
-    title: '404: Page Not Found — SonicWave',
-    description: 'The requested page or media frequency could not be found. Return to the SonicWave homepage or launch the converter studio.',
+    title: '404: Page Not Found : SonicWave',
+    description: 'The requested page could not be found. Return to the SonicWave homepage or setup guide.',
     canonical: 'https://ytmp-3-five.vercel.app/404',
     noindex: true
   });

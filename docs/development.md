@@ -60,8 +60,10 @@ YTMP3/
 ├── scripts/              # Build and distribution utilities
 │   └── package-desktop.mjs # Desktop package bundler
 ├── tests/                # Automated tests (Node native test runner)
-│   ├── converter.test.js # Conversion duration & job state tests
+│   ├── converter.test.js # Conversion duration, formatting & job state tests
 │   ├── binManager.test.js# Binary discovery & verification tests
+│   ├── security.test.js  # SSRF, path traversal, concurrency & binary path tests
+│   ├── server.test.js    # Express API, SSE, range streaming & error handling tests
 │   └── workspace.test.js # Workspace integrity tests
 └── docs/                 # Documentation directory
     ├── architecture.md   # Architectural overview

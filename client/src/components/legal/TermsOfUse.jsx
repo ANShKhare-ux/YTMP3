@@ -5,7 +5,7 @@ import { FileText, ShieldAlert, Cpu, AlertTriangle, Scale, CheckCircle2 } from '
 
 export default function TermsOfUse({ onNavigate }) {
   useDocumentMetadata({
-    title: 'Terms of Use — SonicWave Windows Media Converter',
+    title: 'Terms of Use : SonicWave Windows Media Converter',
     description: 'Review the terms of use for SonicWave. Understand permitted personal use, software licensing under MIT, disclaimers, and user responsibilities.',
     canonical: 'https://ytmp-3-five.vercel.app/terms'
   });
@@ -81,7 +81,7 @@ export default function TermsOfUse({ onNavigate }) {
           <li><strong>Malicious Modification:</strong> Distributing altered or trojanized versions of SonicWave containing malware, spyware, unauthorized telemetry, or cryptominers.</li>
         </ul>
         <p>
-          For comprehensive intellectual property rules, refer to our <a href="/copyright-acceptable-use" onClick={(e) => { e.preventDefault(); onNavigate('copyright', '/copyright-acceptable-use'); }}>Copyright &amp; Acceptable Use Policy</a>.
+          For detailed intellectual property rules, refer to our <a href="/copyright-acceptable-use" onClick={(e) => { e.preventDefault(); onNavigate('copyright', '/copyright-acceptable-use'); }}>Copyright &amp; Acceptable Use Policy</a>.
         </p>
       </section>
 

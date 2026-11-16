@@ -800,13 +800,13 @@ export default function App({ onNavigate }) {
               SonicWave &bull; Spotify-Vibe Studio Converter &bull; Powered by yt-dlp &amp; FFmpeg
             </p>
             <div className="spotify-footer-links" style={{ display: 'flex', gap: '16px', justifyContent: 'center', marginTop: '10px', flexWrap: 'wrap' }}>
-              <a href="/landing" onClick={(e) => { e.preventDefault(); if (onNavigate) onNavigate('landing', '/landing'); else window.location.href = '/landing'; }}>Overview</a>
-              <a href="/install" onClick={(e) => { e.preventDefault(); if (onNavigate) onNavigate('install', '/install'); else window.location.href = '/install'; }}>Setup Guide</a>
-              <a href="/supported-platforms" onClick={(e) => { e.preventDefault(); if (onNavigate) onNavigate('platforms-guide', '/supported-platforms'); else window.location.href = '/supported-platforms'; }}>Platforms</a>
-              <a href="/troubleshooting" onClick={(e) => { e.preventDefault(); if (onNavigate) onNavigate('troubleshooting', '/troubleshooting'); else window.location.href = '/troubleshooting'; }}>Troubleshooting</a>
-              <a href="/privacy" onClick={(e) => { e.preventDefault(); if (onNavigate) onNavigate('privacy', '/privacy'); else window.location.href = '/privacy'; }}>Privacy</a>
-              <a href="/terms" onClick={(e) => { e.preventDefault(); if (onNavigate) onNavigate('terms', '/terms'); else window.location.href = '/terms'; }}>Terms</a>
-              <a href="/contact" onClick={(e) => { e.preventDefault(); if (onNavigate) onNavigate('contact', '/contact'); else window.location.href = '/contact'; }}>Contact</a>
+              <a href="https://ytmp-3-five.vercel.app/" target="_blank" rel="noopener noreferrer" onClick={(e) => { if (onNavigate) { e.preventDefault(); onNavigate('landing', '/landing'); } }}>Overview</a>
+              <a href="https://ytmp-3-five.vercel.app/install" target="_blank" rel="noopener noreferrer" onClick={(e) => { if (onNavigate) { e.preventDefault(); onNavigate('install', '/install'); } }}>Setup Guide</a>
+              <a href="https://ytmp-3-five.vercel.app/supported-platforms" target="_blank" rel="noopener noreferrer" onClick={(e) => { if (onNavigate) { e.preventDefault(); onNavigate('platforms-guide', '/supported-platforms'); } }}>Platforms</a>
+              <a href="https://ytmp-3-five.vercel.app/troubleshooting" target="_blank" rel="noopener noreferrer" onClick={(e) => { if (onNavigate) { e.preventDefault(); onNavigate('troubleshooting', '/troubleshooting'); } }}>Troubleshooting</a>
+              <a href="https://ytmp-3-five.vercel.app/privacy" target="_blank" rel="noopener noreferrer" onClick={(e) => { if (onNavigate) { e.preventDefault(); onNavigate('privacy', '/privacy'); } }}>Privacy</a>
+              <a href="https://ytmp-3-five.vercel.app/terms" target="_blank" rel="noopener noreferrer" onClick={(e) => { if (onNavigate) { e.preventDefault(); onNavigate('terms', '/terms'); } }}>Terms</a>
+              <a href="https://ytmp-3-five.vercel.app/contact" target="_blank" rel="noopener noreferrer" onClick={(e) => { if (onNavigate) { e.preventDefault(); onNavigate('contact', '/contact'); } }}>Contact</a>
             </div>
           </footer>
         </div>

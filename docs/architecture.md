@@ -6,7 +6,7 @@ SonicWave is a full-stack media conversion and playback application designed for
 
 The system exists in two distribution models:
 1. **Full-Stack Web Application**: A client-server architecture composed of a Vite + React frontend (port `5173`) and an Express.js backend (port `3001`) with live Server-Sent Events (SSE) progress streaming.
-2. **Packaged Windows Desktop Bundle**: An offline-capable standalone distribution containing the Node.js backend, local binaries (`yt-dlp.exe`, `ffmpeg.exe`), a launcher batch script (`start.bat`), and a prebuilt desktop frontend that strips out promotional landing components.
+2. **Packaged Windows Desktop Bundle**: A portable standalone distribution (~1.3 MB) containing the Node.js backend, desktop launcher batch script (`start.bat`), self-bootstrapping binary manager (`binManager.js` downloads `yt-dlp` and links `ffmpeg` on first launch), and a prebuilt desktop frontend that strips out promotional landing components.
 
 ---
 
@@ -111,7 +111,7 @@ The system exists in two distribution models:
 3. Backend generates a `crypto.randomUUID()` job ID, initializes job state in `jobs` Map, and spawns `yt-dlp`.
 4. Conversion uses multi-threaded acceleration:
    - `-N 16` (16 concurrent fragment streams).
-   - `--buffer-size 16M` and `--http-chunk-size 10M`.
+   - `--buffer-size 16M` and `--http-chunk-size 5M`.
    - `--merge-output-format mp4` with `-c copy` for video.
    - `--extract-audio` with multi-core encoding or stream copy for AAC/M4A.
 5. Frontend opens an `EventSource` connection to `GET /api/progress/:jobId`.

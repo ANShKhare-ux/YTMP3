@@ -9,7 +9,7 @@ export const CONVERTER_GUIDES = {
     navLabel: 'YouTube to MP3',
     title: 'YouTube to MP3 320kbps Converter',
     eyebrow: 'STUDIO FIDELITY • 320 KBPS CBR • 16-STREAM TURBO',
-    metaTitle: 'YouTube to MP3 320kbps Converter — Free Windows Downloader | SonicWave',
+    metaTitle: 'YouTube to MP3 320kbps Converter : Free Windows Downloader | SonicWave',
     metaDescription: 'Extract true 320 kbps MP3 audio from YouTube videos with local FFmpeg. 16-thread turbo speed, embedded ID3 cover artwork, zero ads, and 100% privacy on Windows.',
     canonical: 'https://ytmp-3-five.vercel.app/convert/youtube-to-mp3',
     badge: '16-Stream Turbo • 320k CBR • ID3 Album Art',
@@ -79,7 +79,7 @@ export const CONVERTER_GUIDES = {
     navLabel: 'YouTube to WAV / FLAC',
     title: 'YouTube to WAV & Lossless FLAC Converter',
     eyebrow: 'PRODUCER GRADE • UNCOMPRESSED PCM • 24-BIT LOSSLESS',
-    metaTitle: 'YouTube to WAV & FLAC Converter — Studio Lossless Audio | SonicWave',
+    metaTitle: 'YouTube to WAV & FLAC Converter : Studio Lossless Audio | SonicWave',
     metaDescription: 'Extract uncompressed WAV and lossless FLAC audio from YouTube videos for music production in FL Studio, Ableton, and Logic Pro. Local FFmpeg processing with zero recompression.',
     canonical: 'https://ytmp-3-five.vercel.app/convert/youtube-to-wav',
     badge: 'Lossless PCM • 24-Bit FLAC • Zero Generation Loss',
@@ -134,7 +134,7 @@ export const CONVERTER_GUIDES = {
       },
       {
         q: 'Are the extracted WAV files compatible with all DAWs and video editors?',
-        a: 'Yes. SonicWave outputs standard RIFF WAVE PCM files formatted with universal headers that open seamlessly in Ableton Live, FL Studio, Logic Pro, Adobe Premiere Pro, and DaVinci Resolve.'
+        a: 'Yes. SonicWave outputs standard RIFF WAVE PCM files formatted with universal headers that open directly in Ableton Live, FL Studio, Logic Pro, Adobe Premiere Pro, and DaVinci Resolve.'
       }
     ]
   },
@@ -144,7 +144,7 @@ export const CONVERTER_GUIDES = {
     navLabel: 'SoundCloud to MP3',
     title: 'SoundCloud to MP3 320kbps Downloader',
     eyebrow: 'DJ SETS • INDIE TRACKS • AUTOMATIC ARTIST TAGGING',
-    metaTitle: 'SoundCloud to MP3 320kbps Downloader — Fast & Private | SonicWave',
+    metaTitle: 'SoundCloud to MP3 320kbps Downloader : Fast & Private | SonicWave',
     metaDescription: 'Download SoundCloud tracks, remixes, and 2-hour DJ sets to 320 kbps MP3 with local FFmpeg. Fast 16-stream parallel downloading with embedded artwork and zero ads.',
     canonical: 'https://ytmp-3-five.vercel.app/convert/soundcloud-to-mp3',
     badge: 'Full DJ Sets • Embedded Art • 16-Stream Turbo',
@@ -159,7 +159,7 @@ export const CONVERTER_GUIDES = {
       { label: 'Download Speed', value: 'Up to 16x faster via parallel chunking' }
     ],
     comparison: [
-      { feature: 'DJ Set Support', sonicWave: 'Seamless 2+ hour sets with 0 timeouts', cloud: 'Fails on tracks longer than 20 minutes' },
+      { feature: 'DJ Set Support', sonicWave: 'Reliable 2+ hour sets with 0 timeouts', cloud: 'Fails on tracks longer than 20 minutes' },
       { feature: 'Artwork Quality', sonicWave: 'High-res original artwork embedded in ID3', cloud: 'Low-res pixelated cover or no artwork' },
       { feature: 'Download Reliability', sonicWave: 'Direct TCP chunking with auto-retry', cloud: 'Connection drops mid-download' },
       { feature: 'Privacy', sonicWave: 'Zero tracking, local PC conversion', cloud: 'Monetized via tracking cookies & spam' }
@@ -189,7 +189,7 @@ export const CONVERTER_GUIDES = {
     faqs: [
       {
         q: 'Can SonicWave download 2-hour and 3-hour SoundCloud sets?',
-        a: 'Yes. SonicWave has no time or file size limits. It utilizes a 16MB internal chunk cache to download continuous audio streams without memory overflow or connection dropouts.'
+        a: 'Yes. SonicWave has no time or file size limits. It uses a 16MB internal chunk cache to download continuous audio streams without memory overflow or connection dropouts.'
       },
       {
         q: 'Does it download the official cover art?',
@@ -197,7 +197,7 @@ export const CONVERTER_GUIDES = {
       },
       {
         q: 'Can I download private SoundCloud links?',
-        a: 'Yes. If you provide a private sharing link with the secret token (`soundcloud.com/artist/track/s-token`), SonicWave parses and converts the audio seamlessly.'
+        a: 'Yes. If you provide a private sharing link with the secret token (`soundcloud.com/artist/track/s-token`), SonicWave parses and converts the audio directly.'
       }
     ]
   },
@@ -207,7 +207,7 @@ export const CONVERTER_GUIDES = {
     navLabel: 'Instagram Reels to MP4',
     title: 'Instagram Reels & Audio Downloader',
     eyebrow: 'CLEAN 1080P MP4 • AUDIO STEM EXTRACTION • ZERO WATERMARK',
-    metaTitle: 'Instagram Reels to MP4 Downloader — Clean 1080p Video | SonicWave',
+    metaTitle: 'Instagram Reels to MP4 Downloader : Clean 1080p Video | SonicWave',
     metaDescription: 'Download Instagram Reels, stories, and public videos to clean 1080p MP4 or isolated 320 kbps MP3 audio. Fast, watermark-free local extraction on Windows with zero ads.',
     canonical: 'https://ytmp-3-five.vercel.app/convert/instagram-reels-to-mp4',
     badge: '1080p Clean MP4 • Audio Stems • No Watermark',

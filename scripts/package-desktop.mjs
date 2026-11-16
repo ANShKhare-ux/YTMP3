@@ -26,6 +26,13 @@ const appMainPath = path.join(clientSrc, 'App.jsx');
 const appBackupPath = path.join(clientSrc, 'App.web.backup.jsx');
 const appDesktopPath = path.join(clientSrc, 'AppDesktop.jsx');
 
+// Recover if an earlier run was aborted
+if (fs.existsSync(appBackupPath)) {
+  console.log('[BUILD] Found existing App.web.backup.jsx from previous aborted run. Restoring...');
+  fs.copyFileSync(appBackupPath, appMainPath);
+  fs.unlinkSync(appBackupPath);
+}
+
 try {
   // Backup web App.jsx and swap with AppDesktop.jsx
   fs.copyFileSync(appMainPath, appBackupPath);
@@ -129,14 +136,23 @@ for (const entry of componentEntries) {
 // Copy prebuilt desktop dist files into staging
 copyDirSync(path.join(rootDir, 'client', 'dist'), path.join(stagingDir, 'client', 'dist'));
 
-// 6. Compress staging folder into zip using pwsh Compress-Archive
+// Helper to run PowerShell with fallback from pwsh to powershell
+function runPowerShell(cmd) {
+  try {
+    execSync(`pwsh -Command "${cmd}"`, { stdio: 'inherit' });
+  } catch {
+    execSync(`powershell -Command "${cmd}"`, { stdio: 'inherit' });
+  }
+}
+
+// 6. Compress staging folder into zip using Compress-Archive
 console.log('[ZIP] Packaging into Windows ZIP archive...');
 if (fs.existsSync(zipOutputFilePublic)) {
   fs.unlinkSync(zipOutputFilePublic);
 }
 
 const psScript = `Compress-Archive -Path '${stagingDir}\\*' -DestinationPath '${zipOutputFilePublic}' -CompressionLevel Optimal`;
-execSync(`pwsh -Command "${psScript}"`, { stdio: 'inherit' });
+runPowerShell(psScript);
 
 // Also mirror to client/dist if dist exists
 if (fs.existsSync(path.dirname(zipOutputFileDist))) {
@@ -149,7 +165,7 @@ const testExtractDir = path.join(process.env.TEMP || 'C:\\Windows\\Temp', 'Sonic
 if (fs.existsSync(testExtractDir)) {
   fs.rmSync(testExtractDir, { recursive: true, force: true });
 }
-execSync(`pwsh -Command "Expand-Archive -Path '${zipOutputFilePublic}' -DestinationPath '${testExtractDir}'"`, { stdio: 'inherit' });
+runPowerShell(`Expand-Archive -Path '${zipOutputFilePublic}' -DestinationPath '${testExtractDir}'`);
 
 const extractedLandingPage = path.join(testExtractDir, 'client', 'src', 'components', 'LandingPage.jsx');
 const hasLandingPage = fs.existsSync(extractedLandingPage);

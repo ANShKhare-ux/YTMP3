@@ -11,7 +11,13 @@ const {
   isAria2Available,
   setAria2Available,
   buildConversionArgs,
-  parseProgress
+  parseProgress,
+  detectPlatform,
+  isValidMediaExtension,
+  findOutputFile,
+  attachProcessListeners,
+  cleanOldDownloads,
+  _jobs
 } = require('../server/converter');
 
 test('converter - formatDuration formatting rules', () => {
@@ -302,6 +308,166 @@ test('converter - parseProgress handles aria2c output edge cases (chunked, initi
   assert.strictEqual(jobState.status, 'tagging');
   assert.strictEqual(jobState.progress, 98);
 });
+
+test('converter - formatDuration handles negative numbers, Infinity, and NaN', () => {
+  assert.strictEqual(formatDuration(-1), '0:00');
+  assert.strictEqual(formatDuration(-3600), '0:00');
+  assert.strictEqual(formatDuration(Infinity), '0:00');
+  assert.strictEqual(formatDuration(-Infinity), '0:00');
+  assert.strictEqual(formatDuration(NaN), '0:00');
+});
+
+test('converter - detectPlatform accurately identifies platforms and ignores false positives', () => {
+  // Twitter / X
+  assert.strictEqual(detectPlatform('https://x.com/username/status/12345'), 'Twitter / X');
+  assert.strictEqual(detectPlatform('https://www.twitter.com/username/status/12345'), 'Twitter / X');
+
+  // Boundary check: domains ending in or containing 'x' must not match Twitter
+  assert.strictEqual(detectPlatform('https://fox.com/watch/video'), 'Web Media');
+  assert.strictEqual(detectPlatform('https://max.com/movies/sample'), 'Web Media');
+  assert.strictEqual(detectPlatform('https://linux.com/news/article'), 'Web Media');
+  assert.strictEqual(detectPlatform('https://example.com/audio.mp3'), 'Web Media');
+
+  // Other supported platforms
+  assert.strictEqual(detectPlatform('https://www.youtube.com/watch?v=dQw4w9WgXcQ'), 'YouTube');
+  assert.strictEqual(detectPlatform('https://youtu.be/dQw4w9WgXcQ'), 'YouTube');
+  assert.strictEqual(detectPlatform('https://www.instagram.com/reel/Cx123456/'), 'Instagram');
+  assert.strictEqual(detectPlatform('https://www.tiktok.com/@creator/video/12345'), 'TikTok');
+  assert.strictEqual(detectPlatform('https://soundcloud.com/artist/track-name'), 'SoundCloud');
+  assert.strictEqual(detectPlatform('https://reddit.com/r/videos/comments/12345/clip'), 'Reddit');
+  assert.strictEqual(detectPlatform('https://vimeo.com/12345678'), 'Vimeo');
+
+  // Invalid URL fallback
+  assert.strictEqual(detectPlatform('not-a-valid-url'), 'Web Media');
+  assert.strictEqual(detectPlatform(''), 'Web Media');
+  assert.strictEqual(detectPlatform(null), 'Web Media');
+});
+
+test('converter - child close event preserves cancelled status and ignores non-zero exit code', () => {
+  const EventEmitter = require('node:events');
+  const fakeChild = new EventEmitter();
+  fakeChild.stdout = new EventEmitter();
+  fakeChild.stderr = new EventEmitter();
+
+  const jobId = 'test-cancellation-preservation-' + Date.now();
+  const jobState = {
+    id: jobId,
+    url: 'https://example.com/audio.mp3',
+    format: 'mp3',
+    status: 'downloading',
+    progress: 45,
+    error: null,
+    process: fakeChild
+  };
+
+  _jobs.set(jobId, jobState);
+
+  try {
+    // Attach genuine process listeners
+    attachProcessListeners(jobState, fakeChild, 'mp3');
+
+    // Simulate cancellation by user
+    jobState.status = 'cancelled';
+    jobState.error = 'Conversion was cancelled by user.';
+
+    // Emit close event with exit code 1 (simulating process termination by SIGTERM / taskkill)
+    fakeChild.emit('close', 1);
+
+    // Verify that jobState.status remains 'cancelled' and error is not overwritten to 'failed'
+    assert.strictEqual(jobState.status, 'cancelled', 'Job status must remain cancelled after exit code 1');
+    assert.strictEqual(jobState.error, 'Conversion was cancelled by user.', 'Cancellation error must be preserved');
+    assert.strictEqual(getJob(jobId).status, 'cancelled', 'getJob must report status as cancelled');
+
+    // Contrast with active uncancelled job: exit code 1 must set status to failed
+    const normalJobId = 'test-normal-failure-' + Date.now();
+    const normalChild = new EventEmitter();
+    normalChild.stdout = new EventEmitter();
+    normalChild.stderr = new EventEmitter();
+    const normalJob = {
+      id: normalJobId,
+      url: 'https://example.com/audio.mp3',
+      format: 'mp3',
+      status: 'downloading',
+      error: null
+    };
+    attachProcessListeners(normalJob, normalChild, 'mp3');
+    normalChild.emit('close', 1);
+    assert.strictEqual(normalJob.status, 'failed', 'Uncancelled job must transition to failed on exit code 1');
+    assert.ok(normalJob.error.includes('exit code 1'), 'Error must reflect exit code');
+  } finally {
+    _jobs.delete(jobId);
+  }
+});
+
+test('converter - isValidMediaExtension accepts valid audio/video and rejects metadata/partial extensions', () => {
+  const validExtensions = ['.mp3', '.m4a', '.wav', '.flac', '.mp4'];
+  const excludedExtensions = ['.part', '.jpg', '.jpeg', '.webp', '.png', '.ytdl', '.temp', '.json', ''];
+
+  for (const ext of validExtensions) {
+    assert.strictEqual(isValidMediaExtension(ext), true, `Extension ${ext} must be accepted by isValidMediaExtension`);
+    assert.strictEqual(isValidMediaExtension(`test-file${ext}`), true, `Filename with ${ext} must be accepted`);
+  }
+
+  for (const ext of excludedExtensions) {
+    assert.strictEqual(isValidMediaExtension(ext), false, `Extension ${ext} must be rejected by isValidMediaExtension`);
+    assert.strictEqual(isValidMediaExtension(`test-file${ext}`), false, `Filename with ${ext} must be rejected`);
+  }
+});
+
+test('converter - findOutputFile discovers actual media files and excludes partial/image files in DOWNLOADS_DIR', () => {
+  const testJobId = 'test-discovery-job-' + Date.now();
+  const partFile = path.join(DOWNLOADS_DIR, `${testJobId}.part`);
+  const imageFile = path.join(DOWNLOADS_DIR, `${testJobId}.jpg`);
+  const mediaFile = path.join(DOWNLOADS_DIR, `${testJobId}.final.mp3`);
+
+  fs.writeFileSync(partFile, 'partial download data');
+  fs.writeFileSync(imageFile, 'thumbnail image data');
+
+  try {
+    // When only .part and .jpg exist, findOutputFile must NOT return them
+    const foundNone = findOutputFile(testJobId, 'mp3');
+    assert.strictEqual(foundNone, null, 'findOutputFile must return null when only non-media files exist');
+
+    // When valid media file is present, findOutputFile must locate and return it
+    fs.writeFileSync(mediaFile, 'completed audio data');
+    const foundMedia = findOutputFile(testJobId, 'mp3');
+    assert.strictEqual(foundMedia, mediaFile, 'findOutputFile must discover valid media file');
+  } finally {
+    if (fs.existsSync(partFile)) fs.unlinkSync(partFile);
+    if (fs.existsSync(imageFile)) fs.unlinkSync(imageFile);
+    if (fs.existsSync(mediaFile)) fs.unlinkSync(mediaFile);
+  }
+});
+
+test('converter - cleanOldDownloads handles subdirectories and locked files without aborting', () => {
+  const expiredFile1 = path.join(DOWNLOADS_DIR, 'test-clean-expired-1.tmp');
+  const expiredFile2 = path.join(DOWNLOADS_DIR, 'test-clean-expired-2.tmp');
+  const subDir = path.join(DOWNLOADS_DIR, 'test-clean-dir.tmp');
+
+  fs.writeFileSync(expiredFile1, 'data1');
+  fs.writeFileSync(expiredFile2, 'data2');
+  if (!fs.existsSync(subDir)) {
+    fs.mkdirSync(subDir, { recursive: true });
+  }
+
+  // Backdate mtime by 3 hours (older than 2-hour threshold)
+  const threeHoursAgo = (Date.now() - 3 * 60 * 60 * 1000) / 1000;
+  fs.utimesSync(expiredFile1, threeHoursAgo, threeHoursAgo);
+  fs.utimesSync(expiredFile2, threeHoursAgo, threeHoursAgo);
+
+  try {
+    cleanOldDownloads(2 * 60 * 60 * 1000);
+
+    assert.strictEqual(fs.existsSync(expiredFile1), false, 'Expired file 1 should be removed');
+    assert.strictEqual(fs.existsSync(expiredFile2), false, 'Expired file 2 should be removed');
+    assert.strictEqual(fs.existsSync(subDir), true, 'Subdirectory should not cause unhandled error or deletion');
+  } finally {
+    if (fs.existsSync(expiredFile1)) fs.unlinkSync(expiredFile1);
+    if (fs.existsSync(expiredFile2)) fs.unlinkSync(expiredFile2);
+    if (fs.existsSync(subDir)) fs.rmdirSync(subDir);
+  }
+});
+
 
 
 

@@ -73,19 +73,22 @@ function savePersistentHistory(job) {
   }
 }
 
-// Clean up files older than 2 hours every 30 minutes to prevent disk exhaustion and memory leaks
-function cleanOldDownloads() {
+// Clean up downloads older than 2 hours every 30 minutes
+function cleanOldDownloads(maxAge = 2 * 60 * 60 * 1000) {
   try {
     const now = Date.now();
-    const maxAge = 2 * 60 * 60 * 1000;
     if (fs.existsSync(DOWNLOADS_DIR)) {
       const files = fs.readdirSync(DOWNLOADS_DIR);
       for (const file of files) {
         const fullPath = path.join(DOWNLOADS_DIR, file);
         try {
           const stats = fs.statSync(fullPath);
-          if (stats.isFile() && now - stats.mtimeMs > maxAge) {
-            fs.unlinkSync(fullPath);
+          if (stats.isFile() && (now - stats.mtimeMs > maxAge)) {
+            try {
+              fs.unlinkSync(fullPath);
+            } catch (unlinkErr) {
+              console.warn(`[converter] Could not unlink ${file}:`, unlinkErr.message);
+            }
           }
         } catch {}
       }
@@ -100,7 +103,9 @@ function cleanOldDownloads() {
         }
       }
     }
-  } catch {}
+  } catch (err) {
+    console.warn('[converter] cleanOldDownloads caught outer error:', err.message);
+  }
 }
 setInterval(cleanOldDownloads, 30 * 60 * 1000).unref();
 
@@ -108,7 +113,7 @@ setInterval(cleanOldDownloads, 30 * 60 * 1000).unref();
  * Format seconds into HH:MM:SS or MM:SS
  */
 function formatDuration(seconds) {
-  if (!seconds || isNaN(seconds)) return '0:00';
+  if (!Number.isFinite(seconds) || seconds <= 0) return '0:00';
   const sec = Math.floor(seconds % 60);
   const min = Math.floor((seconds / 60) % 60);
   const hrs = Math.floor(seconds / 3600);
@@ -123,24 +128,31 @@ function formatDuration(seconds) {
  * Detect social media platform from URL
  */
 function detectPlatform(url) {
-  const lower = url.toLowerCase();
-  if (lower.includes('youtube.com') || lower.includes('youtu.be')) return 'YouTube';
-  if (lower.includes('instagram.com') || lower.includes('instagr.am')) return 'Instagram';
-  if (lower.includes('tiktok.com')) return 'TikTok';
-  if (lower.includes('twitter.com') || lower.includes('x.com') || lower.includes('t.co')) return 'Twitter / X';
-  if (lower.includes('facebook.com') || lower.includes('fb.watch') || lower.includes('fb.com')) return 'Facebook';
-  if (lower.includes('reddit.com') || lower.includes('redd.it')) return 'Reddit';
-  if (lower.includes('soundcloud.com')) return 'SoundCloud';
-  if (lower.includes('twitch.tv')) return 'Twitch';
-  if (lower.includes('vimeo.com')) return 'Vimeo';
-  if (lower.includes('pinterest.com') || lower.includes('pin.it')) return 'Pinterest';
-  if (lower.includes('bilibili.com')) return 'Bilibili';
-  if (lower.includes('threads.net')) return 'Threads';
+  if (!url || typeof url !== 'string') return 'Web Media';
+  let hostname = '';
+  try {
+    hostname = new URL(url.includes('://') ? url : `https://${url}`).hostname.toLowerCase();
+  } catch {
+    return 'Web Media';
+  }
+  const isDomain = (dom) => hostname === dom || hostname.endsWith('.' + dom);
+  if (isDomain('youtube.com') || isDomain('youtu.be')) return 'YouTube';
+  if (isDomain('instagram.com') || isDomain('instagr.am')) return 'Instagram';
+  if (isDomain('tiktok.com')) return 'TikTok';
+  if (isDomain('twitter.com') || isDomain('x.com') || isDomain('t.co')) return 'Twitter / X';
+  if (isDomain('facebook.com') || isDomain('fb.watch') || isDomain('fb.com')) return 'Facebook';
+  if (isDomain('reddit.com') || isDomain('redd.it')) return 'Reddit';
+  if (isDomain('soundcloud.com')) return 'SoundCloud';
+  if (isDomain('twitch.tv')) return 'Twitch';
+  if (isDomain('vimeo.com')) return 'Vimeo';
+  if (isDomain('pinterest.com') || isDomain('pin.it')) return 'Pinterest';
+  if (isDomain('bilibili.com')) return 'Bilibili';
+  if (isDomain('threads.net')) return 'Threads';
   return 'Web Media';
 }
 
 /**
- * Clean & normalize any social media or web URL with strict SSRF & protocol controls
+ * Clean & normalize any media URL with SSRF & protocol validation
  */
 function normalizeUrl(rawUrl) {
   if (!rawUrl || typeof rawUrl !== 'string') {
@@ -176,7 +188,8 @@ function normalizeUrl(rawUrl) {
     throw new Error('Only HTTP and HTTPS URLs are authorized.');
   }
 
-  const hostname = parsed.hostname.toLowerCase();
+  const rawHostname = parsed.hostname.toLowerCase();
+  const hostname = rawHostname.replace(/\.+$/, '');
   if (!hostname) {
     throw new Error('Please enter a valid link from YouTube, Instagram, TikTok, Twitter/X, Facebook, SoundCloud, Reddit, etc.');
   }
@@ -189,6 +202,11 @@ function normalizeUrl(rawUrl) {
     hostname === '::1' ||
     hostname === '[::1]' ||
     hostname.startsWith('127.') ||
+    hostname.endsWith('.localhost') ||
+    hostname === 'localhost.localdomain' ||
+    hostname.endsWith('.localhost.localdomain') ||
+    hostname === 'local' ||
+    hostname.endsWith('.local') ||
     hostname === '169.254.169.254' ||
     hostname === 'metadata.google.internal'
   );
@@ -395,7 +413,7 @@ function buildConversionArgs({
     '--downloader-args', 'aria2c:-s 16 -x 16 -k 1M -j 16'
   ] : [];
 
-  // High-speed multi-threaded acceleration flags (16 parallel chunk streams, 16MB buffer)
+  // Download and performance optimization flags
   const speedFlags = [
     ...(turbo ? ['-N', '16', '--buffer-size', '16M', '--http-chunk-size', '5M'] : []),
     ...(isYouTube && !cookiePath ? ['--extractor-args', 'youtube:player_client=ios,android'] : []),
@@ -443,7 +461,7 @@ function buildConversionArgs({
     let postArgs = 'ExtractAudio:-threads 0';
 
     if (targetFormat === 'm4a') {
-      // Native YouTube AAC stream copy (Instant 0-reencode)
+      // Stream copy AAC when available
       audioFilter = 'ba[ext=m4a]/ba/b';
       postArgs = 'ExtractAudio:-threads 0';
     } else if (targetFormat === 'mp3') {
@@ -518,7 +536,7 @@ function parseProgress(line, jobState) {
       jobState.eta = etaMatch[1];
     }
 
-    // Match multi-gigabyte and multi-megabyte file sizes
+    // Match file sizes
     const sizeMatch = line.match(/(?:of\s+~?|\/)([\d.]+\s*(?:[KMGTkmgt]i?)?B)/i);
     if (sizeMatch) {
       jobState.totalSize = sizeMatch[1];
@@ -538,10 +556,134 @@ function parseProgress(line, jobState) {
   }
 }
 
+const VALID_MEDIA_EXTENSIONS = new Set(['.mp3', '.m4a', '.wav', '.flac', '.mp4']);
+
 /**
- * Start Conversion Job with 16-Stream Turbo Acceleration
+ * Validates whether a file extension or filename corresponds to an authorized media output
+ * @param {string} filenameOrExt
+ * @returns {boolean}
  */
-function startConversion({ url, format = 'mp3', quality = '320k', jobId, turbo = true }) {
+function isValidMediaExtension(filenameOrExt) {
+  if (!filenameOrExt || typeof filenameOrExt !== 'string') return false;
+  const ext = filenameOrExt.startsWith('.') ? filenameOrExt.toLowerCase() : path.extname(filenameOrExt).toLowerCase();
+  return VALID_MEDIA_EXTENSIONS.has(ext);
+}
+
+/**
+ * Locates the output media file for a job in DOWNLOADS_DIR, excluding metadata and partials
+ * @param {string} jobId
+ * @param {string} targetFormat
+ * @returns {string|null} Full path to discovered file or null
+ */
+function findOutputFile(jobId, targetFormat) {
+  const expectedFile = path.join(DOWNLOADS_DIR, `${jobId}.${targetFormat}`);
+  if (fs.existsSync(expectedFile)) {
+    return expectedFile;
+  }
+  const found = fs.readdirSync(DOWNLOADS_DIR).find(f => {
+    if (!f.startsWith(jobId)) return false;
+    const ext = path.extname(f).toLowerCase();
+    return isValidMediaExtension(ext);
+  });
+  return found ? path.join(DOWNLOADS_DIR, found) : null;
+}
+
+/**
+ * Attaches stdout, stderr, close, and error listeners to the conversion child process
+ * @param {Object} jobState
+ * @param {import('child_process').ChildProcess} child
+ * @param {string} targetFormat
+ */
+function attachProcessListeners(jobState, child, targetFormat) {
+  const parseProgressLine = (line) => {
+    parseProgress(line, jobState);
+  };
+
+  if (child.stdout) {
+    child.stdout.on('data', (chunk) => {
+      const lines = chunk.toString().split(/\r?\n/);
+      for (const line of lines) {
+        if (line.trim()) {
+          parseProgressLine(line.trim());
+        }
+      }
+    });
+  }
+
+  let stderrBuffer = '';
+  if (child.stderr) {
+    child.stderr.on('data', (chunk) => {
+      const errText = chunk.toString();
+      stderrBuffer += errText;
+      console.warn(`[converter ${jobState.id} stderr]:`, errText.trim());
+    });
+  }
+
+  child.on('close', (code) => {
+    // Preserve user cancellation - do not overwrite with 'failed' on exit code
+    if (jobState.status === 'cancelled') {
+      return;
+    }
+
+    if (code === 0) {
+      const outputFile = findOutputFile(jobState.id, targetFormat);
+      if (outputFile) {
+        jobState.status = 'completed';
+        jobState.progress = 100;
+        jobState.filePath = outputFile;
+        jobState.fileName = jobState.title
+          ? `${jobState.title.replace(/[/\\?%*:|"<>]/g, '_')}.${targetFormat}`
+          : path.basename(outputFile);
+        savePersistentHistory(jobState);
+        console.log(`[converter] Job ${jobState.id} completed successfully with file ${jobState.fileName}`);
+      } else {
+        jobState.status = 'failed';
+        jobState.error = 'Output media file was not created.';
+      }
+    } else {
+      jobState.status = 'failed';
+      let errorMsg = `Conversion failed (exit code ${code})`;
+      if (stderrBuffer.includes('Sign in to confirm your age')) {
+        errorMsg = 'This video is age-restricted and requires sign-in.';
+      } else if (stderrBuffer.includes('Sign in') || stderrBuffer.includes('bot')) {
+        errorMsg = 'YouTube flagged this video with bot/login verification. Try another video link or export cookies.txt.';
+      } else {
+        const match = stderrBuffer.match(/ERROR:\s*(?:\[[^\]]+\]\s*)?([^\r\n]+)/i);
+        if (match && match[1]) {
+          errorMsg = match[1].trim();
+        }
+      }
+      jobState.error = errorMsg;
+      console.error(`[converter] Job ${jobState.id} failed: ${errorMsg}`);
+
+      // Clean up any incomplete partial files on error
+      try {
+        if (fs.existsSync(DOWNLOADS_DIR)) {
+          const partials = fs.readdirSync(DOWNLOADS_DIR).filter(f => f.startsWith(jobState.id));
+          for (const part of partials) {
+            try {
+              const partPath = path.join(DOWNLOADS_DIR, part);
+              if (fs.statSync(partPath).isFile()) {
+                fs.unlinkSync(partPath);
+              }
+            } catch {}
+          }
+        }
+      } catch {}
+    }
+  });
+
+  child.on('error', (err) => {
+    console.error(`[converter] Job ${jobState.id} failed to spawn:`, err.message);
+    jobState.status = 'failed';
+    jobState.error = err.message;
+  });
+}
+
+/**
+ * Start Conversion Job
+ */
+function startConversion({ url, format = 'mp3', quality = '320k', jobId, duration = 0, turbo = true }) {
   const ytDlp = getYtDlpPath();
   const ffmpeg = getFfmpegPath();
 
@@ -585,7 +727,7 @@ function startConversion({ url, format = 'mp3', quality = '320k', jobId, turbo =
     title: '',
     artist: '',
     thumbnail: '',
-    duration: 0,
+    duration: typeof duration === 'number' && duration > 0 ? duration : 0,
     filePath: null,
     fileName: null,
     error: null,
@@ -614,83 +756,7 @@ function startConversion({ url, format = 'mp3', quality = '320k', jobId, turbo =
   const child = spawn(ytDlp, args, { env });
   jobState.process = child;
 
-  const parseProgressLine = (line) => {
-    parseProgress(line, jobState);
-  };
-
-  child.stdout.on('data', (chunk) => {
-    const lines = chunk.toString().split(/\r?\n/);
-    for (const line of lines) {
-      if (line.trim()) {
-        parseProgressLine(line.trim());
-      }
-    }
-  });
-
-  let stderrBuffer = '';
-  child.stderr.on('data', (chunk) => {
-    const errText = chunk.toString();
-    stderrBuffer += errText;
-    console.warn(`[converter ${jobId} stderr]:`, errText.trim());
-  });
-
-  child.on('close', (code) => {
-    if (code === 0) {
-      // Find output file
-      const expectedFile = path.join(DOWNLOADS_DIR, `${jobId}.${targetFormat}`);
-      if (fs.existsSync(expectedFile)) {
-        jobState.status = 'completed';
-        jobState.progress = 100;
-        jobState.filePath = expectedFile;
-        jobState.fileName = `${(jobState.title || 'audio').replace(/[/\\?%*:|"<>]/g, '_')}.${targetFormat}`;
-        savePersistentHistory(jobState);
-        console.log(`[converter] Job ${jobId} completed successfully!`);
-      } else {
-        // Look for any file with jobId prefix in downloads dir
-        const found = fs.readdirSync(DOWNLOADS_DIR).find(f => f.startsWith(jobId));
-        if (found) {
-          jobState.status = 'completed';
-          jobState.progress = 100;
-          jobState.filePath = path.join(DOWNLOADS_DIR, found);
-          jobState.fileName = found;
-          savePersistentHistory(jobState);
-          console.log(`[converter] Job ${jobId} finished with file ${found}`);
-        } else {
-          jobState.status = 'failed';
-          jobState.error = 'Output media file was not created.';
-        }
-      }
-    } else {
-      jobState.status = 'failed';
-      let errorMsg = `Conversion failed (exit code ${code})`;
-      if (stderrBuffer.includes('Sign in to confirm your age')) {
-        errorMsg = 'This video is age-restricted and requires sign-in.';
-      } else if (stderrBuffer.includes('Sign in') || stderrBuffer.includes('bot')) {
-        errorMsg = 'YouTube flagged this video with bot/login verification. Try another video link or export cookies.txt.';
-      } else {
-        const match = stderrBuffer.match(/ERROR:\s*(?:\[[^\]]+\]\s*)?([^\r\n]+)/i);
-        if (match && match[1]) {
-          errorMsg = match[1].trim();
-        }
-      }
-      jobState.error = errorMsg;
-      console.error(`[converter] Job ${jobId} failed: ${errorMsg}`);
-
-      // Clean up any incomplete partial files on error
-      try {
-        const partials = fs.readdirSync(DOWNLOADS_DIR).filter(f => f.startsWith(jobId));
-        for (const part of partials) {
-          fs.unlinkSync(path.join(DOWNLOADS_DIR, part));
-        }
-      } catch {}
-    }
-  });
-
-  child.on('error', (err) => {
-    console.error(`[converter] Job ${jobId} failed to spawn:`, err.message);
-    jobState.status = 'failed';
-    jobState.error = err.message;
-  });
+  attachProcessListeners(jobState, child, targetFormat);
 
   return jobState;
 }
@@ -728,11 +794,16 @@ function cancelConversion(jobId) {
   const job = jobs.get(jobId);
   if (!job) return false;
   if (job.process && job.status !== 'completed' && job.status !== 'failed') {
-    try {
-      job.process.kill('SIGTERM');
-    } catch {}
     job.status = 'cancelled';
     job.error = 'Conversion was cancelled by user.';
+    const pid = job.process.pid;
+    try {
+      if (process.platform === 'win32' && pid) {
+        require('child_process').execSync(`taskkill /pid ${pid} /T /F`, { stdio: 'ignore' });
+      } else {
+        job.process.kill('SIGTERM');
+      }
+    } catch {}
     console.log(`[converter] Job ${jobId} cancelled.`);
 
     // Clean up partial downloads on cancellation
@@ -741,7 +812,12 @@ function cancelConversion(jobId) {
         if (fs.existsSync(DOWNLOADS_DIR)) {
           const partials = fs.readdirSync(DOWNLOADS_DIR).filter(f => f.startsWith(jobId));
           for (const part of partials) {
-            fs.unlinkSync(path.join(DOWNLOADS_DIR, part));
+            try {
+              const partPath = path.join(DOWNLOADS_DIR, part);
+              if (fs.statSync(partPath).isFile()) {
+                fs.unlinkSync(partPath);
+              }
+            } catch {}
           }
         }
       } catch {}
@@ -771,11 +847,18 @@ module.exports = {
   getJob,
   getHistory,
   formatDuration,
+  detectPlatform,
   getActiveJobCount,
   normalizeUrl,
   DOWNLOADS_DIR,
   isAria2Available,
   setAria2Available,
   buildConversionArgs,
-  parseProgress
+  parseProgress,
+  VALID_MEDIA_EXTENSIONS,
+  isValidMediaExtension,
+  findOutputFile,
+  attachProcessListeners,
+  cleanOldDownloads,
+  _jobs: jobs
 };

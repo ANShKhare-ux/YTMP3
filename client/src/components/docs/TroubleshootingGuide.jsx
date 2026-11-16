@@ -16,7 +16,7 @@ import {
 
 export default function TroubleshootingGuide({ onNavigate }) {
   useDocumentMetadata({
-    title: 'SonicWave Troubleshooting & Diagnostic Guide — Fix Common Issues',
+    title: 'SonicWave Troubleshooting & Diagnostic Guide : Fix Common Issues',
     description: 'Diagnose and resolve common issues in SonicWave for Windows, including SmartScreen popups, extraction timeouts, bot detection errors, and FFmpeg binary checks.',
     canonical: 'https://ytmp-3-five.vercel.app/troubleshooting'
   });

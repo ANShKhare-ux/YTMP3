@@ -5,7 +5,7 @@ import { Shield, HardDrive, Globe, Server, Lock, RefreshCw, AlertCircle } from '
 
 export default function PrivacyPolicy({ onNavigate }) {
   useDocumentMetadata({
-    title: 'Privacy Policy — SonicWave Windows Media Converter',
+    title: 'Privacy Policy : SonicWave Windows Media Converter',
     description: 'Learn how data, local media conversion, storage, and device privacy are handled across the SonicWave website and Windows utility.',
     canonical: 'https://ytmp-3-five.vercel.app/privacy'
   });
@@ -89,7 +89,7 @@ export default function PrivacyPolicy({ onNavigate }) {
 
         <h3>2.3 Website Local Storage Usage</h3>
         <p>
-          The Website utilizes the browser&rsquo;s <code>localStorage</code> API solely for functional display preferences:
+          The Website uses the browser&rsquo;s <code>localStorage</code> API solely for functional display preferences:
         </p>
         <ul>
           <li><code>sonicwave_landing_theme</code>: Remembers your selected UI appearance (<code>dark</code> or <code>light</code> mode) across browser visits.</li>

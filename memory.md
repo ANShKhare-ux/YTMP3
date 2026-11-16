@@ -1,11 +1,11 @@
-# SonicWave — Project Memory & Architecture Knowledge Base
+# SonicWave : Project Memory & Architecture Knowledge Base
 
 ## 1. Project Identity & Purpose
 - **Name**: SonicWave (repository name: `ytmp3-converter`)
 - **Purpose**: High-fidelity YouTube and multi-platform media downloader, audio/video converter, and in-browser media player.
 - **Operating Modes**:
   1. Full-stack web application (React frontend + Express backend).
-  2. Standalone Windows offline package bundled as a portable zip distribution.
+  2. Standalone Windows package (1.3 MB portable zip distribution that provisions yt-dlp and FFmpeg on first launch via `binManager.js`).
 
 ---
 
@@ -21,7 +21,7 @@
 - **Self-Bootstrapping Engine**: Automatic provisioning of `yt-dlp` executable and local bridge for `ffmpeg`.
 - **Persistent History**: Server-side JSON storage (`server/data/history.json`, capped at 50 records) and client-side `localStorage` cache.
 - **Desktop Packaging**: `scripts/package-desktop.mjs` generates `SonicWave-v1.0.0-Windows.zip` stripped of marketing landing components.
-- **UI Design System**: Spotify-inspired dark theme (`#121212`, Spotify Green `#1ed760`) for converter studio, paired with a Linear-styled marketing landing page featuring an exclusive light mode toggle (`Sun` / `Moon`) that preserves dark mode in the converter. Integrated Easing Wizard physics-based animation curves (`--ease-page`, `--ease-modal`, `--ease-dropdown`, `--ease-button-spring`, `--ease-button-punch`, `--ease-card`, `--ease-hover`) with full `prefers-reduced-motion` compliance.
+- **UI Design System**: Spotify-inspired dark theme (`#121212`, Spotify Green `#1ed760`) for converter studio, paired with a Linear-styled marketing landing page featuring a light mode toggle (`Sun` / `Moon`) that preserves dark mode in the converter. Configured CSS easing variables and `prefers-reduced-motion` media queries.
 - **Technical SEO & Search Console Verification**:
   - Global Search Console verification meta tag (`vyi8Qkc4E4RP878V8Gc8VFv05oWR53YLsP0m6eWjYCI`) configured in `<head>` of `client/index.html`.
   - Canonical URL anchored to live production deployment (`https://ytmp-3-five.vercel.app/`).
@@ -36,30 +36,29 @@
   - Touch Target Sizing: Standardized navigation links (`.cursor-nav-link`, `.cursor-mobile-nav-link`) with >= 44px hit heights and >= 8px padding, plus verified footer touch spacing and eliminated fake `href="#"` dummy links.
 - **Production Legal & Support Infrastructure**:
   - Four dedicated, accessible pages: Privacy Policy (`/privacy`), Terms of Use (`/terms`), Copyright & Acceptable Use (`/copyright-acceptable-use`), and Contact & Support (`/contact`).
-  - Seamless SPA routing integrated with browser History API (`pushState`, `popstate`), hash fallbacks, and Vercel wildcard rewrite compatibility (`vercel.json`).
+  - SPA routing integrated with browser History API (`pushState`, `popstate`), hash fallbacks, and Vercel wildcard rewrite compatibility (`vercel.json`).
   - Dynamic document metadata via `useDocumentMetadata`: descriptive page titles, unique meta descriptions, and self-referencing canonical URLs for all four routes.
   - Full sitemap integration in `client/public/sitemap.xml` referencing real canonical URLs.
   - Shared `LegalLayout` with tabbed cross-navigation, theme toggle, and dedicated legal footer, harmonized with Spotify/Linear design tokens.
   - Automated test assertions in `tests/workspace.test.js` validating legal component existence and sitemap URL coverage.
-- **Brand Favicon Suite & Premium Social Share Preview**:
+- **Brand Favicon Suite & Social Share Preview**:
   - `client/public/favicon.ico`: Windows multi-resolution icon binary packaging 16x16, 32x32, and 48x48 PNG layers with 5-bar acoustic soundwave brand mark.
   - `client/public/favicon-96.png`: 96x96 PNG for modern browser tabs and Google Search desktop favicon snippet displays.
   - `client/public/apple-touch-icon.png`: 180x180 PNG for iOS home screen bookmarks and Apple Safari pinned tabs.
-  - `client/public/og/sonicwave-share.png`: 1200x630 high-resolution social preview image featuring live-rendered 28-bar equalizer spectrum, Windows 11 frosted glass window card, 16-stream badge, and feature pills.
+  - `client/public/og/sonicwave-share.png`: 1200x630 social preview image.
   - `client/public/og-image.png`: Mirrored for backwards compatibility with legacy crawlers.
   - `scripts/generate-assets.mjs` & `npm run generate:assets`: Automated generator leveraging Chrome headless with GDI+ bicubic downsampling.
   - `client/index.html`: Fully updated with standard `<link rel="icon">`, `<link rel="apple-touch-icon">`, Open Graph, Twitter Cards, and Schema.org metadata.
-- **Custom Download Success Dialogbox**:
-  - `client/src/components/DownloadSuccessModal.jsx`: Custom celebratory SaaS dialogbox appearing whenever a user triggers the `SonicWave-v1.0.0-Windows.zip` download.
-  - Features dual-wave confetti bursts (`canvas-confetti`) styled with Spotify green and SonicWave blue palettes.
-  - Displays file metadata pill (`SonicWave-v1.0.0-Windows.zip` · 1.3 MB · SHA-256 Verified) with live pulsating indicator.
+- **Download Success Modal**:
+  - `client/src/components/DownloadSuccessModal.jsx`: Modal dialog appearing whenever a user triggers the `SonicWave-v1.0.0-Windows.zip` download.
+  - Displays file metadata pill (`SonicWave-v1.0.0-Windows.zip` · 1.3 MB · SHA-256 Verified).
   - 3-step actionable quick start guide (1. Extract ZIP, 2. Run `start.bat`, 3. Convert & Enjoy).
   - Windows Defender SmartScreen notice informing users to click "More info" -> "Run anyway".
-  - Quick action buttons ("View Full Installation Guide" -> `/install`, "Try Web Studio Now" -> `#app`, and "Click here to retry" link).
+  - Quick action buttons ("View Full Installation Guide" -> `/install`, and "Click here to retry" link).
   - Full keyboard accessibility (`Escape` key dismiss, backdrop click, focus trap, `role="dialog"`, `aria-modal="true"`, `aria-labelledby`).
   - Integrated across `LandingPage.jsx`, `InstallGuide.jsx`, `DocsLayout.jsx`, and `LegalLayout.jsx`.
-- **Custom 404 Error Experience (Not Found)**:
-  - `client/src/components/NotFound.jsx`: High-polish acoustic-themed error page ("Audio Frequency Lost in Static") featuring stylized typography, 5-bar equalizer visual, quick navigation cards (Converter Studio, Install Guide, Platforms, Troubleshooting, Privacy, Support), and theme toggle.
+- **Custom 404 Error Page**:
+  - `client/src/components/NotFound.jsx`: Error page featuring quick navigation cards (Install Guide, Platforms, Troubleshooting, Privacy, Support), and theme toggle.
   - Dynamically injects `meta[name="robots"] content="noindex, follow"` via `useDocumentMetadata` to maintain technical SEO hygiene.
   - SPA router in `client/src/App.jsx` cleanly catches all unknown routes (and explicit `/404`), rendering `NotFound` without page crashes or blank views.
   - `client/public/404.html`: Lightweight static fallback page for static hosting edge cases and non-JS clients.
@@ -78,43 +77,24 @@
   - Replaced `execSync` template string shell invocations in `server/binManager.js` with `execFileSync` argument arrays.
   - Defensive security headers: `X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN`, `Referrer-Policy: strict-origin-when-cross-origin`.
   - Documented findings and verification in `docs/SECURITY_AUDIT_REPORT.md`.
-- **AI Search Engine Optimization (GEO/LLMO) & Programmatic Conversion Guides Architecture**:
-  - `client/public/pricing.md`: Standardized machine-readable pricing and license specifications for autonomous purchasing and recommendation AI agents (ChatGPT, Perplexity, Claude, Copilot), highlighting $0/mo free MIT license, unlimited conversions, 16-thread speed, and zero telemetry/ads.
-  - `client/public/llms.txt`: Enhanced with citable answers, clear 40-60 word definition blocks, and query fan-out mappings across YouTube to 320k MP3, YouTube to WAV, SoundCloud to MP3, and Instagram Reels to MP4.
-  - `client/public/robots.txt`: Added explicit crawler permissions for `ChatGPT-User` and `anthropic-ai` alongside `GPTBot`, `PerplexityBot`, `ClaudeBot`, and `Google-Extended`.
-  - Programmatic Conversion Hub (`client/src/components/convert/ConverterGuide.jsx` & `converterData.js`):
-    - 4 high-intent conversion guides: `/convert/youtube-to-mp3`, `/convert/youtube-to-wav`, `/convert/soundcloud-to-mp3`, and `/convert/instagram-reels-to-mp4`.
-    - Features 40-60 word extractable summaries, technical specifications tables (codecs, bitrates, sample rates, FFmpeg arguments), side-by-side benchmark comparison tables against ad-ridden web converters, 4-step actionable tutorials, and natural-language FAQs.
-    - Dual JSON-LD Schema.org graphs: `HowTo` + `FAQPage` + `TechArticle` structured data dynamically injected per guide.
-    - Integrated conversion guide switcher and Windows 1-click ZIP download CTA with celebratory modal.
-  - Full sitemap coverage in `client/public/sitemap.xml` referencing all 4 conversion guides with 0.9 priority.
-  - Pre-rendered crawler links in `client/index.html` inside `<div id="root">` ensuring zero-JS discovery by AI bots and search engine spiders.
+- **Machine-Readable Pricing and Metadata**:
+  - `client/public/pricing.md`: Standardized machine-readable pricing and license specifications ($0/mo free MIT license, unlimited conversions, 16-thread speed, zero telemetry/ads).
+  - `client/public/llms.txt`: Summary of capabilities and conversion guide mappings.
+  - `client/public/robots.txt`: Added explicit crawler permissions for search and AI crawlers.
+  - Programmatic Conversion Guides (`client/src/components/convert/ConverterGuide.jsx` & `converterData.js`): 4 conversion guides with technical specifications tables, comparison tables, tutorials, and FAQs.
 - **Converter Studio Desktop & Localhost Launcher Routing**:
-  - `start.bat` launches both backend and frontend services, opening the SonicWave website directly at `http://localhost:5173`.
-  - `client/src/App.jsx` default route (`/` or `''`) displays the website (`LandingPage.jsx`) with prominent "Web Studio" and "Launch Studio" buttons enabling seamless one-click transition into the Converter Studio (`/#app`).
-  - Standalone portable desktop package (`SonicWave-v1.0.0-Windows.zip`) distribution continues to run in dedicated Converter Studio mode (`AppDesktop.jsx` without marketing landing dependencies).
-  - Smart dependency resolution in `start.bat`: checks both `server/node_modules/` and root hoisted `node_modules/` to avoid redundant 45-second npm installations.
-  - Server boot optimization: `app.listen()` binds immediately to port 3001, allowing instant health checks while binary verification proceeds in background.
-  - Auto-reconnecting frontend status polling: `AppDesktop.jsx` polls `/api/status` every 3s during startup or disconnects, automatically hydrating history and unlocking studio actions once ready.
-  - Fixed SSE stream cancellation interval leak in `/api/progress/:jobId` when jobs are cancelled.
+  - `start.bat` starts the server and client dev environment, opening the website at `http://localhost:5173`.
+  - Standalone portable desktop package (`SonicWave-v1.0.0-Windows.zip`) runs directly in dedicated Converter Studio mode (`AppDesktop.jsx`).
+  - Web client (`App.jsx`) serves the marketing landing page, legal documents, technical guides, and download modals.
+  - Dependency checking in `start.bat`: verifies local and hoisted `node_modules` before running `npm install`.
+  - Server startup: `app.listen()` binds immediately to port 3001, allowing instant health checks while binary verification proceeds in background.
+  - Auto-reconnecting status polling: `AppDesktop.jsx` polls `/api/status` every 3s during startup or disconnects.
+  - Stream cancellation cleanup: `/api/progress/:jobId` cleans up SSE intervals on job cancellation.
   - Windows path containment normalization: case-insensitive downloads directory verification in `/api/stream` and `/api/download`.
-  - CORS localhost resilience: permits arbitrary local dev ports (5173, 5174, etc.) without throwing unhandled server errors.
-  - Fixed audio player padding: `.spotify-app-layout.has-bottom-player` now properly dynamically applied, preventing docked bottom player from cutting off main content.
-- **Automated Test Suite**: Node.js native test runner (`node:test`) covering converter formatting, binary management, workspace integrity, brand assets, legal pages, technical documentation routing, download success dialogbox, custom 404 error page, security boundaries, AI-SEO / programmatic conversion guides, and website localhost launcher integration (39 tests).
-- **Go-To-Market & Marketing Launch Kit**:
-  - `docs/MARKETING_LAUNCH_KIT.md`: Multi-audience marketing launch pack spanning Product Hunt listing specs, maker comment, image gallery storyboard, TikTok/Reels/Shorts video scripts (Video Editors, Music Producers, General Public), community seeding templates for Reddit/X/AlternativeTo, and social graphics specs.
-- **Programmatic Video Generation Pipeline (Remotion v4.0.543)**:
-  - Scaffolded dedicated `video/` workspace with `@remotion/cli` and React 19.
-  - Re-architected video into high-energy 15-second creator workflow demo (`video/src/WorkflowPromo.tsx`):
-    - **Combined Video Track (`CombinedVideoTrack.tsx`)**: Unified all visual scenes (Hook, Workflow, Timeline Payoff, Outro, Dynamic Camera, and Cursor) into a single continuous video layer on the timeline.
-    - **Split Text Layers (`TextCaptionPill.tsx`)**: Decoupled each caption phrase into its own independent editable track on the Remotion Studio timeline (`[Text] 01 - Stop Gatekeeping`, `[Text] 02 - Paste Any Link`, `[Text] 03 - 16-Stream Speed`, `[Text] 04 - Drag to Timeline`, `[Text] 05 - Link in Bio CTA`) with relative-frame word timing synchronized to neural voice.
-    - **Hook (0-3s)**: "Video editors: stop gatekeeping this" headline overlay with bass drop and whip-pan transition.
-    - **Dynamic Camera Tracking**: Smooth camera punch-in to 1.32x zoom on link paste, tracking across 16-stream turbo speed gauge, and zoom-out to timeline.
-    - **Mock Editing Timeline (`MockEditingTimeline.tsx`)**: Simulates dropping the converted 320k audio file directly into a video editor timeline (V1, A1, A2 tracks) with visual waveform lock and checkmark.
-    - **Animated Hands-on Cursor (`AnimatedCursor.tsx`)**: Realistic cursor gliding, clicking Convert button, and dragging files into editing software.
-    - **Viral Word-by-Word Kinetic Captions (`KineticCaptions.tsx`)**: Compact stadium-pill captions (downscaled from 44px to 20-23px) with exact microsecond word boundaries extracted from neural audio; active words pop and highlight in vibrant Spotify green (`#1ed760`) and lavender in frame-perfect sync with speech.
-    - **Audio Atmosphere**: High-energy Phonk beat (`bgm-phonk.mp3`, 130 BPM with distorted 808 glide) + tactile SFX (`sfx-keyboard.mp3`, `sfx-click.mp3`, `sfx-drop-impact.mp3`, `sfx-whoosh-fast.mp3`) and ultra-punchy neural human voiceover (`vo-hook.mp3` through `vo-timeline.mp3`).
-  - Dual compositions in `Root.tsx`: `SonicWaveShort` (1080x1920 vertical) and `SonicWavePromo` (1920x1080 landscape) running at 450 frames (15.0s @ 30fps), hot-reloading on port 3333.
+  - CORS localhost resilience: permits local dev ports (5173, 5174, etc.).
+- **Automated Test Suite**: Node.js native test runner (`node:test`) covering converter formatting, binary management, workspace integrity, brand assets, legal pages, technical documentation routing, download success dialogbox, custom 404 error page, security boundaries, AI-SEO / programmatic conversion guides, and server endpoints.
+- **Marketing Launch Kit**: `docs/MARKETING_LAUNCH_KIT.md` provides launch checklist, copy templates, and feature highlights.
+- **Programmatic Video Generation Pipeline (Remotion v4.0.543)**: Scaffolded `video/` workspace with `@remotion/cli` and React 19 to generate 15-second creator workflow demos (`SonicWaveShort` and `SonicWavePromo`).
 
 ### Planned / Inferred / Unimplemented Features
 - *Inferred*: The Pricing Modal (`PricingModal.jsx`) is a presentation/comparison UI; no external payment processor (Stripe, LemonSqueezy) is integrated.
@@ -176,11 +156,13 @@
 | `client/src/AppDesktop.jsx` | Dedicated root component for packaged desktop release (no landing page). |
 | `client/src/components/AudioPlayer.jsx` | Audio/video player with range-based stream seeking and download actions. |
 | `client/src/components/CommandPalette.jsx` | `Ctrl+K` quick action menu with format switching, engine updates, and navigation. |
-| `client/src/index.css` | Spotify-inspired dark UI design tokens and Easing Wizard physics curves. |
+| `client/src/index.css` | Spotify-inspired dark UI design tokens and animation easing curves. |
 | `scripts/package-desktop.mjs` | Automated builder for `SonicWave-v1.0.0-Windows.zip`. |
-| `tests/converter.test.js` | Duration formatting, job state isolation, and directory validation tests. |
+| `tests/converter.test.js` | Duration formatting, argument building, progress parsing, and job state tests. |
 | `tests/binManager.test.js` | Path validation, binary existence, and binary execution tests. |
-| `tests/workspace.test.js` | Package manifests and workspace configuration integrity tests. |
+| `tests/security.test.js` | SSRF prevention, URL normalization, and path confinement tests. |
+| `tests/server.test.js` | Express API endpoints, SSE streams, range streaming, and error handling tests. |
+| `tests/workspace.test.js` | Package manifests, routing, and workspace configuration integrity tests. |
 
 ---
 

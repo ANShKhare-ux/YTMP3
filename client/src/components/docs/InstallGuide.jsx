@@ -21,7 +21,7 @@ export default function InstallGuide({ onNavigate }) {
   const [isDownloadSuccessOpen, setIsDownloadSuccessOpen] = useState(false);
 
   useDocumentMetadata({
-    title: 'SonicWave Installation Guide — Windows 11 & 10 (64-Bit Setup)',
+    title: 'SonicWave Installation Guide : Windows 11 & 10 (64-Bit Setup)',
     description: 'Step-by-step installation instructions for SonicWave on Windows 11 and 10. Learn how to extract the portable zip, launch start.bat, and resolve SmartScreen warnings.',
     canonical: 'https://ytmp-3-five.vercel.app/install'
   });

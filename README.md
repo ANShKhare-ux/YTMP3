@@ -1,4 +1,4 @@
-# 🎵 SonicWave — High-Fidelity Multi-Platform Media Converter & Player
+# 🎵 SonicWave : High-Fidelity Multi-Platform Media Converter & Player
 
 [![Test Suite](https://github.com/ANShKhare-ux/YTMP3/actions/workflows/test.yml/badge.svg)](https://github.com/ANShKhare-ux/YTMP3/actions/workflows/test.yml)
 [![Node.js](https://img.shields.io/badge/Node.js-v20%20%7C%20v22-green.svg)](https://nodejs.org/)
@@ -6,7 +6,7 @@
 [![Vite](https://img.shields.io/badge/Vite-6.0-purple.svg)](https://vitejs.dev/)
 [![Design System](https://img.shields.io/badge/Theme-Spotify%20Dark-1ed760.svg)](docs/architecture.md)
 
-SonicWave is a high-performance audio & video extractor, converter, and in-browser media player. It features an automated Node.js Express backend powered by self-bootstrapping `yt-dlp` and `ffmpeg` engines, paired with an immersive Spotify-inspired dark glassmorphic React 19 frontend.
+SonicWave is an audio & video extractor, converter, and in-browser media player. It features a Node.js Express backend powered by `yt-dlp` and `ffmpeg`, paired with a Spotify-inspired dark theme React 19 frontend.
 
 SonicWave operates as both a **full-stack web application** and a **standalone portable Windows desktop package**.
 
@@ -15,18 +15,18 @@ SonicWave operates as both a **full-stack web application** and a **standalone p
 ## ✨ Key Features
 
 - **🌐 Multi-Platform Engine**: Extract media from YouTube, Instagram Reels, TikTok, Twitter/X, SoundCloud, Reddit, Facebook, Vimeo, Bilibili, and Threads.
-- **⚡ 16-Stream Turbo Acceleration**: Concurrent 16-fragment chunk downloading (`-N 16`) with 16MB buffer caching for maximum bandwidth utilization.
-- **🎧 High-Definition Formats & Bitrates**:
+- **⚡ 16-Stream Turbo Acceleration**: Concurrent 16-fragment chunk downloading (`-N 16`) with 16MB buffer caching for faster downloads.
+- **🎧 Formats & Bitrates**:
   - **MP4 (Video)**: `1080p Full HD`, `720p HD`, `480p SD`, `Best Quality` (Direct stream copy with zero re-encoding latency).
-  - **MP3 (Audio)**: Multi-bitrate selection (`320 kbps Studio`, `256 kbps High`, `192 kbps Standard`, `128 kbps Light`).
-  - **M4A (AAC)**: Instant stream copy preserving native digital audio untouched.
+  - **MP3 (Audio)**: Multi-bitrate selection (`320k`, `256k`, `192k`, `128k`).
+  - **M4A (AAC)**: Stream copy preserving native digital audio.
   - **Lossless Audio**: Studio-grade **WAV** and **FLAC**.
 - **📻 In-Browser Media Player**: Listen to converted audio with waveform seek bars or watch HD video previews via HTTP 206 Partial Content range streaming before saving.
 - **📊 Real-Time SSE Pipeline**: Server-Sent Events (SSE) stream percentage, throughput (`MiB/s`), ETA, and muxing phase every 400ms.
-- **🏷️ Metadata & Tagging**: Embeds high-resolution cover artwork and ID3 metadata tags (title, artist, platform).
+- **🏷️ Metadata & Tagging**: Embeds cover artwork and ID3 metadata tags (title, artist, platform).
 - **⌨️ Command Palette (`Ctrl+K` / `⌘K`)**: Fast keyboard-driven command palette for format switching, media playback control, and engine updates.
 - **💾 Dual History**: Server-side JSON storage (`server/data/history.json`) and client-side `localStorage` caching with 1-click playback and re-download.
-- **🤖 Zero-Setup Self-Bootstrapping**: Automatically provisions and updates `yt-dlp` and bridges `ffmpeg` locally without manual Python or PATH installation.
+- **🤖 Automatic Binary Provisioning**: Automatically provisions and updates `yt-dlp` and bridges `ffmpeg` locally without manual Python or PATH installation.
 - **📦 Portable Desktop Distribution**: Build a standalone, marketing-free Windows desktop package using `npm run package`.
 
 ---

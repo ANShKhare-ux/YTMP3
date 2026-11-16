@@ -1,4 +1,4 @@
-# SonicWave — Master Marketing & Product Hunt Launch Kit
+# SonicWave: Master Marketing & Product Hunt Launch Kit
 
 This kit contains all assets, copy, scripts, and promotional frameworks needed to execute a successful multi-channel launch across **Video Editors**, **Music Producers**, and **General Offline Listeners**.
 

@@ -16,9 +16,9 @@ const RESOLUTIONS = [
 ];
 
 const FORMATS = [
-  { value: 'mp3', label: 'MP3', isVideo: false, speedBadge: 'Turbo Multi-Core' },
+  { value: 'mp3', label: 'MP3', isVideo: false, speedBadge: 'Multi-Core' },
   { value: 'mp4', label: 'MP4 (Video)', isVideo: true, speedBadge: 'Direct Stream Copy' },
-  { value: 'm4a', label: 'M4A (AAC)', isVideo: false, speedBadge: '⚡ Instant 0-Reencode' },
+  { value: 'm4a', label: 'M4A (AAC)', isVideo: false, speedBadge: 'Fast Stream Copy' },
   { value: 'wav', label: 'WAV', isVideo: false },
   { value: 'flac', label: 'FLAC', isVideo: false }
 ];
@@ -34,6 +34,7 @@ export default function OptionsSelector({
   setTurbo
 }) {
   const isVideo = format === 'mp4';
+  const isLossless = format === 'wav' || format === 'flac';
   const isUltraLong = videoInfo && (videoInfo.isUltraLong || (videoInfo.duration && videoInfo.duration >= 7200));
 
   const handleFormatChange = (newFormat) => {
@@ -42,6 +43,8 @@ export default function OptionsSelector({
       if (!['1080p', '720p', '480p', 'best'].includes(bitrate)) {
         setBitrate('1080p');
       }
+    } else if (newFormat === 'wav' || newFormat === 'flac') {
+      setBitrate('best');
     } else {
       if (!['320k', '256k', '192k', '128k'].includes(bitrate)) {
         setBitrate('320k');
@@ -121,7 +124,7 @@ export default function OptionsSelector({
         <div className="selector-group">
           <label className="selector-label">
             {isVideo ? <Monitor size={14} style={{ color: 'var(--spotify-green)' }} /> : <Sliders size={14} />}
-            <span>{isVideo ? 'Video Resolution' : 'Audio Bitrate Quality'}</span>
+            <span>{isVideo ? 'Video Resolution' : (isLossless ? 'Audio Quality' : 'Audio Bitrate Quality')}</span>
           </label>
           <div className="pills-container">
             {isVideo
@@ -143,24 +146,34 @@ export default function OptionsSelector({
                     )}
                   </button>
                 ))
-              : BITRATES.map((b) => (
-                  <button
-                    key={b.value}
-                    type="button"
-                    id={`bitrate-${b.value}`}
-                    className={`spotify-pill-btn ${bitrate === b.value ? 'active' : ''}`}
-                    onClick={() => setBitrate(b.value)}
-                    disabled={isConverting}
+              : isLossless ? (
+                  <div
+                    className="spotify-pill-btn active"
+                    style={{ cursor: 'default', background: 'rgba(30, 215, 96, 0.12)', borderColor: 'var(--spotify-green)', color: 'var(--spotify-green)' }}
                   >
-                    <span>{b.label}</span>
-                    {b.value === '320k' && (
-                      <span className="badge-tag-small">
-                        <Sparkles size={10} style={{ display: 'inline', marginRight: 2 }} />
-                        HQ
-                      </span>
-                    )}
-                  </button>
-                ))}
+                    <Sparkles size={12} style={{ display: 'inline', marginRight: 4 }} />
+                    <span>Lossless Master (Source Bitrate &bull; No Compression)</span>
+                  </div>
+                ) : (
+                  BITRATES.map((b) => (
+                    <button
+                      key={b.value}
+                      type="button"
+                      id={`bitrate-${b.value}`}
+                      className={`spotify-pill-btn ${bitrate === b.value ? 'active' : ''}`}
+                      onClick={() => setBitrate(b.value)}
+                      disabled={isConverting}
+                    >
+                      <span>{b.label}</span>
+                      {b.value === '320k' && (
+                        <span className="badge-tag-small">
+                          <Sparkles size={10} style={{ display: 'inline', marginRight: 2 }} />
+                          HQ
+                        </span>
+                      )}
+                    </button>
+                  ))
+                )}
           </div>
         </div>
       </div>

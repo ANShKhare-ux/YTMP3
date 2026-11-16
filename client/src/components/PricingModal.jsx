@@ -47,15 +47,15 @@ export default function PricingModal({ isOpen, onClose }) {
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <span className="hero-pill-badge" style={{ marginBottom: 0 }}>
                 <Crown size={12} style={{ color: '#ffd700' }} />
-                <span>Enterprise Engine Tier</span>
+                <span>Local Desktop Edition</span>
               </span>
               <span className="badge-tag-small" style={{ backgroundColor: 'rgba(30, 215, 96, 0.2)', color: 'var(--spotify-green)' }}>
-                LOCAL LICENSE: ACTIVE
+                FREE &amp; OPEN SOURCE
               </span>
             </div>
             <h2 className="pricing-title">SonicWave Windows Edition</h2>
             <p className="pricing-subtitle">
-              Transparent feature comparison: Standard cloud web converters vs. your unlocked multi-threaded local engine.
+              Feature comparison: Ad-supported web converters vs. your local multi-threaded engine.
             </p>
           </div>
 
@@ -70,7 +70,7 @@ export default function PricingModal({ isOpen, onClose }) {
           </button>
         </div>
 
-        {/* Billing / Cadence Toggle */}
+        {/* Comparison Toggle */}
         <div className="pricing-toggle-container">
           <div className="pricing-toggle-pill">
             <button
@@ -78,14 +78,14 @@ export default function PricingModal({ isOpen, onClose }) {
               className={`pricing-toggle-btn ${billingPeriod === 'monthly' ? 'active' : ''}`}
               onClick={() => setBillingPeriod('monthly')}
             >
-              Cloud Monthly
+              Cloud Converters
             </button>
             <button
               type="button"
               className={`pricing-toggle-btn ${billingPeriod === 'annual' ? 'active' : ''}`}
               onClick={() => setBillingPeriod('annual')}
             >
-              <span>Local Self-Host</span>
+              <span>SonicWave Local</span>
               <span className="discount-pill">100% FREE</span>
             </button>
           </div>
@@ -150,10 +150,10 @@ export default function PricingModal({ isOpen, onClose }) {
             </div>
 
             <div className="pricing-card-top">
-              <span className="tier-name" style={{ color: 'var(--spotify-green)' }}>SonicWave Windows Pro</span>
+              <span className="tier-name" style={{ color: 'var(--spotify-green)' }}>SonicWave Desktop</span>
               <div className="tier-price-box">
-                <span className="tier-amount" style={{ fontSize: '32px' }}>UNLOCKED</span>
-                <span className="tier-period">Lifetime Local</span>
+                <span className="tier-amount" style={{ fontSize: '32px' }}>FREE</span>
+                <span className="tier-period">Local &amp; Offline</span>
               </div>
               <p className="tier-summary">
                 16-stream accelerated engine running directly on your hardware with zero tracking.

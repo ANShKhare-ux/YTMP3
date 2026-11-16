@@ -66,7 +66,7 @@ const TROUBLESHOOTING_GUIDES = [
 
 export default function ContactSupport({ onNavigate }) {
   useDocumentMetadata({
-    title: 'Contact & Support — SonicWave Media Utility',
+    title: 'Contact & Support : SonicWave Media Utility',
     description: 'Get technical help with SonicWave. Access troubleshooting guides, binary update instructions, Windows setup help, and open-source GitHub support.',
     canonical: 'https://ytmp-3-five.vercel.app/contact'
   });

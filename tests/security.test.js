@@ -46,6 +46,47 @@ test('security - normalizeUrl blocks SSRF loopback, internal IPs, and cloud meta
   }
 });
 
+test('security - normalizeUrl blocks RFC 6761 special-use domains and mDNS', () => {
+  const rfc6761Urls = [
+    'http://test.localhost',
+    'http://api.localhost:8080',
+    'http://device.local',
+    'http://printer.local/status',
+    'http://internal.localhost.localdomain',
+    'http://myhost.localhost.localdomain:3000'
+  ];
+
+  for (const url of rfc6761Urls) {
+    assert.throws(
+      () => normalizeUrl(url),
+      /prohibited|invalid/i,
+      `Should reject RFC 6761 special-use domain: ${url}`
+    );
+  }
+});
+
+test('security - normalizeUrl blocks SSRF trailing dot and FQDN root label bypass', () => {
+  const fqdnTargets = [
+    'http://localhost.',
+    'http://localhost.:3000',
+    'http://localhost..',
+    'http://test.localhost.',
+    'http://device.local.',
+    'http://printer.local./status',
+    'http://127.0.0.1.',
+    'http://192.168.1.1.',
+    'http://internal.localhost.localdomain.'
+  ];
+
+  for (const url of fqdnTargets) {
+    assert.throws(
+      () => normalizeUrl(url),
+      /prohibited|invalid/i,
+      `Should reject FQDN trailing dot SSRF target: ${url}`
+    );
+  }
+});
+
 test('security - normalizeUrl blocks non-HTTP schemes and null-byte injection', () => {
   const invalid = [
     'file:///C:/Windows/win.ini',

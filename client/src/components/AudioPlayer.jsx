@@ -26,6 +26,7 @@ export default function AudioPlayer({
 }) {
   const mediaRef = useRef(null);
   const videoContainerRef = useRef(null);
+  const isSeekingRef = useRef(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -95,7 +96,15 @@ export default function AudioPlayer({
   useEffect(() => {
     const handleKeyDown = (e) => {
       const activeTag = document.activeElement?.tagName?.toLowerCase();
-      if (activeTag === 'input' || activeTag === 'textarea' || document.activeElement?.isContentEditable) {
+      const isInteractive = (
+        activeTag === 'input' ||
+        activeTag === 'textarea' ||
+        activeTag === 'button' ||
+        activeTag === 'select' ||
+        document.activeElement?.isContentEditable ||
+        document.activeElement?.closest('[role="dialog"]')
+      );
+      if (isInteractive) {
         return;
       }
 
@@ -126,7 +135,7 @@ export default function AudioPlayer({
   }, [togglePlay, toggleMute, toggleFullscreen, isVideo]);
 
   const handleTimeUpdate = () => {
-    if (mediaRef.current) {
+    if (mediaRef.current && !isSeekingRef.current) {
       setCurrentTime(mediaRef.current.currentTime);
     }
   };
@@ -141,6 +150,14 @@ export default function AudioPlayer({
   const handleSeek = (e) => {
     const target = parseFloat(e.target.value);
     setCurrentTime(target);
+    if (!isSeekingRef.current && mediaRef.current) {
+      mediaRef.current.currentTime = target;
+    }
+  };
+
+  const handleSeekEnd = (e) => {
+    const target = parseFloat(e.target.value);
+    isSeekingRef.current = false;
     if (mediaRef.current) {
       mediaRef.current.currentTime = target;
     }
@@ -382,7 +399,12 @@ export default function AudioPlayer({
               max={duration || 100}
               step="0.1"
               value={currentTime}
+              onMouseDown={() => { isSeekingRef.current = true; }}
+              onTouchStart={() => { isSeekingRef.current = true; }}
               onChange={handleSeek}
+              onMouseUp={handleSeekEnd}
+              onTouchEnd={handleSeekEnd}
+              onKeyUp={handleSeekEnd}
               aria-label="Seek track position"
             />
             <span className="player-timestamp">{formatTime(duration)}</span>

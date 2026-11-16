@@ -224,7 +224,6 @@ const FOOTER_COLUMNS = [
 export default function LandingPage({
   onNavigate
 }) {
-  const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
   const [isDownloadSuccessOpen, setIsDownloadSuccessOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [theme, setTheme] = useState(() => {
@@ -257,18 +256,6 @@ export default function LandingPage({
   const wrapRef = useRef(null);
   const knobRef = useRef(null);
   const trackRef = useRef(null);
-
-  // Close modal on Escape key press
-  useEffect(() => {
-    if (!isDownloadModalOpen) return;
-    const handleKeyDown = (e) => {
-      if (e.key === 'Escape') {
-        setIsDownloadModalOpen(false);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isDownloadModalOpen]);
 
   // Simulated playback timer for the demo preview widget
   useEffect(() => {
@@ -353,7 +340,9 @@ export default function LandingPage({
       return;
     }
 
-    // 1. Custom Physics Curves & Eases (curated via Easing Wizard MCP)
+    const cleanups = [];
+
+    // 1. Animation easing curves
     CustomEase.create("appleSpring", "M0,0 C0.16,1 0.3,1 1,1");
     CustomEase.create("punchSpring", "M0,0 C0.18,0.85 0.32,1.15 1,1");
     CustomEase.create("smoothGlide", "M0,0 C0.25,0.1 0.25,1 1,1");
@@ -447,7 +436,7 @@ export default function LandingPage({
     const statusPhrases = [
       "PORT 3001 • READY",
       "16-STREAM ENGINE ACTIVE",
-      "FFMPEG 7.0 HARDWARE ACCEL",
+      "FFMPEG 6.1 HARDWARE ACCEL",
       "LOSSLESS 320 KBPS PIPELINE",
       "ZERO ADS • ZERO TELEMETRY"
     ];
@@ -489,6 +478,10 @@ export default function LandingPage({
       const wrapEl = wrapRef.current;
       wrapEl.addEventListener("pointermove", onPointerMove);
       wrapEl.addEventListener("pointerleave", onPointerLeave);
+      cleanups.push(() => {
+        wrapEl.removeEventListener("pointermove", onPointerMove);
+        wrapEl.removeEventListener("pointerleave", onPointerLeave);
+      });
     }
 
     // 7. Draggable Seeker Knob with Inertia (GSAP Draggable + Inertia)
@@ -532,9 +525,13 @@ export default function LandingPage({
 
       btn.addEventListener("mousemove", onMouseMove);
       btn.addEventListener("mouseleave", onMouseLeave);
+      cleanups.push(() => {
+        btn.removeEventListener("mousemove", onMouseMove);
+        btn.removeEventListener("mouseleave", onMouseLeave);
+      });
     });
 
-    // 6. Section 1: Platforms Ecosystem Grid ScrollTrigger
+    // 6. Section 1: Supported Platforms Grid ScrollTrigger
     gsap.fromTo(".cursor-platform-tile",
       { y: 35, opacity: 0, scale: 0.95 },
       {
@@ -703,21 +700,29 @@ export default function LandingPage({
 
       card.addEventListener("mousemove", onCardMouseMove);
       card.addEventListener("mouseleave", onCardMouseLeave);
+      cleanups.push(() => {
+        card.removeEventListener("mousemove", onCardMouseMove);
+        card.removeEventListener("mouseleave", onCardMouseLeave);
+      });
     });
 
     // ScrambleText on Card 2 hover
     const startBatSnippet = document.querySelector(".cursor-step-card[data-step='2'] .cursor-mono-snippet");
     const startBatCode = document.querySelector(".cursor-step-card[data-step='2'] code");
     if (startBatSnippet && startBatCode) {
-      startBatSnippet.addEventListener("mouseenter", () => {
+      const onSnippetEnter = () => {
         gsap.to(startBatCode, {
           duration: 0.6,
           scrambleText: {
-            text: ".\\start.bat — auto-bootstraps",
+            text: ".\\start.bat : auto-bootstraps",
             chars: "01X#_-/*",
             speed: 0.45
           }
         });
+      };
+      startBatSnippet.addEventListener("mouseenter", onSnippetEnter);
+      cleanups.push(() => {
+        startBatSnippet.removeEventListener("mouseenter", onSnippetEnter);
       });
     }
 
@@ -808,9 +813,10 @@ export default function LandingPage({
       }
     );
 
-    // Clean up timers on unmount
+    // Clean up timers and event listeners on unmount
     return () => {
       if (statusTimer) clearInterval(statusTimer);
+      cleanups.forEach((fn) => fn());
     };
   }, { scope: containerRef });
 
@@ -882,7 +888,6 @@ export default function LandingPage({
   const handleDownloadZip = (e) => {
     if (e && e.preventDefault) e.preventDefault();
     triggerZipDownload();
-    setIsDownloadModalOpen(false);
     setIsDownloadSuccessOpen(true);
   };
 
@@ -1216,10 +1221,7 @@ export default function LandingPage({
           </div>
         </div>
 
-        {/* =========================================================================
-            PRODUCT UI SCREENSHOT / INTERACTIVE APP WINDOW
-            (DESIGN-cursor.md: surface-1 #0f1011, rounded.xl 16px, hairline #23252a)
-            ========================================================================= */}
+        {/* Interactive app preview window */}
         <div className="cursor-product-panel-wrap" ref={wrapRef}>
           <div className="cursor-product-screenshot-card" ref={cardRef} aria-label="SonicWave Desktop Software Preview">
             {/* Window title bar */}
@@ -1230,7 +1232,7 @@ export default function LandingPage({
                   <span className="cursor-window-dot dot-yellow" />
                   <span className="cursor-window-dot dot-green" />
                 </div>
-                <span className="cursor-window-title">SonicWave Studio &mdash; Windows x64 [16x Multi-Stream Engine]</span>
+                <span className="cursor-window-title">SonicWave Studio : Windows x64 [16-Stream Engine]</span>
               </div>
               <div className="cursor-window-right">
                 <span className="cursor-mono-status">PORT 3001 &bull; READY</span>
@@ -1294,12 +1296,12 @@ export default function LandingPage({
                     <span className="cursor-vis-badge">{selectedDemoTrack.format} &bull; {selectedDemoTrack.quality}</span>
                   </div>
 
-                  {/* Frequency Spectrum (Lavender #5e6ad2) */}
+                  {/* Frequency Spectrum */}
                   <div className="cursor-waveform-spectrum" aria-hidden="true">
                     {selectedDemoTrack.waveform.map((val, idx) => {
                       const isActive = (idx / selectedDemoTrack.waveform.length) * 100 <= demoProgress;
                       const animatedHeight = isPlayingDemo
-                        ? Math.min(100, Math.max(15, val + Math.sin(idx + Date.now() / 200) * 18))
+                        ? Math.min(100, Math.max(15, val + Math.sin(idx + demoProgress * 0.5) * 18))
                         : val * 0.5;
                       return (
                         <div
@@ -1395,13 +1397,11 @@ export default function LandingPage({
         </div>
       </section>
 
-      {/* =========================================================================
-          SUPPORTED PLATFORMS (DESIGN-cursor.md: surface-1 cards, hairline borders)
-          ========================================================================= */}
+      {/* Supported platforms */}
       <section className="cursor-section" id="platforms">
         <div className="cursor-container">
           <div className="cursor-section-header">
-            <span className="cursor-eyebrow">SUPPORTED ECOSYSTEM</span>
+            <span className="cursor-eyebrow">SUPPORTED PLATFORMS</span>
             <h2 className="cursor-display-lg">One binary. Every media platform.</h2>
             <p className="cursor-subhead">
               Powered by continuous upstream extractor updates supporting over 1,000+ media sites
@@ -1480,7 +1480,7 @@ export default function LandingPage({
                     <FolderArchive size={13} className="cursor-snippet-icon" aria-hidden="true" />
                     <code>SonicWave-v1.0.0-Windows.zip</code>
                   </div>
-                  <span className="cursor-snippet-tag">148 KB</span>
+                  <span className="cursor-snippet-tag">1.3 MB</span>
                 </div>
               </div>
 
@@ -1499,7 +1499,7 @@ export default function LandingPage({
                 <div className="cursor-mono-snippet" title="Self-bootstrapping script">
                   <div className="cursor-snippet-left">
                     <Terminal size={13} className="cursor-snippet-icon" aria-hidden="true" />
-                    <code>.\start.bat &mdash; auto-bootstraps</code>
+                    <code>.\start.bat : auto-bootstraps</code>
                     <span className="cursor-cursor-blink">_</span>
                   </div>
                   <span className="cursor-snippet-tag status-live">READY</span>
@@ -1571,7 +1571,7 @@ export default function LandingPage({
               <p className="cursor-card-body">
                 No fake upscaling. Extract genuine 320 kbps CBR/VBR audio, or export pristine uncompressed WAV and lossless FLAC for maximum acoustic dynamic range.
               </p>
-              <span className="cursor-tag">Audiophile Master</span>
+              <span className="cursor-tag">High Fidelity</span>
             </div>
 
             <div className="cursor-feature-card">
@@ -1902,89 +1902,7 @@ export default function LandingPage({
         }}
       />
 
-      {/* Windows Download Modal Dialog */}
-      {isDownloadModalOpen && (
-        <div
-          className="cursor-modal-backdrop"
-          onClick={() => setIsDownloadModalOpen(false)}
-          role="dialog"
-          aria-modal="true"
-          aria-label="Download SonicWave for Windows"
-        >
-          <div
-            className="cursor-modal-window"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="cursor-modal-header">
-              <div className="cursor-modal-title-box">
-                <WindowsIcon size={18} className="cursor-accent-win-icon" />
-                <div>
-                  <h3 className="cursor-modal-h3">Download SonicWave for Windows</h3>
-                  <p className="cursor-modal-meta">Version 1.0.0 &bull; Windows 10 &amp; 11 (64-bit) &bull; Free &amp; Open Source</p>
-                </div>
-              </div>
-              <button
-                type="button"
-                className="cursor-close-btn"
-                onClick={() => setIsDownloadModalOpen(false)}
-                title="Close dialog"
-                aria-label="Close download dialog"
-              >
-                <X size={16} />
-              </button>
-            </div>
-
-            <div className="cursor-modal-body">
-              <a
-                href="/SonicWave-v1.0.0-Windows.zip"
-                download="SonicWave-v1.0.0-Windows.zip"
-                className="cursor-button-primary cursor-modal-download-btn"
-                onClick={handleDownloadZip}
-              >
-                <Download size={18} />
-                <div className="cursor-modal-btn-label">
-                  <span className="btn-label-bold">Download SonicWave Archive (.zip)</span>
-                  <span className="btn-label-sub">Includes 1-click start.bat &bull; Zero manual Python setup</span>
-                </div>
-              </a>
-
-              <div className="cursor-setup-guide-box">
-                <div className="cursor-setup-header">
-                  <Terminal size={14} className="cursor-accent-icon" />
-                  <span>Installation Instructions:</span>
-                </div>
-                <ol className="cursor-setup-ol">
-                  <li>
-                    <strong>Extract the ZIP archive</strong> to any folder (e.g. <code>C:\SonicWave</code> or your Desktop).
-                  </li>
-                  <li>
-                    <strong>Double-click <code>start.bat</code></strong> &mdash; the launcher initializes the background server, auto-provisions <code>yt-dlp.exe</code> &amp; <code>ffmpeg.exe</code>, and launches the converter app.
-                  </li>
-                  <li>
-                    <strong>Paste any media URL</strong> to convert to 320 kbps MP3 or 1080p MP4.
-                  </li>
-                </ol>
-              </div>
-            </div>
-
-            <div className="cursor-modal-footer">
-              <div className="cursor-modal-hash">
-                <ShieldCheck size={13} className="cursor-accent-icon" />
-                <span>SHA-256 Verified &bull; No Adware or Telemetry</span>
-              </div>
-              <button
-                type="button"
-                className="cursor-button-secondary cursor-btn-sm"
-                onClick={() => setIsDownloadModalOpen(false)}
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* SaaS Download Success Dialogbox */}
+      {/* Download Success Dialogbox */}
       <DownloadSuccessModal
         isOpen={isDownloadSuccessOpen}
         onClose={() => setIsDownloadSuccessOpen(false)}
