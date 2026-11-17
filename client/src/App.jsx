@@ -10,6 +10,8 @@ import TroubleshootingGuide from './components/docs/TroubleshootingGuide';
 import ConverterGuide from './components/convert/ConverterGuide';
 import NotFound from './components/NotFound';
 
+const AppDesktop = React.lazy(() => import('./AppDesktop'));
+
 function resolveRoute(pathname, hash) {
   if (pathname === '/install' || hash === '#install' || hash === '#/install') return 'install';
   if (pathname === '/supported-platforms' || hash === '#supported-platforms' || hash === '#/supported-platforms') return 'platforms-guide';
@@ -24,6 +26,7 @@ function resolveRoute(pathname, hash) {
   if (pathname === '/copyright-acceptable-use' || hash === '#copyright-acceptable-use' || hash === '#/copyright-acceptable-use') return 'copyright';
   if (pathname === '/contact' || hash === '#contact' || hash === '#/contact') return 'contact';
   if (pathname === '/landing' || hash === '#landing' || hash === '#/landing') return 'landing';
+  if (pathname === '/app' || hash === '#app' || hash === '#/app' || (typeof window !== 'undefined' && window.sonicWaveDesktop?.isDesktop)) return 'app';
   if (pathname === '/404' || hash === '#404' || hash === '#/404') return 'not-found';
   if (pathname === '/' || pathname === '') return 'landing';
   return 'not-found';
@@ -104,6 +107,15 @@ export default function App() {
   // Custom 404 Error Page
   if (currentView === 'not-found') {
     return <NotFound onNavigate={navigateTo} />;
+  }
+
+  // Desktop App / Studio View
+  if (currentView === 'app') {
+    return (
+      <React.Suspense fallback={<div style={{ background: '#121212', height: '100vh' }} />}>
+        <AppDesktop onNavigate={navigateTo} />
+      </React.Suspense>
+    );
   }
 
   // Marketing Landing Page (Default)
