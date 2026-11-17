@@ -23,7 +23,14 @@
 - **Self-Bootstrapping Engine**: Automatic provisioning of `yt-dlp` executable and local bridge for `ffmpeg`.
 - **Persistent History**: Server-side JSON storage (`server/data/history.json`, capped at 50 records) and client-side `localStorage` cache.
 - **Desktop Packaging**: `scripts/package-desktop.mjs` generates `SonicWave-v1.0.0-Windows.zip` stripped of marketing landing components.
-- **Main Website Installer Integration**: Integrated the Custom Frameless GUI Installer (`SonicWave-Custom-Installer.exe`) as the primary download option across the entire website (`LandingPage.jsx`, `InstallGuide.jsx`, `DownloadSuccessModal.jsx`, `DocsLayout.jsx`, `LegalLayout.jsx`, `client/index.html`, and AI-SEO documentation). Users can choose the recommended native installer or the lightweight portable zip package with dynamic modal guides and confetti feedback.
+- **Main Website Installer Integration & Live Binary Delivery**:
+  - Replaced the large 330 MB Electron installer with a standalone 1.45 MB C# WPF native frameless installer (`SonicWave-Custom-Installer.exe`) built against .NET 4.0/4.8 (present on all Windows 10/11 installations).
+  - Embedded the full offline application payload (`SonicWavePackage.zip`, 1.38 MB) directly into the installer executable, allowing 100% offline installation with zero GitHub/Vercel size limit issues (< 100 MB).
+  - Pushed to `origin main` and verified live on Vercel CDN (`https://ytmp-3-five.vercel.app/SonicWave-Custom-Installer.exe` returns `Content-Type: application/x-msdos-program`, `Content-Length: 1458176`), resolving the issue where browser downloads previously received `index.html`.
+- **Electron Black Screen Remediation**:
+  - Added `app.disableHardwareAcceleration()` for Windows (`process.platform === 'win32'`) in `electron/main.js` to eliminate Chromium D3D11/GPU driver black-screen hangs.
+  - Implemented `show: false` paired with `mainWindow.once('ready-to-show', () => mainWindow.show())` to eliminate black window rendering before the DOM is painted.
+  - Ensured `userData` directory creation before writing `sonicwave.log` to prevent unhandled I/O failures on clean installations.
 - **UI Design System**: Spotify-inspired dark theme (`#121212`, Spotify Green `#1ed760`) for converter studio, paired with a Linear-styled marketing landing page featuring a light mode toggle (`Sun` / `Moon`) that preserves dark mode in the converter. Configured CSS easing variables and `prefers-reduced-motion` media queries.
 - **Technical SEO & Search Console Verification**:
   - Global Search Console verification meta tag (`vyi8Qkc4E4RP878V8Gc8VFv05oWR53YLsP0m6eWjYCI`) configured in `<head>` of `client/index.html`.
