@@ -112,6 +112,16 @@ Runs `scripts/package-desktop.mjs` to:
 3. Package the Node backend, local binaries (`yt-dlp.exe`, `ffmpeg.exe`), and launcher into `SonicWave-v1.0.0-Windows.zip`.
 4. Verify archive purity and mirror it to `client/public/` and `client/dist/`.
 
+### 🖥️ Native Windows Desktop App (Electron)
+Run SonicWave in a dedicated native desktop window (Spotify dark theme, custom frameless styling, taskbar icon, and zero browser address bar):
+```powershell
+# Launch the desktop window directly
+npm.cmd run desktop
+
+# Build the official Windows setup installer (SonicWave-Setup-1.0.0.exe)
+npm.cmd run package:exe
+```
+
 ---
 
 ## 📖 Architecture & Documentation

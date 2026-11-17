@@ -1,0 +1,32 @@
+{
+  "$schema": "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
+  "appId": "com.sonicwave.desktop",
+  "productName": "SonicWave",
+  "artifactName": "${productName}-Setup-${version}.${ext}",
+  "directories": {
+    "output": "dist-electron"
+  },
+  "asar": false,
+  "files": [
+    "electron/**/*",
+    "server/**/*",
+    "client/dist/**/*",
+    "package.json"
+  ],
+  "win": {
+    "target": [
+      {
+        "target": "nsis",
+        "arch": ["x64"]
+      }
+    ],
+    "icon": "electron/icon.ico"
+  },
+  "nsis": {
+    "oneClick": false,
+    "allowToChangeInstallationDirectory": true,
+    "createDesktopShortcut": true,
+    "createStartMenuShortcut": true,
+    "shortcutName": "SonicWave"
+  }
+}

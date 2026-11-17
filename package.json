@@ -2,7 +2,14 @@
   "name": "ytmp3-converter",
   "version": "1.0.0",
   "description": "YouTube to MP3 in-browser converter application",
+  "author": "SonicWave",
   "license": "MIT",
+  "main": "electron/main.js",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "ffmpeg-static": "^5.2.0"
+  },
   "workspaces": [
     "client",
     "server"
@@ -10,16 +17,22 @@
   "scripts": {
     "setup": "npm --prefix server install && npm --prefix client install",
     "build": "npm --prefix client run build",
+    "desktop:build": "node scripts/build-desktop-client.mjs",
+    "build:desktop": "node scripts/build-desktop-client.mjs",
     "start": "node server/index.js",
     "server": "npm --prefix server run dev",
     "client": "npm --prefix client run dev",
     "dev": "concurrently -n \"SERVER,CLIENT\" -c \"cyan,magenta\" \"npm run server\" \"npm run client\"",
+    "desktop": "node scripts/build-desktop-client.mjs && electron .",
     "package": "node scripts/package-desktop.mjs",
+    "package:exe": "node scripts/build-desktop-client.mjs && electron-builder --win nsis",
     "generate:assets": "node scripts/generate-assets.mjs",
     "video": "npm --prefix video run dev",
     "test": "node --test"
   },
   "devDependencies": {
-    "concurrently": "^9.1.2"
+    "concurrently": "^9.1.2",
+    "electron": "^45.3.3",
+    "electron-builder": "^26.18.0"
   }
 }

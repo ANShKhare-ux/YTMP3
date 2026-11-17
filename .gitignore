@@ -5,6 +5,7 @@ server/node_modules/
 
 # Production build outputs
 dist/
+dist-electron/
 client/dist/
 
 # Binaries and downloaded media files

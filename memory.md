@@ -6,6 +6,7 @@
 - **Operating Modes**:
   1. Full-stack web application (React frontend + Express backend).
   2. Standalone Windows package (1.3 MB portable zip distribution that provisions yt-dlp and FFmpeg on first launch via `binManager.js`).
+  3. True Native Windows Application (Electron + Express background engine, Spotify-themed standalone window, zero browser address bar, and official NSIS installer `SonicWave-Setup-1.0.0.exe`).
 
 ---
 
@@ -95,6 +96,12 @@
 - **Automated Test Suite**: Node.js native test runner (`node:test`) covering converter formatting, binary management, workspace integrity, brand assets, legal pages, technical documentation routing, download success dialogbox, custom 404 error page, security boundaries, AI-SEO / programmatic conversion guides, and server endpoints.
 - **Marketing Launch Kit**: `docs/MARKETING_LAUNCH_KIT.md` provides launch checklist, copy templates, and feature highlights.
 - **Programmatic Video Generation Pipeline (Remotion v4.0.543)**: Scaffolded `video/` workspace with `@remotion/cli` and React 19 to generate 15-second creator workflow demos (`SonicWaveShort` and `SonicWavePromo`).
+- **True Native Desktop Windows Application (Electron + NSIS Setup Wizard)**:
+  - Added Electron runtime (`electron/main.js`, `electron/preload.js`) with Spotify dark theme (`#121212`), security isolation (`contextIsolation: true`, `nodeIntegration: false`, `sandbox: true`), and background Express lifecycle management.
+  - Dedicated desktop compilation pipeline (`scripts/build-desktop-client.mjs`) builds `AppDesktop.jsx` into `client/dist/` without polluting web `App.jsx`.
+  - Windows executable bundling via `electron-builder` (`electron-builder.json`) generating standalone `SonicWave.exe` in `dist-electron/win-unpacked` and NSIS installer `SonicWave-Setup-1.0.0.exe`.
+  - High-resolution 256px icon generator (`scripts/generate-desktop-icon.mjs`) embedding 16, 32, 48, and 256px layers in `electron/icon.ico`.
+  - Comprehensive automated test suite in `tests/electron.test.js` validating security isolation, context bridge APIs, builder configuration, and binary outputs.
 
 ### Planned / Inferred / Unimplemented Features
 - *Inferred*: The Pricing Modal (`PricingModal.jsx`) is a presentation/comparison UI; no external payment processor (Stripe, LemonSqueezy) is integrated.
