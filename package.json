@@ -26,6 +26,7 @@
     "desktop": "node scripts/build-desktop-client.mjs && electron .",
     "package": "node scripts/package-desktop.mjs",
     "package:exe": "node scripts/build-desktop-client.mjs && electron-builder --win nsis",
+    "package:installer": "node scripts/build-custom-installer.mjs",
     "generate:assets": "node scripts/generate-assets.mjs",
     "video": "npm --prefix video run dev",
     "test": "node --test"

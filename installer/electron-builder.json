@@ -1,0 +1,30 @@
+{
+  "appId": "com.sonicwave.installer",
+  "productName": "SonicWave-Installer",
+  "artifactName": "SonicWave-Custom-Installer.${ext}",
+  "directories": {
+    "output": "dist-installer"
+  },
+  "extraMetadata": {
+    "main": "installer/main.js"
+  },
+  "asar": false,
+  "files": [
+    "installer/main.js",
+    "installer/engine.js",
+    "installer/ui/**/*"
+  ],
+  "extraResources": [
+    {
+      "from": "dist-electron/win-unpacked",
+      "to": "payload",
+      "filter": [
+        "**/*"
+      ]
+    }
+  ],
+  "win": {
+    "target": "portable",
+    "icon": "electron/icon.ico"
+  }
+}

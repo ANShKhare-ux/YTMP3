@@ -7,6 +7,7 @@
   1. Full-stack web application (React frontend + Express backend).
   2. Standalone Windows package (1.3 MB portable zip distribution that provisions yt-dlp and FFmpeg on first launch via `binManager.js`).
   3. True Native Windows Application (Electron + Express background engine, Spotify-themed standalone window, zero browser address bar, and official NSIS installer `SonicWave-Setup-1.0.0.exe`).
+  4. Custom Frameless GUI Installer (`dist-installer/SonicWave-Custom-Installer.exe`): A dedicated 740×500 frameless dark GUI installer (like TLauncher / Discord / Epic Games) with real-time soundwave visualizer, custom directory picker, desktop/start-menu shortcut creation, and registry uninstall registration.
 
 ---
 
@@ -22,6 +23,7 @@
 - **Self-Bootstrapping Engine**: Automatic provisioning of `yt-dlp` executable and local bridge for `ffmpeg`.
 - **Persistent History**: Server-side JSON storage (`server/data/history.json`, capped at 50 records) and client-side `localStorage` cache.
 - **Desktop Packaging**: `scripts/package-desktop.mjs` generates `SonicWave-v1.0.0-Windows.zip` stripped of marketing landing components.
+- **Main Website Installer Integration**: Integrated the Custom Frameless GUI Installer (`SonicWave-Custom-Installer.exe`) as the primary download option across the entire website (`LandingPage.jsx`, `InstallGuide.jsx`, `DownloadSuccessModal.jsx`, `DocsLayout.jsx`, `LegalLayout.jsx`, `client/index.html`, and AI-SEO documentation). Users can choose the recommended native installer or the lightweight portable zip package with dynamic modal guides and confetti feedback.
 - **UI Design System**: Spotify-inspired dark theme (`#121212`, Spotify Green `#1ed760`) for converter studio, paired with a Linear-styled marketing landing page featuring a light mode toggle (`Sun` / `Moon`) that preserves dark mode in the converter. Configured CSS easing variables and `prefers-reduced-motion` media queries.
 - **Technical SEO & Search Console Verification**:
   - Global Search Console verification meta tag (`vyi8Qkc4E4RP878V8Gc8VFv05oWR53YLsP0m6eWjYCI`) configured in `<head>` of `client/index.html`.
@@ -102,6 +104,10 @@
   - Windows executable bundling via `electron-builder` (`electron-builder.json`) generating standalone `SonicWave.exe` in `dist-electron/win-unpacked` and NSIS installer `SonicWave-Setup-1.0.0.exe`.
   - High-resolution 256px icon generator (`scripts/generate-desktop-icon.mjs`) embedding 16, 32, 48, and 256px layers in `electron/icon.ico`.
   - Comprehensive automated test suite in `tests/electron.test.js` validating security isolation, context bridge APIs, builder configuration, and binary outputs.
+- **100% Custom Frameless GUI Installer (`dist-installer/SonicWave-Custom-Installer.exe`)**:
+  - Custom frameless 740×500 desktop window (`installer/main.js`, `installer/ui/index.html`) with Spotify dark theme (`#121212`), custom drag titlebar, animated soundwave equalizer, and glowing neon controls.
+  - Native installer engine (`installer/engine.js`) providing destination folder selection (defaults to `%LocalAppData%\SonicWave`), Desktop & Start Menu shortcut generation via Windows Script Host, and official Windows Registry uninstaller registration (`HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\SonicWave`).
+  - Automated builder (`scripts/build-custom-installer.mjs`) compiling the standalone portable installer with embedded application payload.
 
 ### Planned / Inferred / Unimplemented Features
 - *Inferred*: The Pricing Modal (`PricingModal.jsx`) is a presentation/comparison UI; no external payment processor (Stripe, LemonSqueezy) is integrated.

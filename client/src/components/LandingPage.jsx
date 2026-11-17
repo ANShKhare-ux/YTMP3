@@ -32,7 +32,7 @@ import {
 } from 'lucide-react';
 import FaqAccordion from './ui/FaqAccordion';
 import HalftoneWordmarkFooter from './ui/halftone-wordmark-footer';
-import DownloadSuccessModal, { triggerZipDownload } from './DownloadSuccessModal';
+import DownloadSuccessModal, { triggerZipDownload, triggerExeDownload } from './DownloadSuccessModal';
 import { gsap } from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -213,7 +213,8 @@ const FOOTER_COLUMNS = [
   {
     title: 'Download',
     links: [
-      { label: 'Windows (.zip)', href: '/SonicWave-v1.0.0-Windows.zip' },
+      { label: 'Custom Installer (.exe)', href: '/SonicWave-Custom-Installer.exe' },
+      { label: 'Portable ZIP (.zip)', href: '/SonicWave-v1.0.0-Windows.zip' },
       { label: 'Installation Steps', href: '/install' },
       { label: 'Zero Telemetry', href: '#features' },
       { label: 'Personal Archiving', href: '/copyright-acceptable-use' },
@@ -225,6 +226,7 @@ export default function LandingPage({
   onNavigate
 }) {
   const [isDownloadSuccessOpen, setIsDownloadSuccessOpen] = useState(false);
+  const [downloadType, setDownloadType] = useState('exe');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [theme, setTheme] = useState(() => {
     try {
@@ -887,12 +889,20 @@ export default function LandingPage({
 
   const handleDownloadZip = (e) => {
     if (e && e.preventDefault) e.preventDefault();
+    setDownloadType('zip');
     triggerZipDownload();
     setIsDownloadSuccessOpen(true);
   };
 
+  const handleDownloadExe = (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    setDownloadType('exe');
+    triggerExeDownload();
+    setIsDownloadSuccessOpen(true);
+  };
+
   const handleDownloadClick = (e) => {
-    handleDownloadZip(e);
+    handleDownloadExe(e);
   };
 
   return (
@@ -1174,11 +1184,22 @@ export default function LandingPage({
               className="cursor-button-primary cursor-btn-lg"
               onClick={handleDownloadClick}
               id="hero-download-btn"
-              aria-label="Download SonicWave for Windows 64-bit"
+              aria-label="Download SonicWave Custom Installer for Windows"
             >
               <WindowsIcon size={16} />
-              <span>Download for Windows (64-bit)</span>
+              <span>Download Custom Installer (.exe)</span>
               <Download size={15} className="cursor-cta-icon" aria-hidden="true" />
+            </button>
+
+            <button
+              type="button"
+              className="cursor-button-secondary cursor-btn-lg"
+              onClick={handleDownloadZip}
+              id="hero-download-zip-btn"
+              aria-label="Download SonicWave portable ZIP package"
+            >
+              <FolderArchive size={15} aria-hidden="true" />
+              <span>Portable ZIP (.zip)</span>
             </button>
 
             <a
@@ -1194,7 +1215,7 @@ export default function LandingPage({
 
           {/* CRO Friction Reduction: Micro-proof directly below primary CTA */}
           <div className="cursor-hero-microproof">
-            <span>Windows 11 &amp; 10 (64-bit) &bull; Standalone 1.3 MB ZIP &bull; No admin rights required</span>
+            <span>Windows 11 &amp; 10 (64-bit) &bull; Custom Spotify-Themed GUI Installer &bull; Portable ZIP also available</span>
           </div>
 
           {/* Clean hairline trust strip */}
@@ -1845,15 +1866,25 @@ export default function LandingPage({
                 className="cursor-button-primary cursor-btn-lg"
                 onClick={handleDownloadClick}
                 id="bottom-download-btn"
-                aria-label="Download SonicWave for Windows 64-bit"
+                aria-label="Download SonicWave Custom Installer for Windows"
               >
                 <WindowsIcon size={16} />
-                <span>Download for Windows (64-bit)</span>
+                <span>Download Custom Installer (.exe)</span>
                 <Download size={15} className="cursor-cta-icon" aria-hidden="true" />
+              </button>
+
+              <button
+                type="button"
+                className="cursor-button-secondary cursor-btn-lg"
+                onClick={handleDownloadZip}
+                aria-label="Download SonicWave Portable ZIP package"
+              >
+                <FolderArchive size={15} aria-hidden="true" />
+                <span>Portable ZIP (1.3 MB)</span>
               </button>
             </div>
             <span className="cursor-micro-note">
-              Windows 11 &bull; Windows 10 &bull; 64-bit &bull; 100% Free &amp; Open Source &bull; Standalone 1.3 MB ZIP
+              Windows 11 &bull; Windows 10 &bull; 64-bit &bull; 100% Free &amp; Open Source &bull; Frameless Custom Installer &amp; Portable ZIP
             </span>
           </div>
         </div>
@@ -1876,7 +1907,9 @@ export default function LandingPage({
         grain={theme === 'light' ? 0.25 : 0.4}
         preset={theme === 'light' ? 'paper' : 'night'}
         onNavigate={(href) => {
-          if (href === '/SonicWave-v1.0.0-Windows.zip') {
+          if (href === '/SonicWave-Custom-Installer.exe') {
+            handleDownloadExe();
+          } else if (href === '/SonicWave-v1.0.0-Windows.zip') {
             handleDownloadZip();
           } else if (onNavigate) {
             if (href === '/install') onNavigate('install', '/install');
@@ -1907,6 +1940,8 @@ export default function LandingPage({
         isOpen={isDownloadSuccessOpen}
         onClose={() => setIsDownloadSuccessOpen(false)}
         onNavigate={onNavigate}
+        downloadType={downloadType}
+        onSwitchType={(type) => setDownloadType(type)}
       />
 
       {/* Floating Smooth Scroll to Top Button */}

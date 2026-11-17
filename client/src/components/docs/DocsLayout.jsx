@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import DownloadSuccessModal, { triggerZipDownload } from '../DownloadSuccessModal';
+import DownloadSuccessModal, { triggerZipDownload, triggerExeDownload } from '../DownloadSuccessModal';
 import {
   Download,
   Layers,
@@ -87,10 +87,12 @@ export default function DocsLayout({
   };
 
   const [isDownloadSuccessOpen, setIsDownloadSuccessOpen] = useState(false);
+  const [downloadType, setDownloadType] = useState('exe');
 
   const handleDownload = (e) => {
     if (e && e.preventDefault) e.preventDefault();
-    triggerZipDownload();
+    setDownloadType('exe');
+    triggerExeDownload();
     setIsDownloadSuccessOpen(true);
   };
 
@@ -256,6 +258,8 @@ export default function DocsLayout({
         isOpen={isDownloadSuccessOpen}
         onClose={() => setIsDownloadSuccessOpen(false)}
         onNavigate={onNavigate}
+        downloadType={downloadType}
+        onSwitchType={(type) => setDownloadType(type)}
       />
     </div>
   );

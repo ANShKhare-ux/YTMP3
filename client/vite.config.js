@@ -32,6 +32,10 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:3001',
         changeOrigin: true,
+      },
+      '/SonicWave-Custom-Installer.exe': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
       }
     }
   }

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import DocsLayout from './DocsLayout';
-import DownloadSuccessModal, { triggerZipDownload } from '../DownloadSuccessModal';
+import DownloadSuccessModal, { triggerZipDownload, triggerExeDownload } from '../DownloadSuccessModal';
 import { useDocumentMetadata } from '../legal/useDocumentMetadata';
 import {
   Download,
@@ -19,6 +19,7 @@ import {
 
 export default function InstallGuide({ onNavigate }) {
   const [isDownloadSuccessOpen, setIsDownloadSuccessOpen] = useState(false);
+  const [downloadType, setDownloadType] = useState('exe');
 
   useDocumentMetadata({
     title: 'SonicWave Installation Guide : Windows 11 & 10 (64-Bit Setup)',
@@ -107,26 +108,65 @@ export default function InstallGuide({ onNavigate }) {
       <section className="legal-section">
         <h2>2. Step-by-Step Installation Walkthrough</h2>
         <p>
-          Follow these four simple steps to get SonicWave running on your Windows PC in less than 30 seconds:
+          Choose your preferred installation method below. We recommend the <strong>Custom Frameless GUI Installer (.exe)</strong> for the full native Windows experience with desktop shortcuts and automatic uninstaller support.
         </p>
 
+        {/* Method 1: Custom GUI Installer */}
+        <div className="legal-card-box" style={{ marginBottom: 24, border: '1px solid rgba(30, 215, 96, 0.3)', background: 'rgba(30, 215, 96, 0.04)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ background: '#1ed760', color: '#000', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 12 }}>RECOMMENDED</span>
+              <h3 style={{ margin: 0, fontSize: 16 }}>Method 1: Custom Native GUI Installer (.exe)</h3>
+            </div>
+            <a
+              href="/SonicWave-Custom-Installer.exe"
+              download="SonicWave-Custom-Installer.exe"
+              className="cursor-button-primary"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '8px 16px', borderRadius: 8, textDecoration: 'none', color: '#000', background: '#1ed760', fontWeight: 700, fontSize: 13 }}
+              onClick={(e) => {
+                e.preventDefault();
+                setDownloadType('exe');
+                triggerExeDownload();
+                setIsDownloadSuccessOpen(true);
+              }}
+            >
+              <Download size={14} /> Download Custom Installer (.exe) &mdash; 330 MB
+            </a>
+          </div>
+          <p style={{ margin: '0 0 10px', fontSize: 13.5, color: 'var(--cursor-ink-muted)' }}>
+            A standalone Spotify-styled frameless GUI installer that copies the pre-packaged media engine, registers desktop and Start Menu shortcuts, and integrates with Windows Settings.
+          </p>
+          <ol style={{ margin: '0 0 0 18px', padding: 0, fontSize: 13.5, lineHeight: 1.8 }}>
+            <li><strong>Download &amp; Run:</strong> Double-click <code>SonicWave-Custom-Installer.exe</code> from your Downloads folder.</li>
+            <li><strong>Configure Preferences:</strong> Choose your install path (default: <code>AppData\Local\Programs\SonicWave</code>) and toggle shortcut preferences.</li>
+            <li><strong>Install:</strong> Click <strong>Install SonicWave</strong>. The installer provisions the full media engine in seconds.</li>
+            <li><strong>Launch:</strong> Click <strong>Launch SonicWave Now</strong> to open the true native window application.</li>
+          </ol>
+        </div>
+
+        {/* Method 2: Portable ZIP Package */}
+        <h3 style={{ fontSize: 15, marginTop: 16 }}>Method 2: Standalone Portable ZIP Package (.zip)</h3>
+        <p style={{ fontSize: 13.5, color: 'var(--cursor-ink-muted)' }}>
+          Best for USB drives, offline portable use, or running without installation:
+        </p>
         <ol>
           <li>
-            <strong>Step 1: Download the Official Package</strong><br />
+            <strong>Step 1: Download the Portable Package</strong><br />
             Download the latest release ZIP directly from the official verified domain:
             <div style={{ margin: '10px 0 16px' }}>
               <a
                 href="/SonicWave-v1.0.0-Windows.zip"
                 download="SonicWave-v1.0.0-Windows.zip"
-                className="cursor-button-primary"
-                style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '8px 16px', borderRadius: 8, textDecoration: 'none', color: '#fff', fontWeight: 600, fontSize: 13 }}
+                className="cursor-button-secondary"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '8px 16px', borderRadius: 8, textDecoration: 'none', fontWeight: 600, fontSize: 13 }}
                 onClick={(e) => {
                   e.preventDefault();
+                  setDownloadType('zip');
                   triggerZipDownload();
                   setIsDownloadSuccessOpen(true);
                 }}
               >
-                <Download size={14} /> Download SonicWave v1.0.0 for Windows (.zip)
+                <Download size={14} /> Download SonicWave v1.0.0 for Windows (.zip) &mdash; 1.3 MB
               </a>
             </div>
           </li>
@@ -265,6 +305,8 @@ export default function InstallGuide({ onNavigate }) {
         isOpen={isDownloadSuccessOpen}
         onClose={() => setIsDownloadSuccessOpen(false)}
         onNavigate={onNavigate}
+        downloadType={downloadType}
+        onSwitchType={(type) => setDownloadType(type)}
       />
     </DocsLayout>
   );

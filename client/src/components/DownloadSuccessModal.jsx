@@ -13,6 +13,25 @@ import {
 } from 'lucide-react';
 
 /**
+ * Programmatically triggers the download of the Windows standalone installer executable.
+ */
+export function triggerExeDownload() {
+  const link = document.createElement('a');
+  link.href = '/SonicWave-Custom-Installer.exe';
+  link.setAttribute('download', 'SonicWave-Custom-Installer.exe');
+  link.style.display = 'none';
+  document.body.appendChild(link);
+  link.click();
+  setTimeout(() => {
+    try {
+      if (document.body.contains(link)) {
+        document.body.removeChild(link);
+      }
+    } catch {}
+  }, 500);
+}
+
+/**
  * Programmatically triggers the download of the Windows zip distribution.
  */
 export function triggerZipDownload() {
@@ -72,9 +91,12 @@ export function fireCelebrationConfetti() {
 export default function DownloadSuccessModal({
   isOpen,
   onClose,
-  onNavigate
+  onNavigate,
+  downloadType = 'exe',
+  onSwitchType
 }) {
   const modalRef = useRef(null);
+  const isExe = downloadType === 'exe';
 
   // Trigger celebration on dialog appearance
   useEffect(() => {
@@ -131,12 +153,16 @@ export default function DownloadSuccessModal({
               <CheckCircle2 size={26} className="cursor-success-check-icon" />
             </div>
             <div className="cursor-success-header-text">
-              <span className="cursor-success-kicker">WINDOWS 64-BIT &bull; PORTABLE UTILITY</span>
+              <span className="cursor-success-kicker">
+                {isExe ? 'WINDOWS 64-BIT \u2022 NATIVE GUI INSTALLER' : 'WINDOWS 64-BIT \u2022 PORTABLE UTILITY'}
+              </span>
               <h2 id="download-success-title" className="cursor-success-title">
                 Download Started!
               </h2>
               <p className="cursor-success-subtitle">
-                SonicWave is downloading. Follow these 3 simple steps to start converting media in seconds:
+                {isExe
+                  ? 'SonicWave Custom Installer is downloading. Follow these 3 simple steps to install the desktop studio:'
+                  : 'SonicWave is downloading. Follow these 3 simple steps to start converting media in seconds:'}
               </p>
             </div>
           </div>
@@ -160,8 +186,14 @@ export default function DownloadSuccessModal({
                 <Download size={16} />
               </div>
               <div className="cursor-success-file-info">
-                <span className="cursor-success-filename">SonicWave-v1.0.0-Windows.zip</span>
-                <span className="cursor-success-filemeta">1.3 MB &bull; Windows 10 &amp; 11 &bull; SHA-256 Verified</span>
+                <span className="cursor-success-filename">
+                  {isExe ? 'SonicWave-Custom-Installer.exe' : 'SonicWave-v1.0.0-Windows.zip'}
+                </span>
+                <span className="cursor-success-filemeta">
+                  {isExe
+                    ? '330 MB \u2022 Windows 10 & 11 \u2022 Standalone Dark GUI Installer'
+                    : '1.3 MB \u2022 Windows 10 & 11 \u2022 SHA-256 Verified'}
+                </span>
               </div>
             </div>
             <div className="cursor-success-file-badge">
@@ -170,45 +202,120 @@ export default function DownloadSuccessModal({
             </div>
           </div>
 
-          {/* 3 Quick Setup Steps */}
-          <div className="cursor-success-steps-box">
-            <h3 className="cursor-success-steps-heading">
-              Quick Setup Guide:
-            </h3>
-            <div className="cursor-success-steps-list">
-              <div className="cursor-success-step-item">
-                <div className="cursor-success-step-num">1</div>
-                <div className="cursor-success-step-content">
-                  <div className="cursor-success-step-title-row">
-                    <FolderArchive size={14} className="cursor-step-icon" />
-                    <strong>Extract the ZIP</strong>
+          {/* Setup Steps (Custom GUI Installer vs Portable ZIP) */}
+          {isExe ? (
+            <div className="cursor-success-steps-box">
+              <h3 className="cursor-success-steps-heading">
+                Quick Setup Guide:
+              </h3>
+              <div className="cursor-success-steps-list">
+                <div className="cursor-success-step-item">
+                  <div className="cursor-success-step-num">1</div>
+                  <div className="cursor-success-step-content">
+                    <div className="cursor-success-step-title-row">
+                      <Terminal size={14} className="cursor-step-icon" />
+                      <strong>Run the Installer</strong>
+                    </div>
+                    <p>Double-click <code>SonicWave-Custom-Installer.exe</code> in your Downloads folder to launch the custom setup.</p>
                   </div>
-                  <p>Right-click <code>SonicWave-v1.0.0-Windows.zip</code> in your Downloads folder and select <strong>Extract All...</strong> to any directory.</p>
                 </div>
-              </div>
 
-              <div className="cursor-success-step-item">
-                <div className="cursor-success-step-num">2</div>
-                <div className="cursor-success-step-content">
-                  <div className="cursor-success-step-title-row">
-                    <Terminal size={14} className="cursor-step-icon" />
-                    <strong>Double-Click <code>start.bat</code></strong>
+                <div className="cursor-success-step-item">
+                  <div className="cursor-success-step-num">2</div>
+                  <div className="cursor-success-step-content">
+                    <div className="cursor-success-step-title-row">
+                      <FolderArchive size={14} className="cursor-step-icon" />
+                      <strong>Choose Preferences</strong>
+                    </div>
+                    <p>Select your installation path and toggle Desktop or Start Menu shortcuts in the frameless installer UI.</p>
                   </div>
-                  <p>The launcher verifies your environment, auto-provisions <code>yt-dlp.exe</code> &amp; <code>ffmpeg.exe</code>, and launches the server.</p>
                 </div>
-              </div>
 
-              <div className="cursor-success-step-item">
-                <div className="cursor-success-step-num">3</div>
-                <div className="cursor-success-step-content">
-                  <div className="cursor-success-step-title-row">
-                    <Sparkles size={14} className="cursor-step-icon" />
-                    <strong>Convert &amp; Enjoy</strong>
+                <div className="cursor-success-step-item">
+                  <div className="cursor-success-step-num">3</div>
+                  <div className="cursor-success-step-content">
+                    <div className="cursor-success-step-title-row">
+                      <Sparkles size={14} className="cursor-step-icon" />
+                      <strong>Install &amp; Launch</strong>
+                    </div>
+                    <p>Click <strong>Install SonicWave</strong> to finish setup and launch your standalone desktop studio window!</p>
                   </div>
-                  <p>Your browser opens to <code>localhost:5173</code>. Paste any link for high-speed 320 kbps MP3 or 1080p MP4 conversions!</p>
                 </div>
               </div>
             </div>
+          ) : (
+            <div className="cursor-success-steps-box">
+              <h3 className="cursor-success-steps-heading">
+                Quick Setup Guide:
+              </h3>
+              <div className="cursor-success-steps-list">
+                <div className="cursor-success-step-item">
+                  <div className="cursor-success-step-num">1</div>
+                  <div className="cursor-success-step-content">
+                    <div className="cursor-success-step-title-row">
+                      <FolderArchive size={14} className="cursor-step-icon" />
+                      <strong>Extract the ZIP</strong>
+                    </div>
+                    <p>Right-click <code>SonicWave-v1.0.0-Windows.zip</code> in your Downloads folder and select <strong>Extract All...</strong> to any directory.</p>
+                  </div>
+                </div>
+
+                <div className="cursor-success-step-item">
+                  <div className="cursor-success-step-num">2</div>
+                  <div className="cursor-success-step-content">
+                    <div className="cursor-success-step-title-row">
+                      <Terminal size={14} className="cursor-step-icon" />
+                      <strong>Double-Click <code>start.bat</code></strong>
+                    </div>
+                    <p>The launcher verifies your environment, auto-provisions <code>yt-dlp.exe</code> &amp; <code>ffmpeg.exe</code>, and launches the server.</p>
+                  </div>
+                </div>
+
+                <div className="cursor-success-step-item">
+                  <div className="cursor-success-step-num">3</div>
+                  <div className="cursor-success-step-content">
+                    <div className="cursor-success-step-title-row">
+                      <Sparkles size={14} className="cursor-step-icon" />
+                      <strong>Convert &amp; Enjoy</strong>
+                    </div>
+                    <p>Your browser opens to <code>localhost:5173</code>. Paste any link for high-speed 320 kbps MP3 or 1080p MP4 conversions!</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Alternative download switch row */}
+          <div style={{ marginTop: '12px', fontSize: '13px', color: '#94a3b8', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)' }}>
+            {isExe ? (
+              <span>
+                Want the lightweight portable zip without installation?{' '}
+                <button
+                  type="button"
+                  style={{ background: 'none', border: 'none', color: '#1ed760', fontWeight: 600, textDecoration: 'underline', cursor: 'pointer', padding: 0 }}
+                  onClick={() => {
+                    if (onSwitchType) onSwitchType('zip');
+                    triggerZipDownload();
+                  }}
+                >
+                  Download Portable ZIP (1.3 MB)
+                </button>
+              </span>
+            ) : (
+              <span>
+                Want the full native desktop experience?{' '}
+                <button
+                  type="button"
+                  style={{ background: 'none', border: 'none', color: '#1ed760', fontWeight: 600, textDecoration: 'underline', cursor: 'pointer', padding: 0 }}
+                  onClick={() => {
+                    if (onSwitchType) onSwitchType('exe');
+                    triggerExeDownload();
+                  }}
+                >
+                  Download Custom Installer (.exe)
+                </button>
+              </span>
+            )}
           </div>
 
           {/* Windows Defender SmartScreen Tip */}
@@ -257,7 +364,8 @@ export default function DownloadSuccessModal({
                 type="button"
                 className="cursor-success-retry-link"
                 onClick={() => {
-                  triggerZipDownload();
+                  if (isExe) triggerExeDownload();
+                  else triggerZipDownload();
                   fireCelebrationConfetti();
                 }}
               >

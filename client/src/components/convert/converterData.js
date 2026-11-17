@@ -35,8 +35,8 @@ export const CONVERTER_GUIDES = {
     steps: [
       {
         step: 1,
-        title: 'Download and Extract SonicWave',
-        text: 'Download the lightweight 1.3 MB portable Windows package (SonicWave-v1.0.0-Windows.zip) and extract it to any folder on your PC.'
+        title: 'Download and Install SonicWave',
+        text: 'Download the official Custom Installer (SonicWave-Custom-Installer.exe) for the native desktop experience, or the portable Windows ZIP (SonicWave-v1.0.0-Windows.zip).'
       },
       {
         step: 2,

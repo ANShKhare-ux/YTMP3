@@ -120,6 +120,9 @@ npm.cmd run desktop
 
 # Build the official Windows setup installer (SonicWave-Setup-1.0.0.exe)
 npm.cmd run package:exe
+
+# Build the 100% custom branded frameless GUI installer (SonicWave-Custom-Installer.exe)
+npm.cmd run package:installer
 ```
 
 ---

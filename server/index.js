@@ -364,6 +364,19 @@ app.get('/api/history', (req, res) => {
   res.json({ success: true, history: getHistory() });
 });
 
+// Download endpoint for SonicWave Custom Installer (.exe)
+app.get('/SonicWave-Custom-Installer.exe', (req, res, next) => {
+  const candidates = [
+    path.join(__dirname, '..', 'client', 'public', 'SonicWave-Custom-Installer.exe'),
+    path.join(__dirname, '..', 'dist-installer', 'SonicWave-Custom-Installer.exe')
+  ];
+  const found = candidates.find(p => fs.existsSync(p));
+  if (found) {
+    return res.download(found, 'SonicWave-Custom-Installer.exe');
+  }
+  next();
+});
+
 // Serve frontend static build in production
 const clientDist = path.join(__dirname, '../client/dist');
 if (fs.existsSync(clientDist)) {

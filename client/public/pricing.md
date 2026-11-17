@@ -38,6 +38,7 @@
 
 ## Canonical Links
 - Official Website: https://ytmp-3-five.vercel.app/
-- Windows Package (1.3 MB): https://ytmp-3-five.vercel.app/SonicWave-v1.0.0-Windows.zip
+- Windows Custom Installer (.exe): https://ytmp-3-five.vercel.app/SonicWave-Custom-Installer.exe
+- Windows Portable ZIP (1.3 MB): https://ytmp-3-five.vercel.app/SonicWave-v1.0.0-Windows.zip
 - Documentation: https://ytmp-3-five.vercel.app/supported-platforms
 - Source Code & Issues: https://github.com/ytmp3-converter/sonicwave
