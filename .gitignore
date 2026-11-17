@@ -17,7 +17,6 @@ server/data/
 *.mp4
 *.webm
 *.m4a
-client/public/*.exe
 
 # Environment variables & Local configurations
 .env

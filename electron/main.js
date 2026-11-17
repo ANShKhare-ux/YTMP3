@@ -3,6 +3,11 @@ const path = require('path');
 const http = require('http');
 const fs = require('fs');
 
+// Disable hardware acceleration on Windows to prevent GPU black-screen issues
+if (process.platform === 'win32') {
+  app.disableHardwareAcceleration();
+}
+
 let mainWindow = null;
 let serverInstance = null;
 const PORT = process.env.PORT || 3001;
@@ -12,7 +17,11 @@ function log(...args) {
   const line = `[${new Date().toISOString()}] ${args.join(' ')}\n`;
   console.log(...args);
   try {
-    const logPath = path.join(app.getPath('userData'), 'sonicwave.log');
+    const userDir = app.getPath('userData');
+    if (!fs.existsSync(userDir)) {
+      fs.mkdirSync(userDir, { recursive: true });
+    }
+    const logPath = path.join(userDir, 'sonicwave.log');
     fs.appendFileSync(logPath, line);
   } catch {}
 }
@@ -166,13 +175,17 @@ async function createWindow() {
     backgroundColor: '#121212',
     icon: path.join(__dirname, 'icon.ico'),
     autoHideMenuBar: true,
-    show: true,
+    show: false,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
       contextIsolation: true,
       sandbox: true
     }
+  });
+
+  mainWindow.once('ready-to-show', () => {
+    mainWindow.show();
   });
 
   Menu.setApplicationMenu(null);
@@ -191,6 +204,18 @@ async function createWindow() {
       mainWindow.webContents.toggleDevTools();
       event.preventDefault();
     }
+  });
+
+  mainWindow.webContents.on('console-message', (event, level, message, line, sourceId) => {
+    log(`[Renderer Console] [Level ${level}] ${message} (at ${sourceId}:${line})`);
+  });
+
+  mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL) => {
+    log(`[Renderer Error] Failed to load ${validatedURL}: ${errorDescription} (${errorCode})`);
+  });
+
+  mainWindow.webContents.on('render-process-gone', (event, details) => {
+    log(`[Renderer Crash] Render process gone: ${JSON.stringify(details)}`);
   });
 
   // Load splash screen first so user never sees a blank black screen
