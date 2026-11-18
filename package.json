@@ -28,6 +28,7 @@
     "package:exe": "node scripts/build-desktop-client.mjs && electron-builder --win nsis",
     "package:mac": "node scripts/build-desktop-client.mjs && electron-builder --mac",
     "package:installer": "node scripts/build-custom-installer.mjs",
+    "package:apk": "node scripts/build-android-apk.mjs",
     "generate:assets": "node scripts/generate-assets.mjs",
     "video": "npm --prefix video run dev",
     "test": "node --test"

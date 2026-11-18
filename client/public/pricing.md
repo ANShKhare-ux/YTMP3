@@ -8,7 +8,7 @@
 - **Conversion Limits**: Unlimited conversions. Zero daily quotas or file duration limits.
 - **Speed Limits**: Unlimited. Up to 16-stream parallel download acceleration.
 - **File Size Limits**: None. Constrained only by available local disk space.
-- **Platform**: Windows 10, Windows 11 (64-bit portable package · 1.3 MB).
+- **Platform**: Windows 10, Windows 11 (64-bit portable package · 1.3 MB), Android (8.0+ ARM64-v8a native app).
 
 ### Included Capabilities & Specifications
 - **Audio Output Codecs**: 
@@ -40,5 +40,6 @@
 - Official Website: https://ytmp-3-five.vercel.app/
 - Windows Custom Installer (.exe): https://ytmp-3-five.vercel.app/SonicWave-Custom-Installer.exe
 - Windows Portable ZIP (1.3 MB): https://ytmp-3-five.vercel.app/SonicWave-v1.0.0-Windows.zip
+- Android Standalone APK (.apk): https://ytmp-3-five.vercel.app/SonicWave.apk
 - Documentation: https://ytmp-3-five.vercel.app/supported-platforms
 - Source Code & Issues: https://github.com/ytmp3-converter/sonicwave

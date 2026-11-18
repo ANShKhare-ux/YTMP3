@@ -278,3 +278,79 @@ test('server - GET /api/download/:jobId and /api/stream/:jobId reject path trave
     _jobs.delete(jobId);
   }
 });
+
+test('server - GET /SonicWave.apk returns HTTP 200 with application/vnd.android.package-archive Content-Type', async () => {
+  const res = await fetch(`${baseUrl}/SonicWave.apk`);
+  assert.strictEqual(res.status, 200, 'GET /SonicWave.apk must return HTTP 200');
+  const contentType = res.headers.get('content-type');
+  assert.ok(
+    contentType && contentType.includes('application/vnd.android.package-archive'),
+    `Content-Type must be application/vnd.android.package-archive, got: ${contentType}`
+  );
+  const disposition = res.headers.get('content-disposition');
+  assert.ok(
+    disposition && disposition.includes('SonicWave.apk'),
+    `Content-Disposition must reference SonicWave.apk, got: ${disposition}`
+  );
+  const buffer = await res.arrayBuffer();
+  assert.ok(buffer.byteLength > 10 * 1024 * 1024, 'Downloaded APK must be a valid complete binary (>10MB)');
+});
+
+test('server - GET /SonicWave.apk returns HTTP 404 JSON when APK candidate files are missing', async () => {
+  const candidates = [
+    path.join(__dirname, '..', 'client', 'public', 'SonicWave.apk'),
+    path.join(__dirname, '..', 'client', 'dist', 'SonicWave.apk'),
+    path.join(__dirname, '..', 'android-app', 'app', 'build', 'outputs', 'apk', 'release', 'app-release.apk')
+  ];
+  const renamed = [];
+  try {
+    for (const p of candidates) {
+      if (fs.existsSync(p)) {
+        const tempPath = `${p}.bak_test_${Date.now()}`;
+        fs.renameSync(p, tempPath);
+        renamed.push({ original: p, temp: tempPath });
+      }
+    }
+
+    const res = await fetch(`${baseUrl}/SonicWave.apk`);
+    assert.strictEqual(res.status, 404, 'Must return 404 when no candidate APK exists');
+    const data = await res.json();
+    assert.strictEqual(data.success, false);
+    assert.strictEqual(data.error, 'SonicWave.apk not found on server');
+  } finally {
+    for (const { original, temp } of renamed) {
+      if (fs.existsSync(temp)) {
+        fs.renameSync(temp, original);
+      }
+    }
+  }
+});
+
+test('server - GET /SonicWave-Custom-Installer.exe returns HTTP 404 JSON when installer candidate files are missing', async () => {
+  const candidates = [
+    path.join(__dirname, '..', 'client', 'public', 'SonicWave-Custom-Installer.exe'),
+    path.join(__dirname, '..', 'dist-installer', 'SonicWave-Custom-Installer.exe')
+  ];
+  const renamed = [];
+  try {
+    for (const p of candidates) {
+      if (fs.existsSync(p)) {
+        const tempPath = `${p}.bak_test_${Date.now()}`;
+        fs.renameSync(p, tempPath);
+        renamed.push({ original: p, temp: tempPath });
+      }
+    }
+
+    const res = await fetch(`${baseUrl}/SonicWave-Custom-Installer.exe`);
+    assert.strictEqual(res.status, 404, 'Must return 404 when no candidate installer exists');
+    const data = await res.json();
+    assert.strictEqual(data.success, false);
+    assert.strictEqual(data.error, 'SonicWave-Custom-Installer.exe not found on server');
+  } finally {
+    for (const { original, temp } of renamed) {
+      if (fs.existsSync(temp)) {
+        fs.renameSync(temp, original);
+      }
+    }
+  }
+});

@@ -374,7 +374,22 @@ app.get('/SonicWave-Custom-Installer.exe', (req, res, next) => {
   if (found) {
     return res.download(found, 'SonicWave-Custom-Installer.exe');
   }
-  next();
+  return res.status(404).json({ success: false, error: 'SonicWave-Custom-Installer.exe not found on server' });
+});
+
+// Download endpoint for SonicWave Android APK (.apk)
+app.get('/SonicWave.apk', (req, res, next) => {
+  const candidates = [
+    path.join(__dirname, '..', 'client', 'public', 'SonicWave.apk'),
+    path.join(__dirname, '..', 'client', 'dist', 'SonicWave.apk'),
+    path.join(__dirname, '..', 'android-app', 'app', 'build', 'outputs', 'apk', 'release', 'app-release.apk')
+  ];
+  const found = candidates.find(p => fs.existsSync(p));
+  if (found) {
+    res.setHeader('Content-Type', 'application/vnd.android.package-archive');
+    return res.download(found, 'SonicWave.apk');
+  }
+  return res.status(404).json({ success: false, error: 'SonicWave.apk not found on server' });
 });
 
 // Serve frontend static build in production

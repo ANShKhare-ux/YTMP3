@@ -301,6 +301,14 @@ test('workspace - standalone Android APK package and download routing integrity'
   const modalSrc = fs.readFileSync(path.join(rootDir, 'client', 'src', 'components', 'DownloadSuccessModal.jsx'), 'utf8');
   assert.ok(modalSrc.includes('export function triggerApkDownload()'), 'DownloadSuccessModal must export triggerApkDownload');
   assert.ok(modalSrc.includes('SonicWave.apk'), 'DownloadSuccessModal must reference SonicWave.apk');
+  assert.ok(
+    modalSrc.includes('if (isApk) triggerApkDownload();'),
+    'DownloadSuccessModal retry link must handle isApk by invoking triggerApkDownload()'
+  );
+  assert.ok(
+    modalSrc.includes('else if (isMac) triggerMacZipDownload();'),
+    'DownloadSuccessModal retry link must handle isMac by invoking triggerMacZipDownload()'
+  );
 
   // Verify LandingPage integration
   const landingSrc = fs.readFileSync(path.join(rootDir, 'client', 'src', 'components', 'LandingPage.jsx'), 'utf8');
@@ -319,6 +327,20 @@ test('workspace - standalone Android APK package and download routing integrity'
   const manifestSrc = fs.readFileSync(manifestPath, 'utf8');
   assert.ok(manifestSrc.includes('android.intent.action.MAIN'), 'Manifest must declare MAIN action');
   assert.ok(manifestSrc.includes('android.intent.action.SEND'), 'Manifest must declare SEND action for Share Sheet');
+  assert.ok(!manifestSrc.includes('ConversionService'), 'Manifest must not declare non-existent ConversionService');
+  assert.ok(!manifestSrc.match(/<application[^>]*android:windowSoftInputMode/), 'Manifest must not declare windowSoftInputMode on <application>');
+  assert.ok(manifestSrc.match(/<activity[^>]*android:windowSoftInputMode="adjustResize"/), 'MainActivity must declare windowSoftInputMode="adjustResize"');
+
+  // Verify packaging script and package.json integration
+  const buildScriptPath = path.join(rootDir, 'scripts', 'build-android-apk.mjs');
+  assert.ok(fs.existsSync(buildScriptPath), 'scripts/build-android-apk.mjs must exist');
+  const packageJson = JSON.parse(fs.readFileSync(path.join(rootDir, 'package.json'), 'utf8'));
+  assert.ok(packageJson.scripts['package:apk'], 'package.json must contain package:apk script');
+
+  // Verify troubleshooting and metadata synchronization
+  const troubleSrc = fs.readFileSync(path.join(rootDir, 'client', 'src', 'components', 'docs', 'TroubleshootingGuide.jsx'), 'utf8');
+  assert.ok(troubleSrc.includes('Android Sideloading'), 'TroubleshootingGuide must cover Android sideloading');
+  assert.ok(troubleSrc.includes('Allow from this source'), 'TroubleshootingGuide must explain Allow from this source');
 });
 
 

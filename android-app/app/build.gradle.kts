@@ -10,7 +10,7 @@ android {
   defaultConfig {
     applicationId = "com.sonicwave.app"
     minSdk = 24
-    targetSdk = 36
+    targetSdk = 34
     versionCode = 1
     versionName = "1.0.0"
 
@@ -19,9 +19,22 @@ android {
     }
   }
 
+  signingConfigs {
+    create("release") {
+      storeFile = file("release.keystore")
+      storePassword = "sonicwavekeystore"
+      keyAlias = "sonicwave"
+      keyPassword = "sonicwavekeystore"
+      enableV1Signing = true
+      enableV2Signing = true
+      enableV3Signing = true
+    }
+  }
+
   buildTypes {
     release {
       isMinifyEnabled = false
+      signingConfig = signingConfigs.getByName("release")
       proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
     }
   }

@@ -17,7 +17,7 @@ import {
 export default function TroubleshootingGuide({ onNavigate }) {
   useDocumentMetadata({
     title: 'SonicWave Troubleshooting & Diagnostic Guide : Fix Common Issues',
-    description: 'Diagnose and resolve common issues in SonicWave for Windows, including SmartScreen popups, extraction timeouts, bot detection errors, and FFmpeg binary checks.',
+    description: 'Diagnose and resolve common issues in SonicWave for Windows and Android, including SmartScreen popups, Android APK sideloading permissions, extraction timeouts, and FFmpeg binary checks.',
     canonical: 'https://ytmp-3-five.vercel.app/troubleshooting'
   });
 
@@ -28,7 +28,7 @@ export default function TroubleshootingGuide({ onNavigate }) {
         <div className="legal-eyebrow-tag">DIAGNOSTIC GUIDE &bull; ERROR RESOLUTION &bull; FAQ</div>
         <h1 className="legal-page-h1">SonicWave Troubleshooting Guide</h1>
         <p className="legal-effective-date">
-          Diagnostic Procedures for SonicWave on Windows 10 &amp; 11 (64-Bit)
+          Diagnostic Procedures for SonicWave on Windows 10 &amp; 11 (64-Bit) and Android (8.0+)
         </p>
       </div>
 
@@ -152,6 +152,35 @@ export default function TroubleshootingGuide({ onNavigate }) {
         </p>
       </section>
 
+      {/* Issue 6: Android APK Sideloading & Installation */}
+      <section className="legal-section">
+        <h2>6. Android Sideloading: &ldquo;Install Unknown Apps&rdquo; &amp; Package Validation</h2>
+        <div className="legal-callout-card" style={{ borderLeftColor: '#10b981', background: 'rgba(16, 185, 129, 0.06)' }}>
+          <p style={{ margin: 0, fontSize: 13.5, color: 'var(--cursor-ink-muted)' }}>
+            <strong>Symptom:</strong> Android displays <em>&ldquo;For your security, your phone is not allowed to install unknown apps from this source&rdquo;</em>, Google Play Protect warning, or <em>&ldquo;App not installed as package appears to be invalid&rdquo;</em>.
+          </p>
+        </div>
+        <p>
+          Because SonicWave for Android is an independent open-source release distributed directly as a standalone APK, modern Android devices require one-time user authorization to install files outside Google Play.
+        </p>
+
+        <h3>Step-by-Step Resolution:</h3>
+        <ol>
+          <li>
+            <strong>Allow from this source:</strong> When downloading via Chrome, Samsung Internet, or opening from Files, tap <strong>Settings</strong> on the prompt and toggle on <strong>&ldquo;Allow from this source&rdquo;</strong>. Tap Back and continue installation.
+          </li>
+          <li>
+            <strong>Play Protect Prompt:</strong> If Play Protect shows <em>&ldquo;Unrecognized App&rdquo;</em>, tap <strong>&ldquo;More details&rdquo;</strong> then <strong>&ldquo;Install anyway&rdquo;</strong>. SonicWave is 100% open-source and signed with the official SonicWave release certificate.
+          </li>
+          <li>
+            <strong>Device Architecture (ARM64-v8a):</strong> SonicWave targets modern 64-bit ARM Android devices running Android 8.0 through Android 14+. Ensure your device runs a 64-bit CPU (standard on 99%+ of smartphones made since 2018).
+          </li>
+          <li>
+            <strong>Storage Access:</strong> When first running a conversion, grant storage/media permissions so converted audio files can be saved to your device&apos;s <code>Download/SonicWave/</code> folder.
+          </li>
+        </ol>
+      </section>
+
       {/* Structured Data: FAQPage JSON-LD */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{
         __html: JSON.stringify({
@@ -180,6 +209,14 @@ export default function TroubleshootingGuide({ onNavigate }) {
               "acceptedAnswer": {
                 "@type": "Answer",
                 "text": "Run 'Get-Process node | Stop-Process -Force' in PowerShell to clear any stranded background Node processes, then relaunch start.bat."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How do I install the SonicWave APK on Android?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Download SonicWave.apk, tap the file, and when prompted enable 'Allow from this source' in your browser or file manager settings. Then tap Install anyway to complete setup."
               }
             }
           ]

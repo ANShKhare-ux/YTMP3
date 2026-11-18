@@ -247,7 +247,7 @@ export default function DownloadSuccessModal({
                 </span>
                 <span className="cursor-success-filemeta">
                   {isApk
-                    ? 'Android 8.0+ \u2022 ARM64 & x86_64 \u2022 Embedded Engine'
+                    ? 'Android 8.0+ \u2022 ARM64 (v8a) \u2022 Embedded Engine'
                     : isMac
                     ? '2.7 MB \u2022 macOS 12+ (Sonoma/Ventura/Monterey) \u2022 M1-M4 & Intel'
                     : isExe
@@ -588,7 +588,9 @@ export default function DownloadSuccessModal({
                 type="button"
                 className="cursor-success-retry-link"
                 onClick={() => {
-                  if (isExe) triggerExeDownload();
+                  if (isApk) triggerApkDownload();
+                  else if (isMac) triggerMacZipDownload();
+                  else if (isExe) triggerExeDownload();
                   else triggerZipDownload();
                   fireCelebrationConfetti();
                 }}
