@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import DocsLayout from './DocsLayout';
-import DownloadSuccessModal, { triggerZipDownload, triggerExeDownload, triggerMacZipDownload } from '../DownloadSuccessModal';
+import DownloadSuccessModal, { triggerZipDownload, triggerExeDownload, triggerMacZipDownload, triggerApkDownload } from '../DownloadSuccessModal';
 import { useDocumentMetadata } from '../legal/useDocumentMetadata';
 import {
   Download,
@@ -14,7 +14,8 @@ import {
   Monitor,
   ExternalLink,
   ArrowRight,
-  HelpCircle
+  HelpCircle,
+  Smartphone
 } from 'lucide-react';
 
 export default function InstallGuide({ onNavigate }) {
@@ -22,8 +23,8 @@ export default function InstallGuide({ onNavigate }) {
   const [downloadType, setDownloadType] = useState('exe');
 
   useDocumentMetadata({
-    title: 'SonicWave Installation Guide : Windows & macOS Setup (64-Bit & Apple Silicon)',
-    description: 'Step-by-step installation instructions for SonicWave on Windows 11/10 and macOS (Apple Silicon & Intel). Learn how to extract packages, launch start.bat or start.sh, and resolve SmartScreen or Gatekeeper warnings.',
+    title: 'SonicWave Installation Guide : Windows, macOS & Android Setup',
+    description: 'Step-by-step installation instructions for SonicWave on Windows 11/10, macOS (Apple Silicon & Intel), and Android phones. Learn how to extract packages, launch start scripts, or sideload the standalone APK.',
     canonical: 'https://ytmp-3-five.vercel.app/install'
   });
 
@@ -31,10 +32,10 @@ export default function InstallGuide({ onNavigate }) {
     <DocsLayout activeTab="install" onNavigate={onNavigate}>
       {/* Page Header */}
       <div className="legal-header-block">
-        <div className="legal-eyebrow-tag">WINDOWS 11 &amp; 10 &bull; MACOS (APPLE SILICON &amp; INTEL) &bull; SETUP GUIDE</div>
+        <div className="legal-eyebrow-tag">WINDOWS 11 &amp; 10 &bull; MACOS &bull; ANDROID &bull; SETUP GUIDE</div>
         <h1 className="legal-page-h1">SonicWave Installation Guide</h1>
         <p className="legal-effective-date">
-          Applies to SonicWave v1.0.0+ &bull; Windows 64-Bit &amp; macOS Distributions
+          Applies to SonicWave v1.0.0+ &bull; Windows, macOS &amp; Android Distributions
         </p>
       </div>
 
@@ -67,6 +68,7 @@ export default function InstallGuide({ onNavigate }) {
             <p>
               <strong>Windows:</strong> Windows 11 (64-bit), Windows 10 (64-bit, Version 1903 or later).<br />
               <strong>macOS:</strong> macOS 12+ Monterey, Ventura, Sonoma, Sequoia (Apple Silicon M1/M2/M3/M4 &amp; Intel x64).<br />
+              <strong>Android:</strong> Android 8.0 (Oreo) or later &mdash; fully standalone, zero PC required.<br />
               <em>Note: 32-bit (x86) legacy Windows editions are not supported.</em>
             </p>
           </div>
@@ -231,6 +233,39 @@ export default function InstallGuide({ onNavigate }) {
             <li><strong>Convert &amp; Enjoy:</strong> SonicWave will open in your browser or native window at <code>http://localhost:5173</code>.</li>
           </ol>
         </div>
+
+        {/* Method 4: Android Standalone App (.apk) */}
+        <div className="legal-card-box" style={{ marginTop: 24, border: '1px solid rgba(30, 215, 96, 0.3)', background: 'rgba(30, 215, 96, 0.04)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ background: '#1ed760', color: '#000', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 12 }}>ANDROID ONLY</span>
+              <h3 style={{ margin: 0, fontSize: 16 }}>Method 4: Android Standalone App (.apk)</h3>
+            </div>
+            <a
+              href="/SonicWave.apk"
+              download="SonicWave.apk"
+              className="cursor-button-primary"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '8px 16px', borderRadius: 8, textDecoration: 'none', color: '#000', background: '#1ed760', fontWeight: 700, fontSize: 13 }}
+              onClick={(e) => {
+                e.preventDefault();
+                setDownloadType('apk');
+                triggerApkDownload();
+                setIsDownloadSuccessOpen(true);
+              }}
+            >
+              <Download size={14} /> Download SonicWave for Android (.apk) &mdash; Standalone
+            </a>
+          </div>
+          <p style={{ margin: '0 0 10px', fontSize: 13.5, color: 'var(--cursor-ink-muted)' }}>
+            100% on-device conversion engine for Android smartphones and tablets (Android 8.0+). Embeds <code>yt-dlp</code>, <code>FFmpeg</code>, and <code>aria2c</code> directly on your phone &mdash; no PC, no server, and no cloud conversion queues required.
+          </p>
+          <ol style={{ margin: '0 0 0 18px', padding: 0, fontSize: 13.5, lineHeight: 1.8 }}>
+            <li><strong>Download APK:</strong> Tap the download button above directly on your Android phone to save <code>SonicWave.apk</code>.</li>
+            <li><strong>Enable Unknown Apps:</strong> When opening the APK, if Android displays &quot;For your security, your phone is not allowed to install unknown apps from this source&quot;, tap <strong>Settings</strong> and toggle on <strong>Allow from this source</strong>.</li>
+            <li><strong>Install:</strong> Tap <strong>Install</strong> on the package installer prompt.</li>
+            <li><strong>Convert via URL or Share Sheet:</strong> Open SonicWave to paste links directly, or tap <strong>Share</strong> inside the official YouTube, Instagram, or TikTok apps and select <strong>SonicWave</strong> to trigger one-tap conversions straight into your phone&apos;s <code>Downloads/SonicWave/</code> folder.</li>
+          </ol>
+        </div>
       </section>
 
       {/* Section 3: SmartScreen & Gatekeeper Resolution */}
@@ -272,6 +307,15 @@ export default function InstallGuide({ onNavigate }) {
               xattr -d com.apple.quarantine start.sh
             </div>
           </li>
+        </ol>
+
+        <h3 style={{ fontSize: 15, marginTop: 24 }}>Android Play Protect &amp; Unknown Apps Sideloading</h3>
+        <p>
+          Because SonicWave for Android is distributed as an independent open-source APK without Google Play Store tracking:
+        </p>
+        <ol>
+          <li><strong>Install Unknown Apps Prompt:</strong> When opening <code>SonicWave.apk</code>, if Android prompts &ldquo;For your security, your phone is not allowed to install unknown apps from this source&rdquo;, tap <strong>Settings</strong> and toggle on <strong>Allow from this source</strong> for Chrome, Brave, or your Files app.</li>
+          <li><strong>Google Play Protect Notice:</strong> If Google Play Protect displays &ldquo;Unrecognized app&rdquo;, tap <strong>More details</strong> &rarr; <strong>Install anyway</strong>. SonicWave is open-source, contains zero ads, and never uploads your personal data or downloaded media.</li>
         </ol>
 
         <p>

@@ -70,6 +70,25 @@ export function triggerMacZipDownload() {
 }
 
 /**
+ * Programmatically triggers the download of the Android standalone APK package.
+ */
+export function triggerApkDownload() {
+  const link = document.createElement('a');
+  link.href = '/SonicWave.apk';
+  link.setAttribute('download', 'SonicWave.apk');
+  link.style.display = 'none';
+  document.body.appendChild(link);
+  link.click();
+  setTimeout(() => {
+    try {
+      if (document.body.contains(link)) {
+        document.body.removeChild(link);
+      }
+    } catch {}
+  }, 500);
+}
+
+/**
  * Fires a celebratory confetti particle blast across the screen.
  */
 export function fireCelebrationConfetti() {
@@ -117,6 +136,7 @@ export default function DownloadSuccessModal({
   const modalRef = useRef(null);
   const isExe = downloadType === 'exe';
   const isMac = downloadType === 'mac';
+  const isApk = downloadType === 'apk';
 
   // Trigger celebration on dialog appearance
   useEffect(() => {
@@ -174,7 +194,9 @@ export default function DownloadSuccessModal({
             </div>
             <div className="cursor-success-header-text">
               <span className="cursor-success-kicker">
-                {isMac
+                {isApk
+                  ? 'ANDROID 8.0+ \u2022 STANDALONE ON-DEVICE ENGINE \u2022 APK'
+                  : isMac
                   ? 'MACOS \u2022 APPLE SILICON & INTEL \u2022 PORTABLE'
                   : isExe
                   ? 'WINDOWS 64-BIT \u2022 NATIVE GUI INSTALLER'
@@ -184,7 +206,9 @@ export default function DownloadSuccessModal({
                 Download Started!
               </h2>
               <p className="cursor-success-subtitle">
-                {isMac
+                {isApk
+                  ? 'SonicWave for Android (.apk) is downloading. Follow these 3 simple steps to install and convert media on your phone:'
+                  : isMac
                   ? 'SonicWave for macOS is downloading. Follow these 3 simple steps to start converting media in seconds:'
                   : isExe
                   ? 'SonicWave Custom Installer is downloading. Follow these 3 simple steps to install the desktop studio:'
@@ -213,14 +237,18 @@ export default function DownloadSuccessModal({
               </div>
               <div className="cursor-success-file-info">
                 <span className="cursor-success-filename">
-                  {isMac
+                  {isApk
+                    ? 'SonicWave.apk'
+                    : isMac
                     ? 'SonicWave-v1.0.0-macOS.zip'
                     : isExe
                     ? 'SonicWave-Custom-Installer.exe'
                     : 'SonicWave-v1.0.0-Windows.zip'}
                 </span>
                 <span className="cursor-success-filemeta">
-                  {isMac
+                  {isApk
+                    ? 'Android 8.0+ \u2022 ARM64 & x86_64 \u2022 Embedded Engine'
+                    : isMac
                     ? '2.7 MB \u2022 macOS 12+ (Sonoma/Ventura/Monterey) \u2022 M1-M4 & Intel'
                     : isExe
                     ? '1.45 MB \u2022 Windows 10 & 11 \u2022 Standalone Dark GUI Installer'
@@ -234,8 +262,48 @@ export default function DownloadSuccessModal({
             </div>
           </div>
 
-          {/* Setup Steps (Custom GUI Installer vs Portable ZIP vs macOS) */}
-          {isMac ? (
+          {/* Setup Steps (Android APK vs macOS vs Windows Custom GUI Installer vs Portable ZIP) */}
+          {isApk ? (
+            <div className="cursor-success-steps-box">
+              <h3 className="cursor-success-steps-heading">
+                Quick Android Setup Guide:
+              </h3>
+              <div className="cursor-success-steps-list">
+                <div className="cursor-success-step-item">
+                  <div className="cursor-success-step-num">1</div>
+                  <div className="cursor-success-step-content">
+                    <div className="cursor-success-step-title-row">
+                      <Download size={14} className="cursor-step-icon" />
+                      <strong>Download SonicWave.apk</strong>
+                    </div>
+                    <p>Once downloaded, tap the notification or locate <code>SonicWave.apk</code> in your phone&apos;s Files/Downloads folder.</p>
+                  </div>
+                </div>
+
+                <div className="cursor-success-step-item">
+                  <div className="cursor-success-step-num">2</div>
+                  <div className="cursor-success-step-content">
+                    <div className="cursor-success-step-title-row">
+                      <ShieldCheck size={14} className="cursor-step-icon" />
+                      <strong>Allow Sideloading</strong>
+                    </div>
+                    <p>If prompted by Android, tap <em>Settings</em> and enable <strong>&quot;Allow from this source&quot;</strong> to permit installing the APK.</p>
+                  </div>
+                </div>
+
+                <div className="cursor-success-step-item">
+                  <div className="cursor-success-step-num">3</div>
+                  <div className="cursor-success-step-content">
+                    <div className="cursor-success-step-title-row">
+                      <Sparkles size={14} className="cursor-step-icon" />
+                      <strong>Tap Install &amp; Launch</strong>
+                    </div>
+                    <p>Open SonicWave! Paste any media link or tap <strong>Share</strong> directly from the YouTube or Instagram app to convert with zero PC needed.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : isMac ? (
             <div className="cursor-success-steps-box">
               <h3 className="cursor-success-steps-heading">
                 Quick Setup Guide (macOS):
@@ -359,9 +427,9 @@ export default function DownloadSuccessModal({
 
           {/* Alternative download switch row */}
           <div style={{ marginTop: '12px', fontSize: '13px', color: '#94a3b8', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)' }}>
-            {isMac ? (
+            {isApk ? (
               <span>
-                Need the Windows version instead?{' '}
+                Looking for the desktop version instead?{' '}
                 <button
                   type="button"
                   style={{ background: 'none', border: 'none', color: '#1ed760', fontWeight: 600, textDecoration: 'underline', cursor: 'pointer', padding: 0 }}
@@ -370,26 +438,73 @@ export default function DownloadSuccessModal({
                     triggerExeDownload();
                   }}
                 >
-                  Download Windows Installer (.exe)
+                  Download Windows (.exe)
+                </button>
+                {' '}&bull;{' '}
+                <button
+                  type="button"
+                  style={{ background: 'none', border: 'none', color: '#5e6ad2', fontWeight: 600, textDecoration: 'underline', cursor: 'pointer', padding: 0 }}
+                  onClick={() => {
+                    if (onSwitchType) onSwitchType('mac');
+                    triggerMacZipDownload();
+                  }}
+                >
+                  macOS (.zip)
+                </button>
+              </span>
+            ) : isMac ? (
+              <span>
+                Need the Windows or Android version instead?{' '}
+                <button
+                  type="button"
+                  style={{ background: 'none', border: 'none', color: '#1ed760', fontWeight: 600, textDecoration: 'underline', cursor: 'pointer', padding: 0 }}
+                  onClick={() => {
+                    if (onSwitchType) onSwitchType('exe');
+                    triggerExeDownload();
+                  }}
+                >
+                  Windows (.exe)
+                </button>
+                {' '}&bull;{' '}
+                <button
+                  type="button"
+                  style={{ background: 'none', border: 'none', color: '#1ed760', fontWeight: 600, textDecoration: 'underline', cursor: 'pointer', padding: 0 }}
+                  onClick={() => {
+                    if (onSwitchType) onSwitchType('apk');
+                    triggerApkDownload();
+                  }}
+                >
+                  Android (.apk)
                 </button>
               </span>
             ) : isExe ? (
               <span>
-                Want the lightweight portable zip without installation?{' '}
+                Looking for Android or portable zip?{' '}
                 <button
                   type="button"
                   style={{ background: 'none', border: 'none', color: '#1ed760', fontWeight: 600, textDecoration: 'underline', cursor: 'pointer', padding: 0 }}
+                  onClick={() => {
+                    if (onSwitchType) onSwitchType('apk');
+                    triggerApkDownload();
+                  }}
+                >
+                  Download Android APK
+                </button>
+                {' '}&bull;{' '}
+                <button
+                  type="button"
+                  style={{ background: 'none', border: 'none', color: '#94a3b8', fontWeight: 600, textDecoration: 'underline', cursor: 'pointer', padding: 0 }}
                   onClick={() => {
                     if (onSwitchType) onSwitchType('zip');
                     triggerZipDownload();
                   }}
                 >
-                  Download Portable ZIP (1.3 MB)
+                  Portable ZIP
                 </button>
               </span>
             ) : (
               <span>
-                Want the full native desktop experience?{' '}
+                Want the full native desktop or Android app?{' '}
                 <button
                   type="button"
                   style={{ background: 'none', border: 'none', color: '#1ed760', fontWeight: 600, textDecoration: 'underline', cursor: 'pointer', padding: 0 }}
@@ -398,17 +513,32 @@ export default function DownloadSuccessModal({
                     triggerExeDownload();
                   }}
                 >
-                  Download Custom Installer (.exe)
+                  Windows Installer (.exe)
+                </button>
+                {' '}&bull;{' '}
+                <button
+                  type="button"
+                  style={{ background: 'none', border: 'none', color: '#1ed760', fontWeight: 600, textDecoration: 'underline', cursor: 'pointer', padding: 0 }}
+                  onClick={() => {
+                    if (onSwitchType) onSwitchType('apk');
+                    triggerApkDownload();
+                  }}
+                >
+                  Android APK
                 </button>
               </span>
             )}
           </div>
 
-          {/* OS Security Notice (Gatekeeper on Mac / SmartScreen on Windows) */}
+          {/* OS Security Notice (Android Play Protect / Gatekeeper on Mac / SmartScreen on Windows) */}
           <div className="cursor-success-smartscreen-tip">
             <ShieldCheck size={16} className="cursor-smartscreen-shield" aria-hidden="true" />
             <div className="cursor-smartscreen-text">
-              {isMac ? (
+              {isApk ? (
+                <>
+                  <strong>Android Play Protect Notice:</strong> If Android displays <em>&quot;Unrecognized app&quot;</em> or blocks installation, tap <strong>More details</strong> &rarr; <strong>Install anyway</strong>. SonicWave executes 100% on-device with zero ads, tracking, or cloud uploads.
+                </>
+              ) : isMac ? (
                 <>
                   <strong>macOS Gatekeeper Notice:</strong> If macOS displays <em>&quot;Unidentified Developer&quot;</em>, right-click <code>start.sh</code> and select <strong>Open</strong>, or run <code>chmod +x start.sh</code> in Terminal. SonicWave is 100% open-source with zero telemetry.
                 </>

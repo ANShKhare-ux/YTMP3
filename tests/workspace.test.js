@@ -290,6 +290,37 @@ test('workspace - AI-SEO machine-readable files and programmatic conversion guid
   assert.ok(indexHtml.includes('href="/pricing.md"'), 'index.html must link to /pricing.md');
 });
 
+test('workspace - standalone Android APK package and download routing integrity', () => {
+  const apkPublicPath = path.join(rootDir, 'client', 'public', 'SonicWave.apk');
+  assert.ok(fs.existsSync(apkPublicPath), 'client/public/SonicWave.apk must exist');
+  const apkSize = fs.statSync(apkPublicPath).size;
+  assert.ok(apkSize > 10 * 1024 * 1024, 'SonicWave.apk must contain full embedded engine (> 10MB)');
+  assert.ok(apkSize < 100 * 1024 * 1024, 'SonicWave.apk must be under 100MB to allow GitHub and Vercel hosting');
+
+  // Verify DownloadSuccessModal export and integration
+  const modalSrc = fs.readFileSync(path.join(rootDir, 'client', 'src', 'components', 'DownloadSuccessModal.jsx'), 'utf8');
+  assert.ok(modalSrc.includes('export function triggerApkDownload()'), 'DownloadSuccessModal must export triggerApkDownload');
+  assert.ok(modalSrc.includes('SonicWave.apk'), 'DownloadSuccessModal must reference SonicWave.apk');
+
+  // Verify LandingPage integration
+  const landingSrc = fs.readFileSync(path.join(rootDir, 'client', 'src', 'components', 'LandingPage.jsx'), 'utf8');
+  assert.ok(landingSrc.includes('triggerApkDownload'), 'LandingPage must import triggerApkDownload');
+  assert.ok(landingSrc.includes('handleDownloadApk'), 'LandingPage must define handleDownloadApk');
+  assert.ok(landingSrc.includes('/SonicWave.apk'), 'LandingPage must link to /SonicWave.apk');
+
+  // Verify InstallGuide integration
+  const installGuideSrc = fs.readFileSync(path.join(rootDir, 'client', 'src', 'components', 'docs', 'InstallGuide.jsx'), 'utf8');
+  assert.ok(installGuideSrc.includes('Method 4: Android Standalone App (.apk)'), 'InstallGuide must explain Android installation');
+  assert.ok(installGuideSrc.includes('SonicWave.apk'), 'InstallGuide must reference SonicWave.apk');
+
+  // Verify Android Manifest configuration
+  const manifestPath = path.join(rootDir, 'android-app', 'app', 'src', 'main', 'AndroidManifest.xml');
+  assert.ok(fs.existsSync(manifestPath), 'Android Manifest must exist');
+  const manifestSrc = fs.readFileSync(manifestPath, 'utf8');
+  assert.ok(manifestSrc.includes('android.intent.action.MAIN'), 'Manifest must declare MAIN action');
+  assert.ok(manifestSrc.includes('android.intent.action.SEND'), 'Manifest must declare SEND action for Share Sheet');
+});
+
 
 
 

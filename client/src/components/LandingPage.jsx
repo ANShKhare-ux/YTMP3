@@ -32,7 +32,7 @@ import {
 } from 'lucide-react';
 import FaqAccordion from './ui/FaqAccordion';
 import HalftoneWordmarkFooter from './ui/halftone-wordmark-footer';
-import DownloadSuccessModal, { triggerZipDownload, triggerExeDownload, triggerMacZipDownload } from './DownloadSuccessModal';
+import DownloadSuccessModal, { triggerZipDownload, triggerExeDownload, triggerMacZipDownload, triggerApkDownload } from './DownloadSuccessModal';
 import { gsap } from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -100,6 +100,22 @@ function AppleIcon({ size = 16, className = '' }) {
       aria-hidden="true"
     >
       <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.62-.75 1.04-1.8 0.92-2.85-.9.04-2 .6-2.65 1.35-.58.66-1.09 1.73-.95 2.76.99.08 2.06-.51 2.68-1.26z" />
+    </svg>
+  );
+}
+
+// Android Robot SVG Icon
+function AndroidIcon({ size = 16, className = '' }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="M17.523 15.3414c-.5511 0-.9993-.4486-.9993-.9997s.4482-.9993.9993-.9993c.551 0 .9993.4482.9993.9993.0001.5511-.4483.9997-.9993.9997m-11.046 0c-.5511 0-.9993-.4486-.9993-.9997s.4482-.9993.9993-.9993c.5511 0 .9993.4482.9993.9993 0 .5511-.4482.9997-.9993.9997m11.4045-6.02l1.9973-3.4592a.416.416 0 00-.1521-.5676.416.416 0 00-.5676.1521l-2.0223 3.503C15.5902 8.4144 13.8533 8.082 12 8.082s-3.5902.3324-5.1368.8677L4.8409 5.4467a.4161.4161 0 00-.5677-.1521.4157.4157 0 00-.1521.5676l1.9973 3.4592C2.6889 11.1867.3432 14.6589 0 18.761h24c-.3432-4.1021-2.6889-7.5743-6.1185-9.4396" />
     </svg>
   );
 }
@@ -182,6 +198,10 @@ const FAQS = [
     a: 'Yes. SonicWave fully supports macOS across both Apple Silicon (M1/M2/M3/M4) and Intel x64 architectures. Download the macOS ZIP package, run start.sh in Terminal, and enjoy authentic 320 kbps MP3 and 1080p MP4 conversions with the exact same high-speed 16-stream parallel turbo engine.'
   },
   {
+    q: 'Can I use SonicWave on my Android phone?',
+    a: 'Yes! SonicWave is available as a 100% standalone Android APK (Android 8.0+). It embeds Python 3.11, yt-dlp, FFmpeg, and aria2c right inside the app, performing media extraction directly on your phone hardware with zero PC or server required. It also supports Android Share Sheet — tap "Share" directly from YouTube, Instagram, or TikTok and pick SonicWave to convert instantly.'
+  },
+  {
     q: 'Which audio and video formats are supported?',
     a: 'SonicWave supports MP3 (at 320k, 256k, 192k, and 128k CBR/VBR), AAC (M4A), uncompressed WAV, and FLAC for audio. For video, it supports MP4 in 1080p Full HD, 720p HD, and 480p SD with automatically multiplexed stereo audio.'
   },
@@ -233,6 +253,7 @@ const FOOTER_COLUMNS = [
   {
     title: 'Download',
     links: [
+      { label: 'Android Standalone (.apk)', href: '/SonicWave.apk' },
       { label: 'Custom Installer (.exe)', href: '/SonicWave-Custom-Installer.exe' },
       { label: 'Windows Portable (.zip)', href: '/SonicWave-v1.0.0-Windows.zip' },
       { label: 'macOS Package (.zip)', href: '/SonicWave-v1.0.0-macOS.zip' },
@@ -251,11 +272,13 @@ export default function LandingPage({
   const [userPlatform, setUserPlatform] = useState(() => {
     if (typeof window === 'undefined' || typeof navigator === 'undefined') return 'win';
     const ua = navigator.userAgent || navigator.platform || '';
+    if (/Android/i.test(ua)) return 'android';
     return /Mac|iPhone|iPad/i.test(ua) ? 'mac' : 'win';
   });
   const [setupTab, setSetupTab] = useState(() => {
     if (typeof window === 'undefined' || typeof navigator === 'undefined') return 'win';
     const ua = navigator.userAgent || navigator.platform || '';
+    if (/Android/i.test(ua)) return 'android';
     return /Mac|iPhone|iPad/i.test(ua) ? 'mac' : 'win';
   });
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -939,8 +962,17 @@ export default function LandingPage({
     setIsDownloadSuccessOpen(true);
   };
 
+  const handleDownloadApk = (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    setDownloadType('apk');
+    triggerApkDownload();
+    setIsDownloadSuccessOpen(true);
+  };
+
   const handleDownloadClick = (e) => {
-    if (userPlatform === 'mac') {
+    if (userPlatform === 'android') {
+      handleDownloadApk(e);
+    } else if (userPlatform === 'mac') {
       handleDownloadMac(e);
     } else {
       handleDownloadExe(e);
@@ -1062,7 +1094,18 @@ export default function LandingPage({
               {theme === 'dark' ? <Sun size={14} aria-hidden="true" /> : <Moon size={14} aria-hidden="true" />}
             </button>
 
-            {userPlatform === 'mac' ? (
+            {userPlatform === 'android' ? (
+              <button
+                type="button"
+                className={`cursor-button-primary cursor-nav-download-btn ${ctaElevated ? 'is-elevated' : ''}`}
+                onClick={handleDownloadApk}
+                id="nav-download-btn"
+                aria-label="Download SonicWave for Android (.apk)"
+              >
+                <AndroidIcon size={14} />
+                <span className="cursor-nav-download-text">Download for Android</span>
+              </button>
+            ) : userPlatform === 'mac' ? (
               <button
                 type="button"
                 className={`cursor-button-primary cursor-nav-download-btn ${ctaElevated ? 'is-elevated' : ''}`}
@@ -1183,7 +1226,34 @@ export default function LandingPage({
               </a>
             </nav>
             <div className="cursor-mobile-menu-actions">
-              {userPlatform === 'mac' ? (
+              {userPlatform === 'android' ? (
+                <>
+                  <button
+                    type="button"
+                    className="cursor-button-primary cursor-mobile-download-btn"
+                    onClick={(e) => { setIsMobileMenuOpen(false); handleDownloadApk(e); }}
+                  >
+                    <AndroidIcon size={16} />
+                    <span>Download for Android (.apk)</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="cursor-button-secondary cursor-mobile-download-btn"
+                    onClick={(e) => { setIsMobileMenuOpen(false); handleDownloadExe(e); }}
+                  >
+                    <WindowsIcon size={16} />
+                    <span>Windows Installer (.exe)</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="cursor-button-secondary cursor-mobile-download-btn"
+                    onClick={(e) => { setIsMobileMenuOpen(false); handleDownloadMac(e); }}
+                  >
+                    <AppleIcon size={16} />
+                    <span>macOS Package (.zip)</span>
+                  </button>
+                </>
+              ) : userPlatform === 'mac' ? (
                 <>
                   <button
                     type="button"
@@ -1201,6 +1271,14 @@ export default function LandingPage({
                     <WindowsIcon size={16} />
                     <span>Windows Installer (.exe)</span>
                   </button>
+                  <button
+                    type="button"
+                    className="cursor-button-secondary cursor-mobile-download-btn"
+                    onClick={(e) => { setIsMobileMenuOpen(false); handleDownloadApk(e); }}
+                  >
+                    <AndroidIcon size={16} />
+                    <span>Android APK (.apk)</span>
+                  </button>
                 </>
               ) : (
                 <>
@@ -1211,6 +1289,14 @@ export default function LandingPage({
                   >
                     <WindowsIcon size={16} />
                     <span>Download for Windows (.exe)</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="cursor-button-secondary cursor-mobile-download-btn"
+                    onClick={(e) => { setIsMobileMenuOpen(false); handleDownloadApk(e); }}
+                  >
+                    <AndroidIcon size={16} />
+                    <span>Android Standalone (.apk)</span>
                   </button>
                   <button
                     type="button"
@@ -1250,22 +1336,58 @@ export default function LandingPage({
           {/* Eyebrow badge (13px, weight 500, letter-spacing +0.4px) */}
           <div className="cursor-eyebrow-pill">
             <span className="cursor-status-dot" aria-hidden="true" />
-            <span className="cursor-eyebrow-text">WINDOWS 11 &amp; 10 &bull; MACOS (APPLE SILICON &amp; INTEL) &bull; AD-FREE &bull; OPEN SOURCE</span>
+            <span className="cursor-eyebrow-text">ANDROID 8.0+ &bull; WINDOWS 11 &amp; 10 &bull; MACOS &bull; AD-FREE &bull; OPEN SOURCE</span>
           </div>
 
           <h1 className="cursor-display-xl">
             <span className="cursor-hero-split">High-speed media downloader</span> &amp;<br />
-            <span className="cursor-gradient-accent">offline audio player for {userPlatform === 'mac' ? 'macOS & Windows' : 'Windows & Mac'}</span>
+            <span className="cursor-gradient-accent">offline audio player for {userPlatform === 'android' ? 'Android, Windows & Mac' : userPlatform === 'mac' ? 'macOS, Windows & Android' : 'Windows, Android & Mac'}</span>
           </h1>
 
           <p className="cursor-body-lg">
             Extract audio and video from YouTube, Instagram, TikTok, Twitter/X, SoundCloud,
-            and 1,000+ sources directly to your {userPlatform === 'mac' ? 'Mac or PC' : 'PC or Mac'}. Accelerated by a 16-stream parallel turbo
+            and 1,000+ sources directly on your {userPlatform === 'android' ? 'Android phone or PC' : userPlatform === 'mac' ? 'Mac, PC, or Android' : 'PC, Android phone, or Mac'}. Accelerated by a 16-stream parallel turbo
             engine with embedded FFmpeg.
           </p>
 
           <div className="cursor-hero-cta-row">
-            {userPlatform === 'mac' ? (
+            {userPlatform === 'android' ? (
+              <>
+                <button
+                  type="button"
+                  className="cursor-button-primary cursor-btn-lg"
+                  onClick={handleDownloadApk}
+                  id="hero-download-btn"
+                  aria-label="Download SonicWave for Android (.apk)"
+                >
+                  <AndroidIcon size={16} />
+                  <span>Download for Android (.apk)</span>
+                  <Download size={15} className="cursor-cta-icon" aria-hidden="true" />
+                </button>
+
+                <button
+                  type="button"
+                  className="cursor-button-secondary cursor-btn-lg"
+                  onClick={handleDownloadExe}
+                  id="hero-download-win-btn"
+                  aria-label="Download SonicWave Custom Installer for Windows"
+                >
+                  <WindowsIcon size={15} aria-hidden="true" />
+                  <span>Windows Installer (.exe)</span>
+                </button>
+
+                <button
+                  type="button"
+                  className="cursor-button-secondary cursor-btn-lg"
+                  onClick={handleDownloadMac}
+                  id="hero-download-mac-btn"
+                  aria-label="Download SonicWave for macOS"
+                >
+                  <AppleIcon size={15} aria-hidden="true" />
+                  <span>macOS (.zip)</span>
+                </button>
+              </>
+            ) : userPlatform === 'mac' ? (
               <>
                 <button
                   type="button"
@@ -1289,6 +1411,17 @@ export default function LandingPage({
                   <WindowsIcon size={15} aria-hidden="true" />
                   <span>Windows Installer (.exe)</span>
                 </button>
+
+                <button
+                  type="button"
+                  className="cursor-button-secondary cursor-btn-lg"
+                  onClick={handleDownloadApk}
+                  id="hero-download-apk-btn"
+                  aria-label="Download SonicWave for Android (.apk)"
+                >
+                  <AndroidIcon size={15} aria-hidden="true" />
+                  <span>Android (.apk)</span>
+                </button>
               </>
             ) : (
               <>
@@ -1302,6 +1435,17 @@ export default function LandingPage({
                   <WindowsIcon size={16} />
                   <span>Download Custom Installer (.exe)</span>
                   <Download size={15} className="cursor-cta-icon" aria-hidden="true" />
+                </button>
+
+                <button
+                  type="button"
+                  className="cursor-button-secondary cursor-btn-lg"
+                  onClick={handleDownloadApk}
+                  id="hero-download-apk-btn"
+                  aria-label="Download SonicWave for Android (.apk)"
+                >
+                  <AndroidIcon size={15} aria-hidden="true" />
+                  <span>Android (.apk)</span>
                 </button>
 
                 <button
@@ -1599,7 +1743,7 @@ export default function LandingPage({
             </p>
 
             {/* Platform switcher tabs */}
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '4px', background: 'var(--cursor-surface-1)', border: '1px solid var(--cursor-hairline)', borderRadius: '10px', marginTop: '16px' }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '4px', background: 'var(--cursor-surface-1)', border: '1px solid var(--cursor-hairline)', borderRadius: '10px', marginTop: '16px', flexWrap: 'wrap' }}>
               <button
                 type="button"
                 onClick={() => setSetupTab('win')}
@@ -1642,6 +1786,27 @@ export default function LandingPage({
                 <AppleIcon size={13} />
                 <span>macOS (start.sh)</span>
               </button>
+              <button
+                type="button"
+                onClick={() => setSetupTab('android')}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '6px 14px',
+                  borderRadius: '7px',
+                  border: 'none',
+                  fontSize: '12.5px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  background: setupTab === 'android' ? '#1ed760' : 'transparent',
+                  color: setupTab === 'android' ? '#000' : 'var(--cursor-ink-muted)'
+                }}
+              >
+                <AndroidIcon size={13} />
+                <span>Android (.apk)</span>
+              </button>
             </div>
           </div>
 
@@ -1670,18 +1835,20 @@ export default function LandingPage({
                     <Download size={15} className="step-icon-download" aria-hidden="true" />
                   </div>
                 </div>
-                <h3 className="cursor-card-title">Download &amp; extract</h3>
+                <h3 className="cursor-card-title">{setupTab === 'android' ? 'Download APK' : 'Download & extract'}</h3>
                 <p className="cursor-card-body">
-                  {setupTab === 'mac'
+                  {setupTab === 'android'
+                    ? 'Download the standalone SonicWave.apk directly to your Android device and tap Install (enable "Allow unknown apps" if prompted).'
+                    : setupTab === 'mac'
                     ? 'Download the lightweight SonicWave macOS ZIP package and extract it to any directory or your Applications folder.'
                     : 'Download the lightweight SonicWave Windows ZIP package or Custom Installer and extract it to any directory.'}
                 </p>
-                <div className="cursor-mono-snippet" title={setupTab === 'mac' ? 'macOS portable zip archive' : 'Windows portable zip archive'}>
+                <div className="cursor-mono-snippet" title={setupTab === 'android' ? 'Android APK installer' : setupTab === 'mac' ? 'macOS portable zip archive' : 'Windows portable zip archive'}>
                   <div className="cursor-snippet-left">
                     <FolderArchive size={13} className="cursor-snippet-icon" aria-hidden="true" />
-                    <code>{setupTab === 'mac' ? 'SonicWave-v1.0.0-macOS.zip' : 'SonicWave-v1.0.0-Windows.zip'}</code>
+                    <code>{setupTab === 'android' ? 'SonicWave.apk : On-Device' : setupTab === 'mac' ? 'SonicWave-v1.0.0-macOS.zip' : 'SonicWave-v1.0.0-Windows.zip'}</code>
                   </div>
-                  <span className="cursor-snippet-tag">{setupTab === 'mac' ? '2.7 MB' : '1.3 MB'}</span>
+                  <span className="cursor-snippet-tag">{setupTab === 'android' ? 'Standalone' : setupTab === 'mac' ? '2.7 MB' : '1.3 MB'}</span>
                 </div>
               </div>
 
@@ -1693,18 +1860,20 @@ export default function LandingPage({
                     <Terminal size={15} className="step-icon-terminal" aria-hidden="true" />
                   </div>
                 </div>
-                <h3 className="cursor-card-title">{setupTab === 'mac' ? 'Run start.sh' : 'Launch start.bat'}</h3>
+                <h3 className="cursor-card-title">{setupTab === 'android' ? 'Share or Paste URL' : setupTab === 'mac' ? 'Run start.sh' : 'Launch start.bat'}</h3>
                 <p className="cursor-card-body">
-                  {setupTab === 'mac' ? (
+                  {setupTab === 'android' ? (
+                    <>Tap <strong>Share</strong> inside YouTube, Instagram, or TikTok and pick <strong>SonicWave</strong>, or paste any video link directly into the app.</>
+                  ) : setupTab === 'mac' ? (
                     <>Open Terminal in the extracted folder and run <strong>./start.sh</strong>. The launcher boots the server, provisions yt-dlp &amp; FFmpeg, and launches the app.</>
                   ) : (
                     <>Double-click <strong>start.bat</strong>. The launcher boots the local server, provisions yt-dlp &amp; FFmpeg executables, and launches the desktop interface.</>
                   )}
                 </p>
-                <div className="cursor-mono-snippet" title="Self-bootstrapping script">
+                <div className="cursor-mono-snippet" title={setupTab === 'android' ? 'System Share Sheet' : 'Self-bootstrapping script'}>
                   <div className="cursor-snippet-left">
                     <Terminal size={13} className="cursor-snippet-icon" aria-hidden="true" />
-                    <code>{setupTab === 'mac' ? './start.sh : auto-bootstraps' : '.\\start.bat : auto-bootstraps'}</code>
+                    <code>{setupTab === 'android' ? 'ACTION_SEND : Share Sheet' : setupTab === 'mac' ? './start.sh : auto-bootstraps' : '.\\start.bat : auto-bootstraps'}</code>
                     <span className="cursor-cursor-blink">_</span>
                   </div>
                   <span className="cursor-snippet-tag status-live">READY</span>
@@ -1719,9 +1888,11 @@ export default function LandingPage({
                     <Music2 size={15} className="step-icon-music" aria-hidden="true" />
                   </div>
                 </div>
-                <h3 className="cursor-card-title">Convert and stream</h3>
+                <h3 className="cursor-card-title">{setupTab === 'android' ? 'Convert On-Device' : 'Convert and stream'}</h3>
                 <p className="cursor-card-body">
-                  Paste any social media URL. Convert to 320 kbps MP3 or 1080p MP4 with 16-stream parallel acceleration, stream in-browser, and save directly to disk.
+                  {setupTab === 'android'
+                    ? 'Embedded yt-dlp & FFmpeg extract 320 kbps MP3 or 1080p MP4 directly on your phone hardware into Downloads/SonicWave/.'
+                    : 'Paste any social media URL. Convert to 320 kbps MP3 or 1080p MP4 with 16-stream parallel acceleration, stream in-browser, and save directly to disk.'}
                 </p>
                 <div className="cursor-mono-snippet" title="Supported audio and video codecs">
                   <div className="cursor-snippet-formats">
@@ -1984,8 +2155,8 @@ export default function LandingPage({
           <div className="cursor-specs-grid">
             <div className="cursor-spec-card">
               <span className="cursor-spec-label">OPERATING SYSTEM</span>
-              <span className="cursor-spec-value">Windows &amp; macOS</span>
-              <span className="cursor-spec-detail">Win 11/10 (64-bit) &bull; macOS 12+ (Apple Silicon &amp; Intel)</span>
+              <span className="cursor-spec-value">Windows, Android &amp; macOS</span>
+              <span className="cursor-spec-detail">Android 8.0+ &bull; Win 11/10 (64-bit) &bull; macOS 12+ (Apple Silicon &amp; Intel)</span>
             </div>
 
             <div className="cursor-spec-card">
@@ -2039,13 +2210,47 @@ export default function LandingPage({
           <div className="cursor-cta-panel">
             <span className="cursor-eyebrow">GET STARTED TODAY</span>
             <h2 className="cursor-display-md">
-              Experience studio-grade conversion on {userPlatform === 'mac' ? 'macOS & Windows' : 'Windows & macOS'}.
+              Experience studio-grade conversion on {userPlatform === 'android' ? 'Android, Windows & macOS' : userPlatform === 'mac' ? 'macOS, Windows & Android' : 'Windows, Android & macOS'}.
             </h2>
             <p className="cursor-subhead">
               Download SonicWave to extract audio and video at 16x parallel turbo speed with zero ads or limits.
             </p>
             <div className="cursor-cta-actions">
-              {userPlatform === 'mac' ? (
+              {userPlatform === 'android' ? (
+                <>
+                  <button
+                    type="button"
+                    className="cursor-button-primary cursor-btn-lg"
+                    onClick={handleDownloadApk}
+                    id="bottom-download-btn"
+                    aria-label="Download SonicWave for Android (.apk)"
+                  >
+                    <AndroidIcon size={16} />
+                    <span>Download for Android (.apk)</span>
+                    <Download size={15} className="cursor-cta-icon" aria-hidden="true" />
+                  </button>
+
+                  <button
+                    type="button"
+                    className="cursor-button-secondary cursor-btn-lg"
+                    onClick={handleDownloadExe}
+                    aria-label="Download SonicWave Custom Installer for Windows"
+                  >
+                    <WindowsIcon size={15} aria-hidden="true" />
+                    <span>Windows Installer (.exe)</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className="cursor-button-secondary cursor-btn-lg"
+                    onClick={handleDownloadMac}
+                    aria-label="Download SonicWave for macOS"
+                  >
+                    <AppleIcon size={15} aria-hidden="true" />
+                    <span>macOS Package (.zip)</span>
+                  </button>
+                </>
+              ) : userPlatform === 'mac' ? (
                 <>
                   <button
                     type="button"
@@ -2068,6 +2273,16 @@ export default function LandingPage({
                     <WindowsIcon size={15} aria-hidden="true" />
                     <span>Windows Installer (.exe)</span>
                   </button>
+
+                  <button
+                    type="button"
+                    className="cursor-button-secondary cursor-btn-lg"
+                    onClick={handleDownloadApk}
+                    aria-label="Download SonicWave for Android (.apk)"
+                  >
+                    <AndroidIcon size={15} aria-hidden="true" />
+                    <span>Android (.apk)</span>
+                  </button>
                 </>
               ) : (
                 <>
@@ -2086,6 +2301,16 @@ export default function LandingPage({
                   <button
                     type="button"
                     className="cursor-button-secondary cursor-btn-lg"
+                    onClick={handleDownloadApk}
+                    aria-label="Download SonicWave for Android (.apk)"
+                  >
+                    <AndroidIcon size={15} aria-hidden="true" />
+                    <span>Android (.apk)</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className="cursor-button-secondary cursor-btn-lg"
                     onClick={handleDownloadMac}
                     aria-label="Download SonicWave for macOS"
                   >
@@ -2096,7 +2321,7 @@ export default function LandingPage({
               )}
             </div>
             <span className="cursor-micro-note">
-              Windows 11 &amp; 10 &bull; macOS Sonoma, Ventura &amp; Monterey (Apple Silicon &amp; Intel) &bull; 100% Free &amp; Open Source
+              Android 8.0+ &bull; Windows 11 &amp; 10 &bull; macOS Sonoma, Ventura &amp; Monterey (Apple Silicon &amp; Intel) &bull; 100% Free &amp; Open Source
             </span>
           </div>
         </div>
@@ -2109,7 +2334,7 @@ export default function LandingPage({
       <HalftoneWordmarkFooter
         wordmark="sonicwave"
         label="SonicWave Media"
-        meta="©2026 · Windows & macOS · 16x Turbo"
+        meta="©2026 · Windows, Android & macOS · 16x Turbo"
         columns={FOOTER_COLUMNS}
         backToTop={true}
         height="560px"
@@ -2125,6 +2350,8 @@ export default function LandingPage({
             handleDownloadZip();
           } else if (href === '/SonicWave-v1.0.0-macOS.zip') {
             handleDownloadMac();
+          } else if (href === '/SonicWave.apk') {
+            handleDownloadApk();
           } else if (onNavigate) {
             if (href === '/install') onNavigate('install', '/install');
             else if (href === '/supported-platforms') onNavigate('platforms-guide', '/supported-platforms');

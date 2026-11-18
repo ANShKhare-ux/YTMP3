@@ -8,6 +8,7 @@
   2. Standalone Windows package (1.3 MB portable zip distribution that provisions yt-dlp and FFmpeg on first launch via `binManager.js`).
   3. True Native Windows Application (Electron + Express background engine, Spotify-themed standalone window, zero browser address bar, and official NSIS installer `SonicWave-Setup-1.0.0.exe`).
   4. Custom Frameless GUI Installer (`dist-installer/SonicWave-Custom-Installer.exe`): A dedicated 740×500 frameless dark GUI installer (like TLauncher / Discord / Epic Games) with real-time soundwave visualizer, custom directory picker, desktop/start-menu shortcut creation, and registry uninstall registration.
+  5. Standalone On-Device Android Application (`client/public/SonicWave.apk`): 100% on-device embedded Python/FFmpeg engine for Android smartphones (Android 8.0+) with system Share Sheet integration and direct downloads to phone storage.
 
 ---
 
@@ -79,6 +80,15 @@
   - `electron/main.js`: Added macOS window styling with native traffic lights (`hiddenInset`, `trafficLightPosition: { x: 16, y: 16 }`) and native application menu supporting standard keyboard shortcuts (`Cmd+C`, `Cmd+V`, `Cmd+A`, `Cmd+Q`, `Cmd+Z`, etc.).
   - `scripts/package-desktop.mjs`: Added generation of `SonicWave-v1.0.0-macOS.zip` (bundling `start.sh`, `server/`, `client/dist/`, `package.json`, and clean desktop entry).
   - Website & UI: Client OS auto-detection (`userPlatform`), dynamic download buttons (`Download for macOS (.zip)` vs `Download for Windows (.exe)`), interactive 3-step setup OS tabs (Windows vs macOS), and installation docs covering macOS Gatekeeper bypass instructions.
+- **Standalone On-Device Android Application (Embedded Engine APK)**:
+  - `android-app/`: Native standalone Android application (`com.sonicwave.app`) built with Jetpack Compose, Material 3, and Kotlin 2.3.
+  - Embedded On-Device Engine: Bundles `youtubedl-android` (v0.18.1), embedded Python 3.11 runtime, FFmpeg, and aria2c native binaries (`arm64-v8a`) to execute 16-stream media extraction directly on phone hardware with zero PC or cloud server required.
+  - Output Storage: Automatically writes converted media to `/storage/emulated/0/Download/SonicWave/` with ID3 metadata tags and album art embedding.
+  - System Share Sheet Integration (`ACTION_SEND`): Listens for video URLs shared directly from YouTube, Instagram, and TikTok apps, auto-filling the input field and triggering conversion without copy-pasting.
+  - Responsive Dark Spotify UI: Features URL input, clipboard paste, format selector (`MP3 320k/256k`, `M4A`, `FLAC`, `WAV`, `MP4 1080p/720p`), animated linear progress, speed/ETA metrics, and completed folder notifier.
+  - Distribution Packaging: Optimized `arm64-v8a` release binary (`76.58 MB`, comfortably under the 100 MB GitHub & Vercel limits) placed at `client/public/SonicWave.apk` and `client/dist/SonicWave.apk`.
+  - Website Integration: Dynamic Android detection (`/Android/i.test(navigator.userAgent)`), "Download for Android (.apk)" primary CTA with custom `AndroidIcon` SVG, quick setup tabs for Android, footer link, and Method 4 guide in `InstallGuide.jsx`.
+  - Automated Verification: Added test 72 to `tests/workspace.test.js` validating APK file existence, size constraints (>10MB and <100MB), modal exports, landing page links, and AndroidManifest intent filters. All 72 tests pass.
 - **Organic Visibility Growth Plan & Technical Documentation Architecture**:
   - Three dedicated, indexable technical documentation hubs: Installation Guide (`/install`), Supported Platforms & Codecs (`/supported-platforms`), and Troubleshooting & FAQ Hub (`/troubleshooting`).
   - Pre-rendered semantic footer navigation inside `<div id="root">` in `client/index.html` allowing crawlers to discover all 7 subpages on the very first byte without waiting for JavaScript execution.
