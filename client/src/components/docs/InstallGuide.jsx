@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import DocsLayout from './DocsLayout';
-import DownloadSuccessModal, { triggerZipDownload, triggerExeDownload } from '../DownloadSuccessModal';
+import DownloadSuccessModal, { triggerZipDownload, triggerExeDownload, triggerMacZipDownload } from '../DownloadSuccessModal';
 import { useDocumentMetadata } from '../legal/useDocumentMetadata';
 import {
   Download,
@@ -22,8 +22,8 @@ export default function InstallGuide({ onNavigate }) {
   const [downloadType, setDownloadType] = useState('exe');
 
   useDocumentMetadata({
-    title: 'SonicWave Installation Guide : Windows 11 & 10 (64-Bit Setup)',
-    description: 'Step-by-step installation instructions for SonicWave on Windows 11 and 10. Learn how to extract the portable zip, launch start.bat, and resolve SmartScreen warnings.',
+    title: 'SonicWave Installation Guide : Windows & macOS Setup (64-Bit & Apple Silicon)',
+    description: 'Step-by-step installation instructions for SonicWave on Windows 11/10 and macOS (Apple Silicon & Intel). Learn how to extract packages, launch start.bat or start.sh, and resolve SmartScreen or Gatekeeper warnings.',
     canonical: 'https://ytmp-3-five.vercel.app/install'
   });
 
@@ -31,10 +31,10 @@ export default function InstallGuide({ onNavigate }) {
     <DocsLayout activeTab="install" onNavigate={onNavigate}>
       {/* Page Header */}
       <div className="legal-header-block">
-        <div className="legal-eyebrow-tag">WINDOWS 11 &amp; 10 (64-BIT) &bull; SETUP GUIDE</div>
+        <div className="legal-eyebrow-tag">WINDOWS 11 &amp; 10 &bull; MACOS (APPLE SILICON &amp; INTEL) &bull; SETUP GUIDE</div>
         <h1 className="legal-page-h1">SonicWave Installation Guide</h1>
         <p className="legal-effective-date">
-          Applies to SonicWave v1.0.0+ &bull; Portable Windows 64-Bit Distribution
+          Applies to SonicWave v1.0.0+ &bull; Windows 64-Bit &amp; macOS Distributions
         </p>
       </div>
 
@@ -65,8 +65,9 @@ export default function InstallGuide({ onNavigate }) {
               <h3>Operating System</h3>
             </div>
             <p>
-              <strong>Supported:</strong> Windows 11 (64-bit), Windows 10 (64-bit, Version 1903 or later).<br />
-              <em>Note: 32-bit (x86) Windows editions and ARM64 without x64 emulation are not supported by the bundled binaries.</em>
+              <strong>Windows:</strong> Windows 11 (64-bit), Windows 10 (64-bit, Version 1903 or later).<br />
+              <strong>macOS:</strong> macOS 12+ Monterey, Ventura, Sonoma, Sequoia (Apple Silicon M1/M2/M3/M4 &amp; Intel x64).<br />
+              <em>Note: 32-bit (x86) legacy Windows editions are not supported.</em>
             </p>
           </div>
 
@@ -192,11 +193,54 @@ export default function InstallGuide({ onNavigate }) {
             Your default web browser will automatically open to <code>http://localhost:5173</code>. Paste any supported media link, pick your format (such as 320 kbps MP3 or 1080p MP4), and convert immediately.
           </li>
         </ol>
+
+        {/* Method 3: macOS Standalone Package */}
+        <div className="legal-card-box" style={{ marginTop: 24, border: '1px solid rgba(94, 106, 210, 0.3)', background: 'rgba(94, 106, 210, 0.04)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ background: '#5e6ad2', color: '#fff', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 12 }}>MACOS</span>
+              <h3 style={{ margin: 0, fontSize: 16 }}>Method 3: macOS Standalone Package (.zip with start.sh)</h3>
+            </div>
+            <a
+              href="/SonicWave-v1.0.0-macOS.zip"
+              download="SonicWave-v1.0.0-macOS.zip"
+              className="cursor-button-secondary"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '8px 16px', borderRadius: 8, textDecoration: 'none', fontWeight: 600, fontSize: 13 }}
+              onClick={(e) => {
+                e.preventDefault();
+                setDownloadType('mac');
+                triggerMacZipDownload();
+                setIsDownloadSuccessOpen(true);
+              }}
+            >
+              <Download size={14} /> Download SonicWave for macOS (.zip) &mdash; 2.7 MB
+            </a>
+          </div>
+          <p style={{ margin: '0 0 10px', fontSize: 13.5, color: 'var(--cursor-ink-muted)' }}>
+            Fully compatible with Apple Silicon (M1/M2/M3/M4) and Intel Macs running macOS Monterey, Ventura, Sonoma, or Sequoia.
+          </p>
+          <ol style={{ margin: '0 0 0 18px', padding: 0, fontSize: 13.5, lineHeight: 1.8 }}>
+            <li><strong>Download &amp; Unzip:</strong> Download <code>SonicWave-v1.0.0-macOS.zip</code> and double-click to unzip it into your Applications or user folder.</li>
+            <li><strong>Open Terminal:</strong> Right-click the extracted <code>SonicWave</code> folder and select <strong>New Terminal at Folder</strong> (or navigate with <code>cd ~/Downloads/SonicWave</code>).</li>
+            <li><strong>Launch start.sh:</strong> Make the script executable and launch by running:
+              <div style={{ margin: '6px 0', padding: '8px 12px', background: 'rgba(0,0,0,0.4)', borderRadius: 6, fontFamily: 'monospace', fontSize: 13, color: '#1ed760' }}>
+                chmod +x start.sh &amp;&amp; ./start.sh
+              </div>
+              The launcher verifies Node.js, auto-provisions yt-dlp &amp; FFmpeg for macOS, and launches the interface.
+            </li>
+            <li><strong>Convert &amp; Enjoy:</strong> SonicWave will open in your browser or native window at <code>http://localhost:5173</code>.</li>
+          </ol>
+        </div>
       </section>
 
-      {/* Section 3: SmartScreen Resolution */}
+      {/* Section 3: SmartScreen & Gatekeeper Resolution */}
       <section className="legal-section">
-        <h2>3. Resolving Windows SmartScreen (&ldquo;Windows protected your PC&rdquo;)</h2>
+        <h2>3. Resolving Windows SmartScreen &amp; macOS Gatekeeper</h2>
+        <p>
+          When launching SonicWave for the first time, your operating system may display a security verification prompt:
+        </p>
+
+        <h3 style={{ fontSize: 15, marginTop: 16 }}>Windows Defender SmartScreen (&ldquo;Windows protected your PC&rdquo;)</h3>
         <p>
           When double-clicking <code>start.bat</code> or running binaries for the first time on Windows 10 or 11, you may encounter a blue Microsoft Defender SmartScreen popup stating:
         </p>
@@ -211,13 +255,27 @@ export default function InstallGuide({ onNavigate }) {
           </p>
         </div>
 
-        <h3>How to Proceed Safely in 2 Clicks:</h3>
+        <h4>How to Proceed Safely on Windows in 2 Clicks:</h4>
         <ol>
           <li>On the blue &ldquo;Windows protected your PC&rdquo; dialog, click the small underline link labeled <strong>&ldquo;More info&rdquo;</strong>.</li>
           <li>A new button labeled <strong>&ldquo;Run anyway&rdquo;</strong> will appear in the bottom-right corner. Click it to launch the application.</li>
         </ol>
+
+        <h3 style={{ fontSize: 15, marginTop: 24 }}>macOS Gatekeeper (&ldquo;Unidentified Developer&rdquo; or &ldquo;App cannot be opened&rdquo;)</h3>
         <p>
-          Windows remembers this approval, so you will not be prompted again on future launches. You can also independently inspect the full source code on our public <a href="https://github.com/ANShKhare-ux/YTMP3" target="_blank" rel="noopener noreferrer">GitHub repository</a>.
+          On macOS, Apple Gatekeeper may notify you that the script or binary was downloaded from the internet:
+        </p>
+        <ol>
+          <li><strong>Quick Finder Bypass:</strong> In Finder, right-click (or Control-click) <code>start.sh</code> and choose <strong>Open</strong>. When macOS prompts with &ldquo;Are you sure you want to open it?&rdquo;, click <strong>Open</strong>.</li>
+          <li><strong>Terminal Command:</strong> Alternatively, run this single terminal command to remove the quarantine flag:
+            <div style={{ margin: '6px 0', padding: '6px 10px', background: 'rgba(0,0,0,0.4)', borderRadius: 6, fontFamily: 'monospace', fontSize: 12.5, color: '#38bdf8' }}>
+              xattr -d com.apple.quarantine start.sh
+            </div>
+          </li>
+        </ol>
+
+        <p>
+          Your operating system remembers this approval, so you will not be prompted again on future launches. You can also independently inspect the full source code on our public <a href="https://github.com/ANShKhare-ux/YTMP3" target="_blank" rel="noopener noreferrer">GitHub repository</a>.
         </p>
       </section>
 

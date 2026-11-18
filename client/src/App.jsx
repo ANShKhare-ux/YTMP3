@@ -10,8 +10,6 @@ import TroubleshootingGuide from './components/docs/TroubleshootingGuide';
 import ConverterGuide from './components/convert/ConverterGuide';
 import NotFound from './components/NotFound';
 
-const AppDesktop = React.lazy(() => import('./AppDesktop'));
-
 function resolveRoute(pathname, hash) {
   if (pathname === '/install' || hash === '#install' || hash === '#/install') return 'install';
   if (pathname === '/supported-platforms' || hash === '#supported-platforms' || hash === '#/supported-platforms') return 'platforms-guide';
@@ -107,15 +105,6 @@ export default function App() {
   // Custom 404 Error Page
   if (currentView === 'not-found') {
     return <NotFound onNavigate={navigateTo} />;
-  }
-
-  // Desktop App / Studio View
-  if (currentView === 'app') {
-    return (
-      <React.Suspense fallback={<div style={{ background: '#121212', height: '100vh' }} />}>
-        <AppDesktop onNavigate={navigateTo} />
-      </React.Suspense>
-    );
   }
 
   // Marketing Landing Page (Default)

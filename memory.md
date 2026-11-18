@@ -72,6 +72,13 @@
   - Dynamically injects `meta[name="robots"] content="noindex, follow"` via `useDocumentMetadata` to maintain technical SEO hygiene.
   - SPA router in `client/src/App.jsx` cleanly catches all unknown routes (and explicit `/404`), rendering `NotFound` without page crashes or blank views.
   - `client/public/404.html`: Lightweight static fallback page for static hosting edge cases and non-JS clients.
+- **Cross-Platform macOS Support**:
+  - `start.sh`: Production-grade POSIX bash launcher for macOS and Linux with Node/npm environment verification, Homebrew installation hints, automatic dependency installation, standalone vs dev routing, and process cleanup traps (`trap ... SIGINT SIGTERM EXIT`).
+  - `electron-builder.json`: Added macOS target configuration producing `.dmg` and `.zip` for both Apple Silicon (`arm64`) and Intel (`x64`), `darkModeSupport: true`, `public.app-category.music`, and custom DMG window coordinates.
+  - `package.json`: Added `package:mac` script (`node scripts/build-desktop-client.mjs && electron-builder --mac`).
+  - `electron/main.js`: Added macOS window styling with native traffic lights (`hiddenInset`, `trafficLightPosition: { x: 16, y: 16 }`) and native application menu supporting standard keyboard shortcuts (`Cmd+C`, `Cmd+V`, `Cmd+A`, `Cmd+Q`, `Cmd+Z`, etc.).
+  - `scripts/package-desktop.mjs`: Added generation of `SonicWave-v1.0.0-macOS.zip` (bundling `start.sh`, `server/`, `client/dist/`, `package.json`, and clean desktop entry).
+  - Website & UI: Client OS auto-detection (`userPlatform`), dynamic download buttons (`Download for macOS (.zip)` vs `Download for Windows (.exe)`), interactive 3-step setup OS tabs (Windows vs macOS), and installation docs covering macOS Gatekeeper bypass instructions.
 - **Organic Visibility Growth Plan & Technical Documentation Architecture**:
   - Three dedicated, indexable technical documentation hubs: Installation Guide (`/install`), Supported Platforms & Codecs (`/supported-platforms`), and Troubleshooting & FAQ Hub (`/troubleshooting`).
   - Pre-rendered semantic footer navigation inside `<div id="root">` in `client/index.html` allowing crawlers to discover all 7 subpages on the very first byte without waiting for JavaScript execution.

@@ -51,6 +51,25 @@ export function triggerZipDownload() {
 }
 
 /**
+ * Programmatically triggers the download of the macOS zip distribution.
+ */
+export function triggerMacZipDownload() {
+  const link = document.createElement('a');
+  link.href = '/SonicWave-v1.0.0-macOS.zip';
+  link.setAttribute('download', 'SonicWave-v1.0.0-macOS.zip');
+  link.style.display = 'none';
+  document.body.appendChild(link);
+  link.click();
+  setTimeout(() => {
+    try {
+      if (document.body.contains(link)) {
+        document.body.removeChild(link);
+      }
+    } catch {}
+  }, 500);
+}
+
+/**
  * Fires a celebratory confetti particle blast across the screen.
  */
 export function fireCelebrationConfetti() {
@@ -97,6 +116,7 @@ export default function DownloadSuccessModal({
 }) {
   const modalRef = useRef(null);
   const isExe = downloadType === 'exe';
+  const isMac = downloadType === 'mac';
 
   // Trigger celebration on dialog appearance
   useEffect(() => {
@@ -154,13 +174,19 @@ export default function DownloadSuccessModal({
             </div>
             <div className="cursor-success-header-text">
               <span className="cursor-success-kicker">
-                {isExe ? 'WINDOWS 64-BIT \u2022 NATIVE GUI INSTALLER' : 'WINDOWS 64-BIT \u2022 PORTABLE UTILITY'}
+                {isMac
+                  ? 'MACOS \u2022 APPLE SILICON & INTEL \u2022 PORTABLE'
+                  : isExe
+                  ? 'WINDOWS 64-BIT \u2022 NATIVE GUI INSTALLER'
+                  : 'WINDOWS 64-BIT \u2022 PORTABLE UTILITY'}
               </span>
               <h2 id="download-success-title" className="cursor-success-title">
                 Download Started!
               </h2>
               <p className="cursor-success-subtitle">
-                {isExe
+                {isMac
+                  ? 'SonicWave for macOS is downloading. Follow these 3 simple steps to start converting media in seconds:'
+                  : isExe
                   ? 'SonicWave Custom Installer is downloading. Follow these 3 simple steps to install the desktop studio:'
                   : 'SonicWave is downloading. Follow these 3 simple steps to start converting media in seconds:'}
               </p>
@@ -187,11 +213,17 @@ export default function DownloadSuccessModal({
               </div>
               <div className="cursor-success-file-info">
                 <span className="cursor-success-filename">
-                  {isExe ? 'SonicWave-Custom-Installer.exe' : 'SonicWave-v1.0.0-Windows.zip'}
+                  {isMac
+                    ? 'SonicWave-v1.0.0-macOS.zip'
+                    : isExe
+                    ? 'SonicWave-Custom-Installer.exe'
+                    : 'SonicWave-v1.0.0-Windows.zip'}
                 </span>
                 <span className="cursor-success-filemeta">
-                  {isExe
-                    ? '330 MB \u2022 Windows 10 & 11 \u2022 Standalone Dark GUI Installer'
+                  {isMac
+                    ? '2.7 MB \u2022 macOS 12+ (Sonoma/Ventura/Monterey) \u2022 M1-M4 & Intel'
+                    : isExe
+                    ? '1.45 MB \u2022 Windows 10 & 11 \u2022 Standalone Dark GUI Installer'
                     : '1.3 MB \u2022 Windows 10 & 11 \u2022 SHA-256 Verified'}
                 </span>
               </div>
@@ -202,8 +234,48 @@ export default function DownloadSuccessModal({
             </div>
           </div>
 
-          {/* Setup Steps (Custom GUI Installer vs Portable ZIP) */}
-          {isExe ? (
+          {/* Setup Steps (Custom GUI Installer vs Portable ZIP vs macOS) */}
+          {isMac ? (
+            <div className="cursor-success-steps-box">
+              <h3 className="cursor-success-steps-heading">
+                Quick Setup Guide (macOS):
+              </h3>
+              <div className="cursor-success-steps-list">
+                <div className="cursor-success-step-item">
+                  <div className="cursor-success-step-num">1</div>
+                  <div className="cursor-success-step-content">
+                    <div className="cursor-success-step-title-row">
+                      <FolderArchive size={14} className="cursor-step-icon" />
+                      <strong>Extract the ZIP</strong>
+                    </div>
+                    <p>Double-click <code>SonicWave-v1.0.0-macOS.zip</code> in your Downloads folder to unarchive the application.</p>
+                  </div>
+                </div>
+
+                <div className="cursor-success-step-item">
+                  <div className="cursor-success-step-num">2</div>
+                  <div className="cursor-success-step-content">
+                    <div className="cursor-success-step-title-row">
+                      <Terminal size={14} className="cursor-step-icon" />
+                      <strong>Run <code>start.sh</code></strong>
+                    </div>
+                    <p>Open Terminal in the extracted folder and execute: <code>chmod +x start.sh &amp;&amp; ./start.sh</code></p>
+                  </div>
+                </div>
+
+                <div className="cursor-success-step-item">
+                  <div className="cursor-success-step-num">3</div>
+                  <div className="cursor-success-step-content">
+                    <div className="cursor-success-step-title-row">
+                      <Sparkles size={14} className="cursor-step-icon" />
+                      <strong>Convert &amp; Enjoy</strong>
+                    </div>
+                    <p>Your browser opens to <code>localhost:5173</code>. Paste any link for high-speed 320 kbps MP3 or 1080p MP4 conversions!</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : isExe ? (
             <div className="cursor-success-steps-box">
               <h3 className="cursor-success-steps-heading">
                 Quick Setup Guide:
@@ -287,7 +359,21 @@ export default function DownloadSuccessModal({
 
           {/* Alternative download switch row */}
           <div style={{ marginTop: '12px', fontSize: '13px', color: '#94a3b8', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)' }}>
-            {isExe ? (
+            {isMac ? (
+              <span>
+                Need the Windows version instead?{' '}
+                <button
+                  type="button"
+                  style={{ background: 'none', border: 'none', color: '#1ed760', fontWeight: 600, textDecoration: 'underline', cursor: 'pointer', padding: 0 }}
+                  onClick={() => {
+                    if (onSwitchType) onSwitchType('exe');
+                    triggerExeDownload();
+                  }}
+                >
+                  Download Windows Installer (.exe)
+                </button>
+              </span>
+            ) : isExe ? (
               <span>
                 Want the lightweight portable zip without installation?{' '}
                 <button
@@ -318,11 +404,19 @@ export default function DownloadSuccessModal({
             )}
           </div>
 
-          {/* Windows Defender SmartScreen Tip */}
+          {/* OS Security Notice (Gatekeeper on Mac / SmartScreen on Windows) */}
           <div className="cursor-success-smartscreen-tip">
             <ShieldCheck size={16} className="cursor-smartscreen-shield" aria-hidden="true" />
             <div className="cursor-smartscreen-text">
-              <strong>Windows Defender Notice:</strong> If Windows prompts <em>&quot;Windows protected your PC&quot;</em>, click <strong>More info</strong> &rarr; <strong>Run anyway</strong>. SonicWave is 100% open source with zero telemetry or background daemons.
+              {isMac ? (
+                <>
+                  <strong>macOS Gatekeeper Notice:</strong> If macOS displays <em>&quot;Unidentified Developer&quot;</em>, right-click <code>start.sh</code> and select <strong>Open</strong>, or run <code>chmod +x start.sh</code> in Terminal. SonicWave is 100% open-source with zero telemetry.
+                </>
+              ) : (
+                <>
+                  <strong>Windows Defender Notice:</strong> If Windows prompts <em>&quot;Windows protected your PC&quot;</em>, click <strong>More info</strong> &rarr; <strong>Run anyway</strong>. SonicWave is 100% open source with zero telemetry or background daemons.
+                </>
+              )}
             </div>
           </div>
         </div>

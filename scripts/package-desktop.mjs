@@ -14,6 +14,8 @@ const stagingDir = path.join(
 
 const zipOutputFilePublic = path.join(rootDir, 'client', 'public', 'SonicWave-v1.0.0-Windows.zip');
 const zipOutputFileDist = path.join(rootDir, 'client', 'dist', 'SonicWave-v1.0.0-Windows.zip');
+const macZipOutputFilePublic = path.join(rootDir, 'client', 'public', 'SonicWave-v1.0.0-macOS.zip');
+const macZipOutputFileDist = path.join(rootDir, 'client', 'dist', 'SonicWave-v1.0.0-macOS.zip');
 
 console.log('==================================================');
 console.log('   SonicWave Desktop Package Generator');
@@ -71,6 +73,9 @@ fs.mkdirSync(path.join(stagingDir, 'client', 'dist'), { recursive: true });
 
 // 3. Copy root files
 fs.copyFileSync(path.join(rootDir, 'start.bat'), path.join(stagingDir, 'start.bat'));
+if (fs.existsSync(path.join(rootDir, 'start.sh'))) {
+  fs.copyFileSync(path.join(rootDir, 'start.sh'), path.join(stagingDir, 'start.sh'));
+}
 fs.copyFileSync(path.join(rootDir, 'README.md'), path.join(stagingDir, 'README.md'));
 fs.copyFileSync(path.join(rootDir, 'package.json'), path.join(stagingDir, 'package.json'));
 
@@ -154,9 +159,13 @@ if (fs.existsSync(zipOutputFilePublic)) {
 const psScript = `Compress-Archive -Path '${stagingDir}\\*' -DestinationPath '${zipOutputFilePublic}' -CompressionLevel Optimal`;
 runPowerShell(psScript);
 
+// Mirror to client/public/SonicWave-v1.0.0-macOS.zip
+fs.copyFileSync(zipOutputFilePublic, macZipOutputFilePublic);
+
 // Also mirror to client/dist if dist exists
 if (fs.existsSync(path.dirname(zipOutputFileDist))) {
   fs.copyFileSync(zipOutputFilePublic, zipOutputFileDist);
+  fs.copyFileSync(zipOutputFilePublic, macZipOutputFileDist);
 }
 
 // 7. Verification: Verify LandingPage is NOT inside the zip

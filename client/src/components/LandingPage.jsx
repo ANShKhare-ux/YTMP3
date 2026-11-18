@@ -32,7 +32,7 @@ import {
 } from 'lucide-react';
 import FaqAccordion from './ui/FaqAccordion';
 import HalftoneWordmarkFooter from './ui/halftone-wordmark-footer';
-import DownloadSuccessModal, { triggerZipDownload, triggerExeDownload } from './DownloadSuccessModal';
+import DownloadSuccessModal, { triggerZipDownload, triggerExeDownload, triggerMacZipDownload } from './DownloadSuccessModal';
 import { gsap } from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -84,6 +84,22 @@ function WindowsIcon({ size = 16, className = '' }) {
       aria-hidden="true"
     >
       <path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.951-1.801" />
+    </svg>
+  );
+}
+
+// Apple Silhouette SVG Icon
+function AppleIcon({ size = 16, className = '' }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.62-.75 1.04-1.8 0.92-2.85-.9.04-2 .6-2.65 1.35-.58.66-1.09 1.73-.95 2.76.99.08 2.06-.51 2.68-1.26z" />
     </svg>
   );
 }
@@ -155,11 +171,15 @@ const PLATFORMS = [
 const FAQS = [
   {
     q: 'Why choose local software over web-based online converters?',
-    a: 'Cloud converter websites throttle download speeds to a single thread, introduce security risks via ad redirects, and frequently compress audio down to 128 kbps. SonicWave executes locally on your Windows PC with a 16-stream parallel turbo engine, local FFmpeg & yt-dlp extraction, zero advertisements, and authentic 320 kbps MP3 and 1080p MP4 output.'
+    a: 'Cloud converter websites throttle download speeds to a single thread, introduce security risks via ad redirects, and frequently compress audio down to 128 kbps. SonicWave executes locally on your PC or Mac with a 16-stream parallel turbo engine, local FFmpeg & yt-dlp extraction, zero advertisements, and authentic 320 kbps MP3 and 1080p MP4 output.'
   },
   {
     q: 'Do I need to install Python, FFmpeg, or modify system environment variables?',
-    a: 'No. SonicWave is self-bootstrapping. When you launch start.bat on Windows, the software automatically downloads and verifies the official yt-dlp and FFmpeg binaries into its local server directory. No manual configuration is required.'
+    a: 'No. SonicWave is self-bootstrapping. When you launch start.bat on Windows or start.sh on macOS, the software automatically downloads and verifies the official yt-dlp and FFmpeg binaries into its local server directory. No manual configuration is required.'
+  },
+  {
+    q: 'Does SonicWave support macOS (Apple Silicon & Intel)?',
+    a: 'Yes. SonicWave fully supports macOS across both Apple Silicon (M1/M2/M3/M4) and Intel x64 architectures. Download the macOS ZIP package, run start.sh in Terminal, and enjoy authentic 320 kbps MP3 and 1080p MP4 conversions with the exact same high-speed 16-stream parallel turbo engine.'
   },
   {
     q: 'Which audio and video formats are supported?',
@@ -171,7 +191,7 @@ const FAQS = [
   },
   {
     q: 'Does SonicWave inject album artwork and ID3 metadata tags?',
-    a: 'Yes. Converted audio tracks automatically have ID3 tags embedded with the video title, uploader name, and high-resolution thumbnail artwork so your files display cleanly in Windows Media Player, iTunes, Groove, Spotify, and mobile players.'
+    a: 'Yes. Converted audio tracks automatically have ID3 tags embedded with the video title, uploader name, and high-resolution thumbnail artwork so your files display cleanly in Windows Media Player, Apple Music, iTunes, Groove, Spotify, and mobile players.'
   },
   {
     q: 'How are extraction rules updated when upstream video platforms change?',
@@ -214,7 +234,8 @@ const FOOTER_COLUMNS = [
     title: 'Download',
     links: [
       { label: 'Custom Installer (.exe)', href: '/SonicWave-Custom-Installer.exe' },
-      { label: 'Portable ZIP (.zip)', href: '/SonicWave-v1.0.0-Windows.zip' },
+      { label: 'Windows Portable (.zip)', href: '/SonicWave-v1.0.0-Windows.zip' },
+      { label: 'macOS Package (.zip)', href: '/SonicWave-v1.0.0-macOS.zip' },
       { label: 'Installation Steps', href: '/install' },
       { label: 'Zero Telemetry', href: '#features' },
       { label: 'Personal Archiving', href: '/copyright-acceptable-use' },
@@ -227,6 +248,16 @@ export default function LandingPage({
 }) {
   const [isDownloadSuccessOpen, setIsDownloadSuccessOpen] = useState(false);
   const [downloadType, setDownloadType] = useState('exe');
+  const [userPlatform, setUserPlatform] = useState(() => {
+    if (typeof window === 'undefined' || typeof navigator === 'undefined') return 'win';
+    const ua = navigator.userAgent || navigator.platform || '';
+    return /Mac|iPhone|iPad/i.test(ua) ? 'mac' : 'win';
+  });
+  const [setupTab, setSetupTab] = useState(() => {
+    if (typeof window === 'undefined' || typeof navigator === 'undefined') return 'win';
+    const ua = navigator.userAgent || navigator.platform || '';
+    return /Mac|iPhone|iPad/i.test(ua) ? 'mac' : 'win';
+  });
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [theme, setTheme] = useState(() => {
     try {
@@ -901,8 +932,19 @@ export default function LandingPage({
     setIsDownloadSuccessOpen(true);
   };
 
+  const handleDownloadMac = (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    setDownloadType('mac');
+    triggerMacZipDownload();
+    setIsDownloadSuccessOpen(true);
+  };
+
   const handleDownloadClick = (e) => {
-    handleDownloadExe(e);
+    if (userPlatform === 'mac') {
+      handleDownloadMac(e);
+    } else {
+      handleDownloadExe(e);
+    }
   };
 
   return (
@@ -1020,16 +1062,29 @@ export default function LandingPage({
               {theme === 'dark' ? <Sun size={14} aria-hidden="true" /> : <Moon size={14} aria-hidden="true" />}
             </button>
 
-            <button
-              type="button"
-              className={`cursor-button-primary cursor-nav-download-btn ${ctaElevated ? 'is-elevated' : ''}`}
-              onClick={handleDownloadClick}
-              id="nav-download-btn"
-              aria-label="Download SonicWave for Windows"
-            >
-              <WindowsIcon size={14} />
-              <span className="cursor-nav-download-text">Download for Windows</span>
-            </button>
+            {userPlatform === 'mac' ? (
+              <button
+                type="button"
+                className={`cursor-button-primary cursor-nav-download-btn ${ctaElevated ? 'is-elevated' : ''}`}
+                onClick={handleDownloadMac}
+                id="nav-download-btn"
+                aria-label="Download SonicWave for macOS"
+              >
+                <AppleIcon size={14} />
+                <span className="cursor-nav-download-text">Download for Mac</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                className={`cursor-button-primary cursor-nav-download-btn ${ctaElevated ? 'is-elevated' : ''}`}
+                onClick={handleDownloadClick}
+                id="nav-download-btn"
+                aria-label="Download SonicWave for Windows"
+              >
+                <WindowsIcon size={14} />
+                <span className="cursor-nav-download-text">Download for Windows</span>
+              </button>
+            )}
 
             <button
               type="button"
@@ -1128,14 +1183,45 @@ export default function LandingPage({
               </a>
             </nav>
             <div className="cursor-mobile-menu-actions">
-              <button
-                type="button"
-                className="cursor-button-primary cursor-mobile-download-btn"
-                onClick={(e) => { setIsMobileMenuOpen(false); handleDownloadClick(e); }}
-              >
-                <WindowsIcon size={16} />
-                <span>Download for Windows (.zip)</span>
-              </button>
+              {userPlatform === 'mac' ? (
+                <>
+                  <button
+                    type="button"
+                    className="cursor-button-primary cursor-mobile-download-btn"
+                    onClick={(e) => { setIsMobileMenuOpen(false); handleDownloadMac(e); }}
+                  >
+                    <AppleIcon size={16} />
+                    <span>Download for macOS (.zip)</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="cursor-button-secondary cursor-mobile-download-btn"
+                    onClick={(e) => { setIsMobileMenuOpen(false); handleDownloadExe(e); }}
+                  >
+                    <WindowsIcon size={16} />
+                    <span>Windows Installer (.exe)</span>
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    className="cursor-button-primary cursor-mobile-download-btn"
+                    onClick={(e) => { setIsMobileMenuOpen(false); handleDownloadClick(e); }}
+                  >
+                    <WindowsIcon size={16} />
+                    <span>Download for Windows (.exe)</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="cursor-button-secondary cursor-mobile-download-btn"
+                    onClick={(e) => { setIsMobileMenuOpen(false); handleDownloadMac(e); }}
+                  >
+                    <AppleIcon size={16} />
+                    <span>macOS Package (.zip)</span>
+                  </button>
+                </>
+              )}
               <button
                 type="button"
                 className="cursor-button-secondary cursor-mobile-theme-btn"
@@ -1164,43 +1250,83 @@ export default function LandingPage({
           {/* Eyebrow badge (13px, weight 500, letter-spacing +0.4px) */}
           <div className="cursor-eyebrow-pill">
             <span className="cursor-status-dot" aria-hidden="true" />
-            <span className="cursor-eyebrow-text">WINDOWS 11 &amp; 10 &bull; 64-BIT NATIVE &bull; AD-FREE &bull; OPEN SOURCE</span>
+            <span className="cursor-eyebrow-text">WINDOWS 11 &amp; 10 &bull; MACOS (APPLE SILICON &amp; INTEL) &bull; AD-FREE &bull; OPEN SOURCE</span>
           </div>
 
           <h1 className="cursor-display-xl">
             <span className="cursor-hero-split">High-speed media downloader</span> &amp;<br />
-            <span className="cursor-gradient-accent">offline audio player for Windows</span>
+            <span className="cursor-gradient-accent">offline audio player for {userPlatform === 'mac' ? 'macOS & Windows' : 'Windows & Mac'}</span>
           </h1>
 
           <p className="cursor-body-lg">
             Extract audio and video from YouTube, Instagram, TikTok, Twitter/X, SoundCloud,
-            and 1,000+ sources directly to your PC. Accelerated by a 16-stream parallel turbo
+            and 1,000+ sources directly to your {userPlatform === 'mac' ? 'Mac or PC' : 'PC or Mac'}. Accelerated by a 16-stream parallel turbo
             engine with embedded FFmpeg.
           </p>
 
           <div className="cursor-hero-cta-row">
-            <button
-              type="button"
-              className="cursor-button-primary cursor-btn-lg"
-              onClick={handleDownloadClick}
-              id="hero-download-btn"
-              aria-label="Download SonicWave Custom Installer for Windows"
-            >
-              <WindowsIcon size={16} />
-              <span>Download Custom Installer (.exe)</span>
-              <Download size={15} className="cursor-cta-icon" aria-hidden="true" />
-            </button>
+            {userPlatform === 'mac' ? (
+              <>
+                <button
+                  type="button"
+                  className="cursor-button-primary cursor-btn-lg"
+                  onClick={handleDownloadMac}
+                  id="hero-download-btn"
+                  aria-label="Download SonicWave for macOS"
+                >
+                  <AppleIcon size={16} />
+                  <span>Download for macOS (.zip)</span>
+                  <Download size={15} className="cursor-cta-icon" aria-hidden="true" />
+                </button>
 
-            <button
-              type="button"
-              className="cursor-button-secondary cursor-btn-lg"
-              onClick={handleDownloadZip}
-              id="hero-download-zip-btn"
-              aria-label="Download SonicWave portable ZIP package"
-            >
-              <FolderArchive size={15} aria-hidden="true" />
-              <span>Portable ZIP (.zip)</span>
-            </button>
+                <button
+                  type="button"
+                  className="cursor-button-secondary cursor-btn-lg"
+                  onClick={handleDownloadExe}
+                  id="hero-download-win-btn"
+                  aria-label="Download SonicWave Custom Installer for Windows"
+                >
+                  <WindowsIcon size={15} aria-hidden="true" />
+                  <span>Windows Installer (.exe)</span>
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  className="cursor-button-primary cursor-btn-lg"
+                  onClick={handleDownloadClick}
+                  id="hero-download-btn"
+                  aria-label="Download SonicWave Custom Installer for Windows"
+                >
+                  <WindowsIcon size={16} />
+                  <span>Download Custom Installer (.exe)</span>
+                  <Download size={15} className="cursor-cta-icon" aria-hidden="true" />
+                </button>
+
+                <button
+                  type="button"
+                  className="cursor-button-secondary cursor-btn-lg"
+                  onClick={handleDownloadZip}
+                  id="hero-download-zip-btn"
+                  aria-label="Download SonicWave portable ZIP package"
+                >
+                  <FolderArchive size={15} aria-hidden="true" />
+                  <span>Portable ZIP (.zip)</span>
+                </button>
+
+                <button
+                  type="button"
+                  className="cursor-button-secondary cursor-btn-lg"
+                  onClick={handleDownloadMac}
+                  id="hero-download-mac-btn"
+                  aria-label="Download SonicWave for macOS"
+                >
+                  <AppleIcon size={15} aria-hidden="true" />
+                  <span>macOS (.zip)</span>
+                </button>
+              </>
+            )}
 
             <a
               href="#how-it-works"
@@ -1215,7 +1341,13 @@ export default function LandingPage({
 
           {/* CRO Friction Reduction: Micro-proof directly below primary CTA */}
           <div className="cursor-hero-microproof">
-            <span>Windows 11 &amp; 10 (64-bit) &bull; Custom Spotify-Themed GUI Installer &bull; Portable ZIP also available</span>
+            <span>
+              {userPlatform === 'mac' ? (
+                <>macOS Sonoma, Ventura &amp; Monterey &bull; Apple Silicon M1/M2/M3/M4 &amp; Intel &bull; Windows version also available</>
+              ) : (
+                <>Windows 11 &amp; 10 (64-bit) &bull; Custom Spotify-Themed GUI Installer &bull; macOS Apple Silicon &amp; Intel supported</>
+              )}
+            </span>
           </div>
 
           {/* Clean hairline trust strip */}
@@ -1452,7 +1584,7 @@ export default function LandingPage({
       </section>
 
       {/* =========================================================================
-          3-STEP WINDOWS SETUP (DESIGN-cursor.md: surface-1, 14px rounded, hairline)
+          3-STEP SETUP (DESIGN-cursor.md: surface-1, 14px rounded, hairline)
           ========================================================================= */}
       <section className="cursor-section cursor-section-alt" id="how-it-works">
         <div className="cursor-container">
@@ -1465,6 +1597,52 @@ export default function LandingPage({
               No manual Python installations. No environment variable configuration.
               Download, extract, and convert.
             </p>
+
+            {/* Platform switcher tabs */}
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '4px', background: 'var(--cursor-surface-1)', border: '1px solid var(--cursor-hairline)', borderRadius: '10px', marginTop: '16px' }}>
+              <button
+                type="button"
+                onClick={() => setSetupTab('win')}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '6px 14px',
+                  borderRadius: '7px',
+                  border: 'none',
+                  fontSize: '12.5px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  background: setupTab === 'win' ? '#1ed760' : 'transparent',
+                  color: setupTab === 'win' ? '#000' : 'var(--cursor-ink-muted)'
+                }}
+              >
+                <WindowsIcon size={13} />
+                <span>Windows (start.bat)</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setSetupTab('mac')}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '6px 14px',
+                  borderRadius: '7px',
+                  border: 'none',
+                  fontSize: '12.5px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  background: setupTab === 'mac' ? '#1ed760' : 'transparent',
+                  color: setupTab === 'mac' ? '#000' : 'var(--cursor-ink-muted)'
+                }}
+              >
+                <AppleIcon size={13} />
+                <span>macOS (start.sh)</span>
+              </button>
+            </div>
           </div>
 
           <div className="cursor-steps-wrapper">
@@ -1494,14 +1672,16 @@ export default function LandingPage({
                 </div>
                 <h3 className="cursor-card-title">Download &amp; extract</h3>
                 <p className="cursor-card-body">
-                  Download the lightweight SonicWave Windows ZIP package and extract it to any directory on your computer.
+                  {setupTab === 'mac'
+                    ? 'Download the lightweight SonicWave macOS ZIP package and extract it to any directory or your Applications folder.'
+                    : 'Download the lightweight SonicWave Windows ZIP package or Custom Installer and extract it to any directory.'}
                 </p>
-                <div className="cursor-mono-snippet" title="Windows portable zip archive">
+                <div className="cursor-mono-snippet" title={setupTab === 'mac' ? 'macOS portable zip archive' : 'Windows portable zip archive'}>
                   <div className="cursor-snippet-left">
                     <FolderArchive size={13} className="cursor-snippet-icon" aria-hidden="true" />
-                    <code>SonicWave-v1.0.0-Windows.zip</code>
+                    <code>{setupTab === 'mac' ? 'SonicWave-v1.0.0-macOS.zip' : 'SonicWave-v1.0.0-Windows.zip'}</code>
                   </div>
-                  <span className="cursor-snippet-tag">1.3 MB</span>
+                  <span className="cursor-snippet-tag">{setupTab === 'mac' ? '2.7 MB' : '1.3 MB'}</span>
                 </div>
               </div>
 
@@ -1513,14 +1693,18 @@ export default function LandingPage({
                     <Terminal size={15} className="step-icon-terminal" aria-hidden="true" />
                   </div>
                 </div>
-                <h3 className="cursor-card-title">Launch start.bat</h3>
+                <h3 className="cursor-card-title">{setupTab === 'mac' ? 'Run start.sh' : 'Launch start.bat'}</h3>
                 <p className="cursor-card-body">
-                  Double-click <strong>start.bat</strong>. The launcher boots the local server, provisions yt-dlp &amp; FFmpeg executables, and launches the desktop interface.
+                  {setupTab === 'mac' ? (
+                    <>Open Terminal in the extracted folder and run <strong>./start.sh</strong>. The launcher boots the server, provisions yt-dlp &amp; FFmpeg, and launches the app.</>
+                  ) : (
+                    <>Double-click <strong>start.bat</strong>. The launcher boots the local server, provisions yt-dlp &amp; FFmpeg executables, and launches the desktop interface.</>
+                  )}
                 </p>
                 <div className="cursor-mono-snippet" title="Self-bootstrapping script">
                   <div className="cursor-snippet-left">
                     <Terminal size={13} className="cursor-snippet-icon" aria-hidden="true" />
-                    <code>.\start.bat : auto-bootstraps</code>
+                    <code>{setupTab === 'mac' ? './start.sh : auto-bootstraps' : '.\\start.bat : auto-bootstraps'}</code>
                     <span className="cursor-cursor-blink">_</span>
                   </div>
                   <span className="cursor-snippet-tag status-live">READY</span>
@@ -1800,14 +1984,14 @@ export default function LandingPage({
           <div className="cursor-specs-grid">
             <div className="cursor-spec-card">
               <span className="cursor-spec-label">OPERATING SYSTEM</span>
-              <span className="cursor-spec-value">Windows 11 &amp; 10</span>
-              <span className="cursor-spec-detail">64-bit Architecture (x86_64)</span>
+              <span className="cursor-spec-value">Windows &amp; macOS</span>
+              <span className="cursor-spec-detail">Win 11/10 (64-bit) &bull; macOS 12+ (Apple Silicon &amp; Intel)</span>
             </div>
 
             <div className="cursor-spec-card">
               <span className="cursor-spec-label">PROCESSOR</span>
-              <span className="cursor-spec-value">Intel Core or AMD Ryzen</span>
-              <span className="cursor-spec-detail">Dual-Core 1.5 GHz or higher</span>
+              <span className="cursor-spec-value">Intel Core, AMD Ryzen &bull; Apple M1-M4</span>
+              <span className="cursor-spec-detail">Dual-Core 1.5 GHz or Apple Silicon</span>
             </div>
 
             <div className="cursor-spec-card">
@@ -1834,7 +2018,7 @@ export default function LandingPage({
             <span className="cursor-eyebrow">QUESTIONS &amp; ANSWERS</span>
             <h2 className="cursor-display-lg">Frequently asked questions.</h2>
             <p className="cursor-subhead">
-              Everything you need to know about SonicWave for Windows.
+              Everything you need to know about SonicWave for Windows and macOS.
             </p>
           </div>
 
@@ -1855,36 +2039,64 @@ export default function LandingPage({
           <div className="cursor-cta-panel">
             <span className="cursor-eyebrow">GET STARTED TODAY</span>
             <h2 className="cursor-display-md">
-              Experience studio-grade conversion on Windows.
+              Experience studio-grade conversion on {userPlatform === 'mac' ? 'macOS & Windows' : 'Windows & macOS'}.
             </h2>
             <p className="cursor-subhead">
-              Download SonicWave for Windows to extract audio and video at 16x parallel turbo speed with zero ads or limits.
+              Download SonicWave to extract audio and video at 16x parallel turbo speed with zero ads or limits.
             </p>
             <div className="cursor-cta-actions">
-              <button
-                type="button"
-                className="cursor-button-primary cursor-btn-lg"
-                onClick={handleDownloadClick}
-                id="bottom-download-btn"
-                aria-label="Download SonicWave Custom Installer for Windows"
-              >
-                <WindowsIcon size={16} />
-                <span>Download Custom Installer (.exe)</span>
-                <Download size={15} className="cursor-cta-icon" aria-hidden="true" />
-              </button>
+              {userPlatform === 'mac' ? (
+                <>
+                  <button
+                    type="button"
+                    className="cursor-button-primary cursor-btn-lg"
+                    onClick={handleDownloadMac}
+                    id="bottom-download-btn"
+                    aria-label="Download SonicWave for macOS"
+                  >
+                    <AppleIcon size={16} />
+                    <span>Download for macOS (.zip)</span>
+                    <Download size={15} className="cursor-cta-icon" aria-hidden="true" />
+                  </button>
 
-              <button
-                type="button"
-                className="cursor-button-secondary cursor-btn-lg"
-                onClick={handleDownloadZip}
-                aria-label="Download SonicWave Portable ZIP package"
-              >
-                <FolderArchive size={15} aria-hidden="true" />
-                <span>Portable ZIP (1.3 MB)</span>
-              </button>
+                  <button
+                    type="button"
+                    className="cursor-button-secondary cursor-btn-lg"
+                    onClick={handleDownloadExe}
+                    aria-label="Download SonicWave Custom Installer for Windows"
+                  >
+                    <WindowsIcon size={15} aria-hidden="true" />
+                    <span>Windows Installer (.exe)</span>
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    className="cursor-button-primary cursor-btn-lg"
+                    onClick={handleDownloadClick}
+                    id="bottom-download-btn"
+                    aria-label="Download SonicWave Custom Installer for Windows"
+                  >
+                    <WindowsIcon size={16} />
+                    <span>Download Custom Installer (.exe)</span>
+                    <Download size={15} className="cursor-cta-icon" aria-hidden="true" />
+                  </button>
+
+                  <button
+                    type="button"
+                    className="cursor-button-secondary cursor-btn-lg"
+                    onClick={handleDownloadMac}
+                    aria-label="Download SonicWave for macOS"
+                  >
+                    <AppleIcon size={15} aria-hidden="true" />
+                    <span>macOS Package (.zip)</span>
+                  </button>
+                </>
+              )}
             </div>
             <span className="cursor-micro-note">
-              Windows 11 &bull; Windows 10 &bull; 64-bit &bull; 100% Free &amp; Open Source &bull; Frameless Custom Installer &amp; Portable ZIP
+              Windows 11 &amp; 10 &bull; macOS Sonoma, Ventura &amp; Monterey (Apple Silicon &amp; Intel) &bull; 100% Free &amp; Open Source
             </span>
           </div>
         </div>
@@ -1897,7 +2109,7 @@ export default function LandingPage({
       <HalftoneWordmarkFooter
         wordmark="sonicwave"
         label="SonicWave Media"
-        meta="©2026 · Windows 64-bit · 16x Turbo"
+        meta="©2026 · Windows & macOS · 16x Turbo"
         columns={FOOTER_COLUMNS}
         backToTop={true}
         height="560px"
@@ -1911,6 +2123,8 @@ export default function LandingPage({
             handleDownloadExe();
           } else if (href === '/SonicWave-v1.0.0-Windows.zip') {
             handleDownloadZip();
+          } else if (href === '/SonicWave-v1.0.0-macOS.zip') {
+            handleDownloadMac();
           } else if (onNavigate) {
             if (href === '/install') onNavigate('install', '/install');
             else if (href === '/supported-platforms') onNavigate('platforms-guide', '/supported-platforms');
