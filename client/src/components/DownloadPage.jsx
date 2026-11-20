@@ -207,7 +207,7 @@ export default function DownloadPage({ onNavigate }) {
       </header>
 
       {/* Main Download Hub Container */}
-      <main className="legal-main" id="main-content" style={{ flex: 1, maxWidth: '1140px', width: '100%', margin: '0 auto', padding: '32px 20px 80px' }}>
+      <main className="legal-main download-page-main" id="main-content">
         {/* Breadcrumb Navigation */}
         <nav aria-label="Breadcrumb" style={{ marginBottom: '24px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: 'var(--cursor-ink-muted)' }}>
@@ -284,23 +284,11 @@ export default function DownloadPage({ onNavigate }) {
           </button>
         </div>
 
-        {/* 4 Download Methods Grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '24px', marginBottom: '56px' }}>
+        {/* 4 Download Methods Grid: 4 Aligned in a Single Line */}
+        <div className="download-methods-grid">
           
           {/* METHOD 1: Windows Native Custom Installer */}
-          <div
-            className="download-method-card"
-            style={{
-              background: 'linear-gradient(180deg, #181818 0%, #121212 100%)',
-              border: userPlatform === 'win' ? '1px solid var(--spotify-green)' : '1px solid rgba(255, 255, 255, 0.1)',
-              borderRadius: '16px',
-              padding: '28px',
-              display: 'flex',
-              flexDirection: 'column',
-              boxShadow: userPlatform === 'win' ? '0 0 24px rgba(30, 215, 96, 0.15)' : 'none',
-              position: 'relative'
-            }}
-          >
+          <div className={`download-method-card ${userPlatform === 'win' ? 'is-recommended' : ''}`}>
             {userPlatform === 'win' && (
               <div
                 style={{
@@ -321,25 +309,25 @@ export default function DownloadPage({ onNavigate }) {
               </div>
             )}
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
-              <div style={{ padding: '8px', background: 'rgba(30, 215, 96, 0.15)', borderRadius: '10px', color: 'var(--spotify-green)' }}>
+            <div className="download-card-header">
+              <div className="download-card-icon-box brand-accent">
                 <WindowsIcon size={20} />
               </div>
               <div>
-                <span style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--spotify-green)' }}>
+                <span className="download-card-method-tag brand-accent">
                   Method 01 &bull; Native Desktop App
                 </span>
-                <h3 style={{ fontSize: '19px', fontWeight: 700, margin: '2px 0 0', color: '#ffffff' }}>
+                <h3 className="download-card-title">
                   Windows Custom Installer (.exe)
                 </h3>
               </div>
             </div>
 
-            <p style={{ fontSize: '13.5px', color: 'var(--text-subdued)', lineHeight: 1.5, margin: '0 0 16px' }}>
+            <p className="download-card-desc">
               Frameless Spotify-dark GUI installer. Automatically provisions <code>SonicWave.exe</code>, configures Desktop &amp; Start Menu shortcuts, and runs in a dedicated native window without browser address bars.
             </p>
 
-            <div style={{ background: 'rgba(255, 255, 255, 0.04)', borderRadius: '8px', padding: '10px 12px', fontSize: '12px', color: 'var(--text-subdued)', marginBottom: '18px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <div className="download-card-specs">
               <div><strong>File:</strong> <code>SonicWave-Custom-Installer.exe</code></div>
               <div><strong>Size:</strong> 1.5 MB &bull; <strong>OS:</strong> Windows 11 &amp; 10 (64-bit)</div>
               <div><strong>Status:</strong> SHA-256 Verified &bull; Zero Registry Bloat</div>
@@ -347,20 +335,19 @@ export default function DownloadPage({ onNavigate }) {
 
             <button
               type="button"
-              className="cursor-button-primary"
+              className="cursor-button-primary download-card-btn"
               onClick={() => startDownload('exe')}
-              style={{ width: '100%', padding: '12px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '22px' }}
             >
-              <Download size={16} />
+              <Download size={15} />
               <span>Download Custom Installer (.exe)</span>
             </button>
 
             {/* Step-by-Step Guide */}
-            <div style={{ borderTop: '1px solid rgba(255, 255, 255, 0.08)', paddingTop: '16px', marginTop: 'auto' }}>
-              <h4 style={{ fontSize: '13px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.6px', color: '#ffffff', marginBottom: '10px' }}>
+            <div className="download-card-guide">
+              <h4 className="download-card-guide-title">
                 How to Install &amp; Use:
               </h4>
-              <ol style={{ paddingLeft: '18px', margin: 0, fontSize: '12.5px', color: 'var(--text-subdued)', lineHeight: 1.6 }}>
+              <ol className="download-card-guide-list">
                 <li>Double-click <code>SonicWave-Custom-Installer.exe</code>.</li>
                 <li>Click <strong>Install Now</strong> (or choose your custom install folder).</li>
                 <li>Launch SonicWave from your new Desktop shortcut &mdash; starts instantly with no console window.</li>
@@ -372,19 +359,7 @@ export default function DownloadPage({ onNavigate }) {
           </div>
 
           {/* METHOD 2: Android Standalone On-Device APK */}
-          <div
-            className="download-method-card"
-            style={{
-              background: 'linear-gradient(180deg, #181818 0%, #121212 100%)',
-              border: userPlatform === 'android' ? '1px solid var(--spotify-green)' : '1px solid rgba(255, 255, 255, 0.1)',
-              borderRadius: '16px',
-              padding: '28px',
-              display: 'flex',
-              flexDirection: 'column',
-              boxShadow: userPlatform === 'android' ? '0 0 24px rgba(30, 215, 96, 0.15)' : 'none',
-              position: 'relative'
-            }}
-          >
+          <div className={`download-method-card ${userPlatform === 'android' ? 'is-recommended' : ''}`}>
             {userPlatform === 'android' && (
               <div
                 style={{
@@ -405,25 +380,25 @@ export default function DownloadPage({ onNavigate }) {
               </div>
             )}
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
-              <div style={{ padding: '8px', background: 'rgba(30, 215, 96, 0.15)', borderRadius: '10px', color: 'var(--spotify-green)' }}>
+            <div className="download-card-header">
+              <div className="download-card-icon-box brand-accent">
                 <AndroidIcon size={20} />
               </div>
               <div>
-                <span style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--spotify-green)' }}>
+                <span className="download-card-method-tag brand-accent">
                   Method 02 &bull; 100% On-Device Mobile
                 </span>
-                <h3 style={{ fontSize: '19px', fontWeight: 700, margin: '2px 0 0', color: '#ffffff' }}>
+                <h3 className="download-card-title">
                   Android Standalone APK (.apk)
                 </h3>
               </div>
             </div>
 
-            <p style={{ fontSize: '13.5px', color: 'var(--text-subdued)', lineHeight: 1.5, margin: '0 0 16px' }}>
+            <p className="download-card-desc">
               True standalone mobile app bundling embedded Python 3.11, FFmpeg, and yt-dlp. Converts directly on phone hardware with system Share Sheet integration &mdash; zero PC or server required.
             </p>
 
-            <div style={{ background: 'rgba(255, 255, 255, 0.04)', borderRadius: '8px', padding: '10px 12px', fontSize: '12px', color: 'var(--text-subdued)', marginBottom: '18px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <div className="download-card-specs">
               <div><strong>File:</strong> <code>SonicWave.apk</code></div>
               <div><strong>Size:</strong> 73 MB &bull; <strong>OS:</strong> Android 8.0+ through Android 15</div>
               <div><strong>Signature:</strong> Release Keystore (v1, v2, v3) &bull; Target SDK 34</div>
@@ -431,20 +406,19 @@ export default function DownloadPage({ onNavigate }) {
 
             <button
               type="button"
-              className="cursor-button-primary"
+              className="cursor-button-primary download-card-btn"
               onClick={() => startDownload('apk')}
-              style={{ width: '100%', padding: '12px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '22px' }}
             >
-              <Download size={16} />
+              <Download size={15} />
               <span>Download Android APK (73 MB)</span>
             </button>
 
             {/* Step-by-Step Guide */}
-            <div style={{ borderTop: '1px solid rgba(255, 255, 255, 0.08)', paddingTop: '16px', marginTop: 'auto' }}>
-              <h4 style={{ fontSize: '13px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.6px', color: '#ffffff', marginBottom: '10px' }}>
+            <div className="download-card-guide">
+              <h4 className="download-card-guide-title">
                 How to Install &amp; Use:
               </h4>
-              <ol style={{ paddingLeft: '18px', margin: 0, fontSize: '12.5px', color: 'var(--text-subdued)', lineHeight: 1.6 }}>
+              <ol className="download-card-guide-list">
                 <li>Tap <strong>Download Android APK</strong> on your phone.</li>
                 <li>If prompted "File might be harmful", tap <strong>Download anyway</strong>.</li>
                 <li>Tap the downloaded file. If prompted, enable <strong>Install unknown apps</strong> for your browser.</li>
@@ -454,36 +428,26 @@ export default function DownloadPage({ onNavigate }) {
           </div>
 
           {/* METHOD 3: Windows Portable Web ZIP */}
-          <div
-            className="download-method-card"
-            style={{
-              background: 'linear-gradient(180deg, #181818 0%, #121212 100%)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              borderRadius: '16px',
-              padding: '28px',
-              display: 'flex',
-              flexDirection: 'column'
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
-              <div style={{ padding: '8px', background: 'rgba(255, 255, 255, 0.08)', borderRadius: '10px', color: '#ffffff' }}>
+          <div className="download-method-card">
+            <div className="download-card-header">
+              <div className="download-card-icon-box">
                 <FolderArchive size={20} />
               </div>
               <div>
-                <span style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--text-subdued)' }}>
+                <span className="download-card-method-tag">
                   Method 03 &bull; Portable Web Package
                 </span>
-                <h3 style={{ fontSize: '19px', fontWeight: 700, margin: '2px 0 0', color: '#ffffff' }}>
+                <h3 className="download-card-title">
                   Windows Portable ZIP (.zip)
                 </h3>
               </div>
             </div>
 
-            <p style={{ fontSize: '13.5px', color: 'var(--text-subdued)', lineHeight: 1.5, margin: '0 0 16px' }}>
+            <p className="download-card-desc">
               Lightweight portable distribution with 1-click <code>start.bat</code> launcher. Perfect for running SonicWave inside your favorite desktop browser (Chrome, Edge, Firefox) without any installation.
             </p>
 
-            <div style={{ background: 'rgba(255, 255, 255, 0.04)', borderRadius: '8px', padding: '10px 12px', fontSize: '12px', color: 'var(--text-subdued)', marginBottom: '18px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <div className="download-card-specs">
               <div><strong>File:</strong> <code>SonicWave-v1.0.0-Windows.zip</code></div>
               <div><strong>Size:</strong> 1.45 MB &bull; <strong>OS:</strong> Windows 11 &amp; 10</div>
               <div><strong>Launcher:</strong> 1-click <code>start.bat</code> &bull; Self-Bootstrapping</div>
@@ -491,20 +455,19 @@ export default function DownloadPage({ onNavigate }) {
 
             <button
               type="button"
-              className="cursor-button-secondary"
+              className="cursor-button-secondary download-card-btn"
               onClick={() => startDownload('zip')}
-              style={{ width: '100%', padding: '12px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '22px' }}
             >
-              <Download size={16} />
+              <Download size={15} />
               <span>Download Portable ZIP (.zip)</span>
             </button>
 
             {/* Step-by-Step Guide */}
-            <div style={{ borderTop: '1px solid rgba(255, 255, 255, 0.08)', paddingTop: '16px', marginTop: 'auto' }}>
-              <h4 style={{ fontSize: '13px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.6px', color: '#ffffff', marginBottom: '10px' }}>
+            <div className="download-card-guide">
+              <h4 className="download-card-guide-title">
                 How to Install &amp; Use:
               </h4>
-              <ol style={{ paddingLeft: '18px', margin: 0, fontSize: '12.5px', color: 'var(--text-subdued)', lineHeight: 1.6 }}>
+              <ol className="download-card-guide-list">
                 <li>Extract <code>SonicWave-v1.0.0-Windows.zip</code> to any folder.</li>
                 <li>Double-click <code>start.bat</code>.</li>
                 <li>The script verifies local engine binaries and opens the studio at <code>http://localhost:5173</code> in your browser.</li>
@@ -513,19 +476,7 @@ export default function DownloadPage({ onNavigate }) {
           </div>
 
           {/* METHOD 4: macOS Portable Package */}
-          <div
-            className="download-method-card"
-            style={{
-              background: 'linear-gradient(180deg, #181818 0%, #121212 100%)',
-              border: userPlatform === 'mac' ? '1px solid var(--spotify-green)' : '1px solid rgba(255, 255, 255, 0.1)',
-              borderRadius: '16px',
-              padding: '28px',
-              display: 'flex',
-              flexDirection: 'column',
-              boxShadow: userPlatform === 'mac' ? '0 0 24px rgba(30, 215, 96, 0.15)' : 'none',
-              position: 'relative'
-            }}
-          >
+          <div className={`download-method-card ${userPlatform === 'mac' ? 'is-recommended' : ''}`}>
             {userPlatform === 'mac' && (
               <div
                 style={{
@@ -546,25 +497,25 @@ export default function DownloadPage({ onNavigate }) {
               </div>
             )}
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
-              <div style={{ padding: '8px', background: 'rgba(255, 255, 255, 0.08)', borderRadius: '10px', color: '#ffffff' }}>
+            <div className="download-card-header">
+              <div className="download-card-icon-box">
                 <AppleIcon size={20} />
               </div>
               <div>
-                <span style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--text-subdued)' }}>
+                <span className="download-card-method-tag">
                   Method 04 &bull; Cross-Platform Apple
                 </span>
-                <h3 style={{ fontSize: '19px', fontWeight: 700, margin: '2px 0 0', color: '#ffffff' }}>
+                <h3 className="download-card-title">
                   macOS Portable ZIP (.zip)
                 </h3>
               </div>
             </div>
 
-            <p style={{ fontSize: '13.5px', color: 'var(--text-subdued)', lineHeight: 1.5, margin: '0 0 16px' }}>
+            <p className="download-card-desc">
               Optimized for macOS 12+ (Sonoma, Ventura, Monterey). Features POSIX bash launcher <code>start.sh</code> with Apple Silicon (M1/M2/M3/M4) and Intel architecture support.
             </p>
 
-            <div style={{ background: 'rgba(255, 255, 255, 0.04)', borderRadius: '8px', padding: '10px 12px', fontSize: '12px', color: 'var(--text-subdued)', marginBottom: '18px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <div className="download-card-specs">
               <div><strong>File:</strong> <code>SonicWave-v1.0.0-macOS.zip</code></div>
               <div><strong>Size:</strong> 1.45 MB &bull; <strong>OS:</strong> macOS 12+ (Apple Silicon &amp; Intel)</div>
               <div><strong>Launcher:</strong> POSIX bash <code>start.sh</code> &bull; Signal Handled</div>
@@ -572,20 +523,19 @@ export default function DownloadPage({ onNavigate }) {
 
             <button
               type="button"
-              className="cursor-button-secondary"
+              className="cursor-button-secondary download-card-btn"
               onClick={() => startDownload('mac')}
-              style={{ width: '100%', padding: '12px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '22px' }}
             >
-              <Download size={16} />
+              <Download size={15} />
               <span>Download macOS Package (.zip)</span>
             </button>
 
             {/* Step-by-Step Guide */}
-            <div style={{ borderTop: '1px solid rgba(255, 255, 255, 0.08)', paddingTop: '16px', marginTop: 'auto' }}>
-              <h4 style={{ fontSize: '13px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.6px', color: '#ffffff', marginBottom: '10px' }}>
+            <div className="download-card-guide">
+              <h4 className="download-card-guide-title">
                 How to Install &amp; Use:
               </h4>
-              <ol style={{ paddingLeft: '18px', margin: 0, fontSize: '12.5px', color: 'var(--text-subdued)', lineHeight: 1.6 }}>
+              <ol className="download-card-guide-list">
                 <li>Unzip <code>SonicWave-v1.0.0-macOS.zip</code>.</li>
                 <li>Open Terminal in the extracted folder and run:</li>
                 <li style={{ listStyle: 'none', margin: '6px 0 6px -18px' }}>
