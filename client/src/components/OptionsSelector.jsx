@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sliders, Music, Video, Sparkles, Monitor, Zap, Info, ShieldCheck } from 'lucide-react';
+import { Sliders, Music, Video, Sparkles, Monitor, Zap, Info, ShieldCheck, VolumeX } from 'lucide-react';
 
 const BITRATES = [
   { value: '320k', label: '320 kbps', badge: 'Ultra HQ', desc: 'Studio grade sound' },
@@ -72,6 +72,16 @@ export default function OptionsSelector({
 
   return (
     <div className="selectors-wrapper">
+      {/* Silent Media Notice */}
+      {videoInfo?.hasAudio === false && (
+        <div style={{ background: 'rgba(234, 179, 8, 0.1)', border: '1px solid rgba(234, 179, 8, 0.3)', borderRadius: '10px', padding: '10px 14px', marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12.5px', color: '#facc15' }}>
+          <VolumeX size={15} style={{ flexShrink: 0 }} />
+          <span>
+            <strong>Silent Media Detected:</strong> This post has no audio stream. <strong>MP4 (Video)</strong> or <strong>Cover/Photo</strong> is recommended.
+          </span>
+        </div>
+      )}
+
       {/* 1-Click Tailored Social Media Presets */}
       {presets.length > 0 && (
         <div className="tailored-presets-section">

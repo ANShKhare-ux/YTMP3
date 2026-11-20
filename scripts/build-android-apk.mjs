@@ -80,6 +80,7 @@ if (apksignerPath && fs.existsSync(apksignerPath)) {
     '--ks-key-alias', 'sonicwave',
     '--ks-pass', 'pass:sonicwavekeystore',
     '--key-pass', 'pass:sonicwavekeystore',
+    '--min-sdk-version', '21',
     '--v1-signing-enabled', 'true',
     '--v2-signing-enabled', 'true',
     '--v3-signing-enabled', 'true',

@@ -6,7 +6,7 @@ plugins {
 
 android {
   namespace = "com.sonicwave.app"
-  compileSdk = 36
+  compileSdk = 34
   defaultConfig {
     applicationId = "com.sonicwave.app"
     minSdk = 24

@@ -150,6 +150,7 @@ export default function DownloadPage({ onNavigate }) {
           <a
             href="/"
             className="cursor-nav-brand"
+            style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center', gap: '10px' }}
             onClick={(e) => {
               e.preventDefault();
               if (onNavigate) onNavigate('landing', '/');
@@ -158,8 +159,8 @@ export default function DownloadPage({ onNavigate }) {
             aria-label="SonicWave Home"
           >
             <CursorBrandLogo size={26} />
-            <span className="cursor-brand-title">SonicWave</span>
-            <span className="cursor-nav-version-badge">v1.0.0</span>
+            <span className="cursor-brand-title" style={{ color: 'var(--cursor-ink, #ffffff)', fontWeight: 600, fontSize: '15px' }}>SonicWave</span>
+            <span className="cursor-nav-version-badge" style={{ fontSize: '11px', padding: '2px 7px', borderRadius: '4px' }}>v1.0.0</span>
           </a>
 
           <nav className="cursor-nav-links" aria-label="Download Center Navigation">
@@ -199,7 +200,7 @@ export default function DownloadPage({ onNavigate }) {
               style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
             >
               <ArrowLeft size={13} aria-hidden="true" />
-              <span>Back to Studio</span>
+              <span>Back to Home</span>
             </button>
           </div>
         </div>

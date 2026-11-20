@@ -1,5 +1,5 @@
 import React from 'react';
-import { User, Eye, Zap, Film, FileText, Image, Smartphone } from 'lucide-react';
+import { User, Eye, Zap, Film, FileText, Image, Smartphone, Layers, VolumeX } from 'lucide-react';
 
 export default function VideoPreview({ video }) {
   if (!video) return null;
@@ -46,7 +46,12 @@ export default function VideoPreview({ video }) {
             {video.platform ? `${video.platform}` : 'Social Media Track'}
           </span>
 
-          {video.isReel ? (
+          {video.isCarousel ? (
+            <span className="spotify-tag-badge carousel-badge" style={{ borderColor: 'rgba(168, 85, 247, 0.4)', background: 'rgba(168, 85, 247, 0.12)', color: '#c084fc' }}>
+              <Layers size={11} />
+              Carousel ({video.itemCount || 'Multi'} items)
+            </span>
+          ) : video.isReel ? (
             <span className="spotify-tag-badge reel-badge" style={{ borderColor: 'rgba(254, 44, 85, 0.4)', background: 'rgba(254, 44, 85, 0.12)', color: '#ff4d6d' }}>
               <Film size={11} />
               {video.isShort ? 'YouTube Short' : 'Reel (9:16)'}
@@ -57,6 +62,13 @@ export default function VideoPreview({ video }) {
               {video.isPhoto ? 'Feed Post (Photo)' : 'Feed Post (Video)'}
             </span>
           ) : null}
+
+          {video.hasAudio === false && (
+            <span className="spotify-tag-badge silent-badge" style={{ borderColor: 'rgba(234, 179, 8, 0.4)', background: 'rgba(234, 179, 8, 0.12)', color: '#facc15' }}>
+              <VolumeX size={11} />
+              Silent Source
+            </span>
+          )}
 
           {video.aspectRatio && (
             <span className="spotify-tag-badge aspect-badge" style={{ opacity: 0.85 }}>

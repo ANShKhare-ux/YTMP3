@@ -155,20 +155,27 @@ function detectPlatform(url) {
  * Classify media content between Posts, Reels, Shorts, and standard media
  * along with specific social media platform detection and aspect ratios.
  */
-function classifyMediaContent(url, data = {}) {
+function classifyMediaContent(url, data = {}, flags = {}) {
+  const isCarousel = Boolean(flags.isCarousel || data.isCarousel || data._type === 'playlist' || (Array.isArray(data.entries) && data.entries.length > 0));
+  const itemCount = flags.itemCount || (Array.isArray(data.entries) ? data.entries.length : 1);
+  const hasAudio = flags.hasAudio !== undefined ? flags.hasAudio : true;
+
   if (!url || typeof url !== 'string') {
     return {
       platform: 'Web Media',
       platformId: 'web',
-      contentType: 'video',
-      contentCategory: 'Media',
-      contentLabel: 'Web Media',
+      contentType: isCarousel ? 'carousel' : 'video',
+      contentCategory: isCarousel ? 'Carousel' : 'Media',
+      contentLabel: isCarousel ? `Media Carousel (${itemCount} items)` : 'Web Media',
       isReel: false,
       isPost: false,
+      isCarousel: isCarousel,
+      itemCount: itemCount,
+      hasAudio: hasAudio,
       isShort: false,
       isAudio: false,
       isPhoto: false,
-      badge: 'Web Media',
+      badge: isCarousel ? `Media Carousel \u2022 ${itemCount} items` : 'Web Media',
       aspectRatio: '16:9'
     };
   }
@@ -183,15 +190,18 @@ function classifyMediaContent(url, data = {}) {
     return {
       platform: 'Web Media',
       platformId: 'web',
-      contentType: 'video',
-      contentCategory: 'Media',
-      contentLabel: 'Web Media',
+      contentType: isCarousel ? 'carousel' : 'video',
+      contentCategory: isCarousel ? 'Carousel' : 'Media',
+      contentLabel: isCarousel ? `Media Carousel (${itemCount} items)` : 'Web Media',
       isReel: false,
       isPost: false,
+      isCarousel: isCarousel,
+      itemCount: itemCount,
+      hasAudio: hasAudio,
       isShort: false,
       isAudio: false,
       isPhoto: false,
-      badge: 'Web Media',
+      badge: isCarousel ? `Media Carousel \u2022 ${itemCount} items` : 'Web Media',
       aspectRatio: '16:9'
     };
   }
@@ -212,6 +222,27 @@ function classifyMediaContent(url, data = {}) {
     const isStoryUrl = pathname.includes('/stories/');
     const isTvUrl = pathname.includes('/tv/');
 
+    // Handle Instagram Carousel (multiple slides, photos, or videos)
+    if (isCarousel) {
+      return {
+        platform: 'Instagram',
+        platformId: 'instagram',
+        contentType: 'post',
+        contentCategory: 'Post',
+        contentLabel: `Instagram Carousel (${itemCount} items)`,
+        isReel: false,
+        isPost: true,
+        isCarousel: true,
+        itemCount: itemCount,
+        hasAudio: hasAudio,
+        isShort: false,
+        isAudio: false,
+        isPhoto: !hasAudio,
+        badge: `Instagram Carousel \u2022 ${itemCount} items`,
+        aspectRatio: aspectRatio
+      };
+    }
+
     if (isReelUrl || isStoryUrl || (!isPostUrl && !isTvUrl && isVertical)) {
       return {
         platform: 'Instagram',
@@ -221,6 +252,9 @@ function classifyMediaContent(url, data = {}) {
         contentLabel: 'Instagram Reel',
         isReel: true,
         isPost: false,
+        isCarousel: false,
+        itemCount: 1,
+        hasAudio: hasAudio,
         isShort: false,
         isAudio: false,
         isPhoto: false,
@@ -238,6 +272,9 @@ function classifyMediaContent(url, data = {}) {
         contentLabel: 'Instagram Video',
         isReel: false,
         isPost: true,
+        isCarousel: false,
+        itemCount: 1,
+        hasAudio: hasAudio,
         isShort: false,
         isAudio: false,
         isPhoto: false,
@@ -259,6 +296,9 @@ function classifyMediaContent(url, data = {}) {
         contentLabel: 'Instagram Post (Photo)',
         isReel: false,
         isPost: true,
+        isCarousel: false,
+        itemCount: 1,
+        hasAudio: false,
         isShort: false,
         isAudio: false,
         isPhoto: true,
@@ -275,6 +315,9 @@ function classifyMediaContent(url, data = {}) {
       contentLabel: 'Instagram Post (Video)',
       isReel: false,
       isPost: true,
+      isCarousel: false,
+      itemCount: 1,
+      hasAudio: hasAudio,
       isShort: false,
       isAudio: false,
       isPhoto: false,
@@ -504,7 +547,7 @@ function classifyMediaContent(url, data = {}) {
  * Generate tailored download presets specifically customized for each social
  * media app and content type (Reel vs Post vs Video).
  */
-function getTailoredDownloadOptions({ platformId, contentType, isReel, isPost, duration, data = {} }) {
+function getTailoredDownloadOptions({ platformId, contentType, isReel, isPost, duration, data = {}, isCarousel = false, itemCount = 1, hasAudio = true }) {
   // 1. Instagram Reel
   if (platformId === 'instagram' && isReel) {
     return {
@@ -554,9 +597,49 @@ function getTailoredDownloadOptions({ platformId, contentType, isReel, isPost, d
     };
   }
 
-  // 2. Instagram Post
+  // 2. Instagram Post & Carousel
   if (platformId === 'instagram' && isPost) {
     const isPhoto = contentType === 'photo';
+
+    if (isCarousel || hasAudio === false) {
+      return {
+        appTheme: 'instagram',
+        appColor: '#c13584',
+        headline: isCarousel ? `Instagram Carousel (${itemCount} items)` : 'Instagram Post (Silent Media)',
+        subhead: hasAudio ? 'Slide 1 Video & High-Resolution Photos' : 'Slide 1 Video & Photo Frames (No Audio Stream)',
+        presets: [
+          {
+            id: 'carousel-video-hd',
+            label: 'Slide 1 Video (MP4)',
+            format: 'mp4',
+            quality: '1080p',
+            badge: '1080p HD',
+            icon: 'video',
+            desc: hasAudio ? 'Full HD slide 1 video with sound' : 'Full HD slide 1 video (silent)',
+            recommended: true
+          },
+          {
+            id: 'carousel-cover-hd',
+            label: 'Slide 1 Cover / Photo',
+            format: 'cover',
+            quality: 'original',
+            badge: 'HD Image',
+            icon: 'image',
+            desc: 'Download slide 1 full-resolution photo'
+          },
+          ...(hasAudio ? [{
+            id: 'carousel-audio-320',
+            label: 'Post Audio (MP3)',
+            format: 'mp3',
+            quality: '320k',
+            badge: '320 kbps HQ',
+            icon: 'music',
+            desc: 'Extract audio track from post'
+          }] : [])
+        ]
+      };
+    }
+
     return {
       appTheme: 'instagram',
       appColor: '#c13584',
@@ -1080,30 +1163,55 @@ function getVideoInfo(rawUrl) {
       try {
         const data = JSON.parse(stdout);
 
+        const isCarousel = data._type === 'playlist' || (Array.isArray(data.entries) && data.entries.length > 0);
+        const entries = isCarousel ? data.entries : [];
+        const primaryItem = isCarousel && entries.length > 0 ? (entries[0] || {}) : data;
+
         // Pick highest resolution thumbnail
-        let thumbnail = data.thumbnail;
-        if (Array.isArray(data.thumbnails) && data.thumbnails.length > 0) {
-          const sorted = [...data.thumbnails].sort((a, b) => (b.width || 0) - (a.width || 0));
+        let thumbnail = data.thumbnail || primaryItem.thumbnail;
+        const candidateThumbs = (Array.isArray(primaryItem.thumbnails) && primaryItem.thumbnails.length > 0)
+          ? primaryItem.thumbnails
+          : (Array.isArray(data.thumbnails) ? data.thumbnails : []);
+        if (candidateThumbs.length > 0) {
+          const sorted = [...candidateThumbs].sort((a, b) => (b.width || 0) - (a.width || 0));
           thumbnail = sorted[0].url || thumbnail;
         }
 
-        const duration = data.duration || 0;
+        // Detect if media has an audio stream
+        let hasAudio = false;
+        if (isCarousel && entries.length > 0) {
+          hasAudio = entries.some(e => Array.isArray(e.formats) && e.formats.some(f => f.acodec && f.acodec !== 'none'));
+        } else if (Array.isArray(data.formats) && data.formats.length > 0) {
+          hasAudio = data.formats.some(f => f.acodec && f.acodec !== 'none');
+        } else if (data.acodec && data.acodec !== 'none') {
+          hasAudio = true;
+        }
+
+        const duration = Number(primaryItem.duration || data.duration) || 0;
         const platform = detectPlatform(url);
-        const classification = classifyMediaContent(url, data);
+        const classification = classifyMediaContent(url, primaryItem, {
+          isCarousel,
+          itemCount: entries.length,
+          hasAudio
+        });
+
         const tailoredOptions = getTailoredDownloadOptions({
           platformId: classification.platformId,
           contentType: classification.contentType,
           isReel: classification.isReel,
           isPost: classification.isPost,
           duration: duration,
-          data: data
+          data: primaryItem,
+          isCarousel,
+          itemCount: entries.length,
+          hasAudio
         });
 
         const info = {
-          id: data.id,
+          id: primaryItem.id || data.id,
           url: data.webpage_url || url,
-          title: data.title || `${platform} Media`,
-          uploader: data.uploader || data.channel || data.creator || `${platform} Creator`,
+          title: primaryItem.title || data.title || `${platform} Media`,
+          uploader: primaryItem.uploader || data.uploader || primaryItem.channel || data.channel || `${platform} Creator`,
           platform: classification.platform || platform,
           platformId: classification.platformId,
           contentType: classification.contentType,
@@ -1111,6 +1219,9 @@ function getVideoInfo(rawUrl) {
           contentLabel: classification.contentLabel,
           isReel: classification.isReel,
           isPost: classification.isPost,
+          isCarousel: isCarousel,
+          itemCount: entries.length || 1,
+          hasAudio: hasAudio,
           isShort: classification.isShort,
           isAudio: classification.isAudio,
           isPhoto: classification.isPhoto,
@@ -1118,14 +1229,14 @@ function getVideoInfo(rawUrl) {
           contentBadge: classification.badge,
           tailoredOptions: tailoredOptions,
           presets: tailoredOptions.presets || [],
-          channelUrl: data.channel_url || data.uploader_url || null,
+          channelUrl: primaryItem.channel_url || data.channel_url || primaryItem.uploader_url || data.uploader_url || null,
           duration: duration,
           durationFormatted: formatDuration(duration),
           isUltraLong: duration >= 7200, // >= 2 hours (handles 10h, 24h, 100h+)
           thumbnail: thumbnail,
-          viewCount: data.view_count || data.like_count || 0,
-          uploadDate: data.upload_date || '',
-          description: (data.description || '').slice(0, 300)
+          viewCount: primaryItem.view_count || data.view_count || primaryItem.like_count || data.like_count || 0,
+          uploadDate: primaryItem.upload_date || data.upload_date || '',
+          description: (primaryItem.description || data.description || '').slice(0, 300)
         };
 
         resolve(info);
@@ -1229,6 +1340,18 @@ function buildConversionArgs({
     '--no-mtime'
   ];
 
+  let hostname = '';
+  let pathname = '';
+  try {
+    const parsed = new URL(url.includes('://') ? url : `https://${url}`);
+    hostname = parsed.hostname.toLowerCase();
+    pathname = parsed.pathname.toLowerCase();
+  } catch {}
+
+  const isInstagram = hostname === 'instagram.com' || hostname.endsWith('.instagram.com') || hostname === 'instagr.am' || hostname.endsWith('.instagr.am');
+  const isMultiItemCandidate = isInstagram && (pathname.includes('/p/') || pathname.includes('/reel/') || pathname.includes('/reels/'));
+  const itemFlags = isMultiItemCandidate ? ['--playlist-items', '1'] : [];
+
   let args = [];
 
   if (isVideo) {
@@ -1249,6 +1372,7 @@ function buildConversionArgs({
       '--output', outputTemplate,
       '--newline',
       '--no-playlist',
+      ...itemFlags,
       '--embed-metadata',
       '--embed-thumbnail',
       '--no-check-certificates',
@@ -1280,6 +1404,7 @@ function buildConversionArgs({
       '--output', outputTemplate,
       '--newline',
       '--no-playlist',
+      ...itemFlags,
       '--embed-metadata',
       '--embed-thumbnail',
       '--convert-thumbnails', 'jpg',
@@ -1445,7 +1570,9 @@ function attachProcessListeners(jobState, child, targetFormat) {
     } else {
       jobState.status = 'failed';
       let errorMsg = `Conversion failed (exit code ${code})`;
-      if (stderrBuffer.includes('Sign in to confirm your age')) {
+      if (stderrBuffer.includes('unable to obtain file audio codec with ffprobe') || stderrBuffer.includes('does not contain any audio stream')) {
+        errorMsg = 'This post does not contain an audio stream (silent video or photo). Please select MP4 to download the video or Cover for the photo.';
+      } else if (stderrBuffer.includes('Sign in to confirm your age')) {
         errorMsg = 'This video is age-restricted and requires sign-in.';
       } else if (stderrBuffer.includes('Sign in') || stderrBuffer.includes('bot')) {
         errorMsg = 'YouTube flagged this video with bot/login verification. Try another video link or export cookies.txt.';

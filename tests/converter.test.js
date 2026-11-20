@@ -582,6 +582,51 @@ test('converter - getTailoredDownloadOptions generates app-specific presets with
   assert.ok(flacPreset && wavPreset, 'SoundCloud must offer lossless audio formats');
 });
 
+test('converter - classifyMediaContent and getTailoredDownloadOptions handle Instagram Carousels and Silent Media', () => {
+  // Carousel Post
+  const igCarousel = classifyMediaContent('https://www.instagram.com/p/Df7jLCigbb3/', {
+    entries: new Array(18).fill({})
+  }, {
+    isCarousel: true,
+    itemCount: 18,
+    hasAudio: false
+  });
+
+  assert.strictEqual(igCarousel.platform, 'Instagram');
+  assert.strictEqual(igCarousel.isCarousel, true);
+  assert.strictEqual(igCarousel.itemCount, 18);
+  assert.strictEqual(igCarousel.hasAudio, false);
+  assert.strictEqual(igCarousel.badge, 'Instagram Carousel • 18 items');
+
+  // Carousel tailored options with silent audio
+  const carouselOptions = getTailoredDownloadOptions({
+    platformId: 'instagram',
+    contentType: 'post',
+    isReel: false,
+    isPost: true,
+    isCarousel: true,
+    itemCount: 18,
+    hasAudio: false
+  });
+
+  assert.strictEqual(carouselOptions.headline, 'Instagram Carousel (18 items)');
+  const recommendedPreset = carouselOptions.presets.find(p => p.recommended);
+  assert.ok(recommendedPreset, 'Should have a recommended preset');
+  assert.strictEqual(recommendedPreset.format, 'mp4', 'Silent carousel should recommend MP4 video, not MP3');
+
+  // Ensure buildConversionArgs includes --playlist-items 1 for Instagram multi-item posts
+  const conversionArgs = buildConversionArgs({
+    url: 'https://www.instagram.com/p/Df7jLCigbb3/',
+    format: 'mp4',
+    quality: '1080p',
+    outputTemplate: 'server/downloads/test-job.%(ext)s'
+  });
+
+  const playlistItemsIndex = conversionArgs.args.indexOf('--playlist-items');
+  assert.notStrictEqual(playlistItemsIndex, -1, 'Must include --playlist-items for Instagram posts');
+  assert.strictEqual(conversionArgs.args[playlistItemsIndex + 1], '1', '--playlist-items should target item 1');
+});
+
 
 
 

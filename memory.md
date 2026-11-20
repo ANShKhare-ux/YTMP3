@@ -19,8 +19,13 @@
   - Distinguishes between **Reels** (Instagram Reel, YouTube Short, TikTok, Facebook Reel) and **Posts** (Instagram feed photo/carousel/video, Facebook post, Twitter/X post, Reddit, SoundCloud audio) with precise aspect ratio tags (`9:16`, `1:1`, `16:9`).
   - Dynamic content classification via `classifyMediaContent(url, data)` in `server/converter.js`.
   - App-specific tailored download presets generated via `getTailoredDownloadOptions` (e.g. 1080p MP4, 320k MP3 audio track, M4A fast stream copy, high-res photo/cover download).
-  - Spotify-themed interactive preview badges (`🎬 Reel • 9:16`, `⚡ YouTube Short`, `📄 Feed Post`) in `VideoPreview.jsx`.
+  - Spotify-themed interactive preview badges (`🎬 Reel • 9:16`, `⚡ YouTube Short`, `📄 Feed Post`, `📸 Carousel (N items)`, `🔇 Silent Source`) in `VideoPreview.jsx`.
   - 1-click tailored download presets with active highlights in `OptionsSelector.jsx` and direct photo/cover download in `AppDesktop.jsx`.
+  - **Instagram Carousel & Silent Media Resolution**:
+    - Multi-item sidecar posts (`_type === 'playlist'`, `data.entries`) resolve primary item thumbnail, title, uploader, and duration cleanly from `data.entries[0]`.
+    - Detects silent media (`acodec === 'none'`), recommending pristine Full HD MP4 video and full-resolution photo downloads rather than failing postprocessing with `unable to obtain file audio codec with ffprobe`.
+    - Added `--playlist-items 1` in `buildConversionArgs` for Instagram multi-item posts, preventing yt-dlp file output template collisions and downloading slide 1 cleanly in seconds.
+    - Added clear user error messaging in `attachProcessListeners` when audio extraction is attempted on silent media without crashing the backend process.
 - **Audio Extraction**: Multi-bitrate MP3 (`320k`, `256k`, `192k`, `128k`), M4A (instant stream copy), lossless WAV, and FLAC.
 - **Video Conversion**: High-definition MP4 packaging (`1080p`, `720p`, `480p`, `best`) with direct stream copy audio muxing.
 - **Live Progress Updates**: Server-Sent Events (SSE) tracking download percentage, speed, ETA, and re-encoding stage every 400ms.
@@ -39,6 +44,7 @@
     - Opens directly when "DOWNLOAD NOW" is clicked from any landing page CTA (or directly via `/download`).
     - Presents all 4 official distributions: Windows Custom Installer (`SonicWave-Custom-Installer.exe`), Android Standalone APK (`SonicWave.apk`), Windows Portable ZIP (`SonicWave-v1.0.0-Windows.zip`), and macOS Portable Package (`SonicWave-v1.0.0-macOS.zip`).
     - Features dynamic client OS auto-detection highlighting the user's specific platform, actionable 1-click download buttons, complete step-by-step installation & usage walkthroughs for each package, comparison matrix, and SmartScreen / Android sideloading diagnostic FAQs.
+    - Top header branding styled cleanly with design tokens (`cursor-nav-brand`, explicit text colors, version badge) and `Back to Home` navigation button.
     - Full SPA routing (`/download`, `/downloads`), sitemap indexing (`sitemap.xml` priority 1.0), and AI crawler discovery (`llms.txt`).
 - **Electron Black Screen Remediation**:
   - Added `app.disableHardwareAcceleration()` for Windows (`process.platform === 'win32'`) in `electron/main.js` to eliminate Chromium D3D11/GPU driver black-screen hangs.
