@@ -42,6 +42,7 @@ Yes. SonicWave is 100% free under the MIT License with zero advertisements, zero
 
 ## Canonical URLs
 - Homepage: https://ytmp-3-five.vercel.app/
+- Download Center (All Platforms & Guides): https://ytmp-3-five.vercel.app/download
 - Structured Pricing & Specs: https://ytmp-3-five.vercel.app/pricing.md
 - Windows Custom Installer (.exe): https://ytmp-3-five.vercel.app/SonicWave-Custom-Installer.exe
 - Windows Portable ZIP (1.3 MB): https://ytmp-3-five.vercel.app/SonicWave-v1.0.0-Windows.zip

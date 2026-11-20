@@ -253,6 +253,7 @@ const FOOTER_COLUMNS = [
   {
     title: 'Download',
     links: [
+      { label: 'Download Center (All Platforms)', href: '/download' },
       { label: 'Android Standalone (.apk)', href: '/SonicWave.apk' },
       { label: 'Custom Installer (.exe)', href: '/SonicWave-Custom-Installer.exe' },
       { label: 'Windows Portable (.zip)', href: '/SonicWave-v1.0.0-Windows.zip' },
@@ -970,12 +971,11 @@ export default function LandingPage({
   };
 
   const handleDownloadClick = (e) => {
-    if (userPlatform === 'android') {
-      handleDownloadApk(e);
-    } else if (userPlatform === 'mac') {
-      handleDownloadMac(e);
+    if (e && e.preventDefault) e.preventDefault();
+    if (onNavigate) {
+      onNavigate('download', '/download');
     } else {
-      handleDownloadExe(e);
+      window.location.href = '/download';
     }
   };
 
@@ -2125,7 +2125,8 @@ export default function LandingPage({
           } else if (href === '/SonicWave.apk') {
             handleDownloadApk();
           } else if (onNavigate) {
-            if (href === '/install') onNavigate('install', '/install');
+            if (href === '/download') onNavigate('download', '/download');
+            else if (href === '/install') onNavigate('install', '/install');
             else if (href === '/supported-platforms') onNavigate('platforms-guide', '/supported-platforms');
             else if (href === '/troubleshooting') onNavigate('troubleshooting', '/troubleshooting');
             else if (href === '/privacy') onNavigate('privacy', '/privacy');

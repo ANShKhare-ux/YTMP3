@@ -343,6 +343,37 @@ test('workspace - standalone Android APK package and download routing integrity'
   assert.ok(troubleSrc.includes('Allow from this source'), 'TroubleshootingGuide must explain Allow from this source');
 });
 
+test('workspace - dedicated DownloadPage component and /download routing integrity', () => {
+  // 1. Verify DownloadPage.jsx exists and exports component
+  const downloadPagePath = path.join(rootDir, 'client', 'src', 'components', 'DownloadPage.jsx');
+  assert.ok(fs.existsSync(downloadPagePath), 'client/src/components/DownloadPage.jsx must exist');
+  const downloadPageSrc = fs.readFileSync(downloadPagePath, 'utf8');
+  assert.ok(downloadPageSrc.includes('export default function DownloadPage'), 'DownloadPage must export default function DownloadPage');
+
+  // 2. Verify all 4 download methods and guides are present
+  assert.ok(downloadPageSrc.includes('SonicWave-Custom-Installer.exe'), 'DownloadPage must feature Windows Custom Installer');
+  assert.ok(downloadPageSrc.includes('SonicWave.apk'), 'DownloadPage must feature Android APK');
+  assert.ok(downloadPageSrc.includes('SonicWave-v1.0.0-Windows.zip'), 'DownloadPage must feature Windows Portable ZIP');
+  assert.ok(downloadPageSrc.includes('SonicWave-v1.0.0-macOS.zip'), 'DownloadPage must feature macOS Package');
+  assert.ok(downloadPageSrc.includes('How to Install &amp; Use:'), 'DownloadPage must include usage guides for each method');
+
+  // 3. Verify App.jsx routes /download and /downloads to DownloadPage
+  const appSrc = fs.readFileSync(path.join(rootDir, 'client', 'src', 'App.jsx'), 'utf8');
+  assert.ok(appSrc.includes("import DownloadPage from './components/DownloadPage'"), 'App.jsx must import DownloadPage');
+  assert.ok(appSrc.includes("pathname === '/download'"), 'App.jsx must route /download');
+  assert.ok(appSrc.includes("<DownloadPage onNavigate={navigateTo} />"), 'App.jsx must render DownloadPage');
+
+  // 4. Verify LandingPage DOWNLOAD NOW button navigates to /download
+  const landingSrc = fs.readFileSync(path.join(rootDir, 'client', 'src', 'components', 'LandingPage.jsx'), 'utf8');
+  assert.ok(landingSrc.includes("onNavigate('download', '/download')"), 'LandingPage handleDownloadClick must route to /download');
+
+  // 5. Verify sitemap and llms.txt include /download
+  const sitemapSrc = fs.readFileSync(path.join(rootDir, 'client', 'public', 'sitemap.xml'), 'utf8');
+  assert.ok(sitemapSrc.includes('https://ytmp-3-five.vercel.app/download'), 'sitemap.xml must include /download');
+  const llmsSrc = fs.readFileSync(path.join(rootDir, 'client', 'public', 'llms.txt'), 'utf8');
+  assert.ok(llmsSrc.includes('https://ytmp-3-five.vercel.app/download'), 'llms.txt must include /download');
+});
+
 
 
 

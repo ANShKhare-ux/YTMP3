@@ -35,6 +35,11 @@
   - The standalone custom installer (`SonicWave-Custom-Installer.exe`, 1.52 MB) extracts `SonicWave.exe`, generates Desktop and Start Menu shortcuts targeting `SonicWave.exe`, and auto-launches the native window application.
   - The portable ZIP archive (`SonicWave-v1.0.0-Windows.zip`, 1.45 MB) serves the web version with `start.bat` for users wanting local browser execution.
   - Streamlined the landing page hero and bottom CTA rows: removed the cluttered 4-button cluster and replaced it with a prominent, high-converting **"DOWNLOAD NOW"** primary CTA button paired with subtle platform selector sublinks (`Windows Native (.exe)`, `Web Portable (.zip)`, `Android (.apk)`, `macOS (.zip)`).
+  - **Dedicated Download Center Page (`client/src/components/DownloadPage.jsx`)**:
+    - Opens directly when "DOWNLOAD NOW" is clicked from any landing page CTA (or directly via `/download`).
+    - Presents all 4 official distributions: Windows Custom Installer (`SonicWave-Custom-Installer.exe`), Android Standalone APK (`SonicWave.apk`), Windows Portable ZIP (`SonicWave-v1.0.0-Windows.zip`), and macOS Portable Package (`SonicWave-v1.0.0-macOS.zip`).
+    - Features dynamic client OS auto-detection highlighting the user's specific platform, actionable 1-click download buttons, complete step-by-step installation & usage walkthroughs for each package, comparison matrix, and SmartScreen / Android sideloading diagnostic FAQs.
+    - Full SPA routing (`/download`, `/downloads`), sitemap indexing (`sitemap.xml` priority 1.0), and AI crawler discovery (`llms.txt`).
 - **Electron Black Screen Remediation**:
   - Added `app.disableHardwareAcceleration()` for Windows (`process.platform === 'win32'`) in `electron/main.js` to eliminate Chromium D3D11/GPU driver black-screen hangs.
   - Implemented `show: false` paired with `mainWindow.once('ready-to-show', () => mainWindow.show())` to eliminate black window rendering before the DOM is painted.

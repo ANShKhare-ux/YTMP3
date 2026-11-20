@@ -8,9 +8,11 @@ import InstallGuide from './components/docs/InstallGuide';
 import SupportedPlatforms from './components/docs/SupportedPlatforms';
 import TroubleshootingGuide from './components/docs/TroubleshootingGuide';
 import ConverterGuide from './components/convert/ConverterGuide';
+import DownloadPage from './components/DownloadPage';
 import NotFound from './components/NotFound';
 
 function resolveRoute(pathname, hash) {
+  if (pathname === '/download' || pathname === '/downloads' || hash === '#download' || hash === '#/download' || hash === '#downloads' || hash === '#/downloads') return 'download';
   if (pathname === '/install' || hash === '#install' || hash === '#/install') return 'install';
   if (pathname === '/supported-platforms' || hash === '#supported-platforms' || hash === '#/supported-platforms') return 'platforms-guide';
   if (pathname === '/troubleshooting' || hash === '#troubleshooting' || hash === '#/troubleshooting') return 'troubleshooting';
@@ -62,6 +64,11 @@ export default function App() {
       window.removeEventListener('hashchange', handleRouteSync);
     };
   }, []);
+
+  // Dedicated Download Center (All available methods & guides)
+  if (currentView === 'download') {
+    return <DownloadPage onNavigate={navigateTo} />;
+  }
 
   // Technical Documentation Hubs
   if (currentView === 'install') {
