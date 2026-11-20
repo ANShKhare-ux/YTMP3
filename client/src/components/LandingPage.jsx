@@ -2072,8 +2072,8 @@ export default function LandingPage({
         crop={0.2}
         dotGap={6}
         radius={85}
-        grain={theme === 'light' ? 0.25 : 0.4}
-        preset={theme === 'light' ? 'paper' : 'night'}
+        grain={0.4}
+        preset="night"
         onNavigate={(href) => {
           if (href === '/SonicWave-Custom-Installer.exe') {
             handleDownloadExe();
@@ -2097,11 +2097,7 @@ export default function LandingPage({
             window.location.href = href;
           }
         }}
-        palette={theme === 'light' ? {
-          background: '#f7f8f9',
-          ink: '#0d0f12',
-          warm: '#5e6ad2',
-        } : {
+        palette={{
           background: '#010102',
           ink: '#f0f3f6',
           warm: '#5e69d1',
