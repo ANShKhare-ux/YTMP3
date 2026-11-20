@@ -143,48 +143,62 @@ export default function DownloadPage({ onNavigate }) {
   };
 
   return (
-    <div className={`cursor-canvas-root ${theme === 'light' ? 'light-mode' : ''}`} data-theme={theme} style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <div className={`cursor-canvas-root legal-shell ${theme === 'light' ? 'light-mode' : ''}`} data-theme={theme} style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       {/* Top Navbar */}
-      <header className="cursor-top-nav is-scrolled" role="banner" style={{ position: 'sticky', top: 0, zIndex: 100 }}>
+      <header className="cursor-top-nav" role="banner">
         <div className="cursor-nav-container">
-          <div className="cursor-nav-left">
+          <a
+            href="/"
+            className="cursor-nav-brand"
+            onClick={(e) => {
+              e.preventDefault();
+              if (onNavigate) onNavigate('landing', '/');
+              else window.location.href = '/';
+            }}
+            aria-label="SonicWave Home"
+          >
+            <CursorBrandLogo size={26} />
+            <span className="cursor-brand-title">SonicWave</span>
+            <span className="cursor-nav-version-badge">v1.0.0</span>
+          </a>
+
+          <nav className="cursor-nav-links" aria-label="Download Center Navigation">
             <a
               href="/"
-              className="cursor-brand-block"
+              className="cursor-nav-link"
               onClick={(e) => {
                 e.preventDefault();
                 if (onNavigate) onNavigate('landing', '/');
+                else window.location.href = '/';
               }}
-              aria-label="SonicWave Home"
             >
-              <CursorBrandLogo size={28} />
-              <div className="cursor-brand-text">
-                <span className="cursor-brand-name">SonicWave</span>
-                <span className="cursor-brand-version">v1.0.0</span>
-              </div>
+              <ArrowLeft size={13} style={{ marginRight: 4 }} aria-hidden="true" />
+              Back to Home
             </a>
-          </div>
+          </nav>
 
-          <div className="cursor-nav-right">
+          <div className="cursor-nav-actions">
             <button
               type="button"
-              className="cursor-icon-btn"
+              className="cursor-button-secondary cursor-nav-theme-btn"
               onClick={toggleTheme}
-              title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-              aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+              title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+              aria-label={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
             >
-              {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+              {theme === 'dark' ? <Sun size={14} aria-hidden="true" /> : <Moon size={14} aria-hidden="true" />}
             </button>
 
             <button
               type="button"
               className="cursor-button-secondary cursor-btn-sm"
-              onClick={() => {
+              onClick={(e) => {
+                e.preventDefault();
                 if (onNavigate) onNavigate('landing', '/');
+                else window.location.href = '/';
               }}
               style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
             >
-              <ArrowLeft size={14} />
+              <ArrowLeft size={13} aria-hidden="true" />
               <span>Back to Studio</span>
             </button>
           </div>
@@ -192,33 +206,31 @@ export default function DownloadPage({ onNavigate }) {
       </header>
 
       {/* Main Download Hub Container */}
-      <main id="main-content" style={{ flex: 1, maxWidth: '1120px', width: '100%', margin: '0 auto', padding: '40px 20px 80px' }}>
+      <main className="legal-main" id="main-content" style={{ flex: 1, maxWidth: '1140px', width: '100%', margin: '0 auto', padding: '32px 20px 80px' }}>
         {/* Breadcrumb Navigation */}
         <nav aria-label="Breadcrumb" style={{ marginBottom: '24px' }}>
-          <ol style={{ display: 'flex', alignItems: 'center', gap: '8px', listStyle: 'none', padding: 0, margin: 0, fontSize: '13px', color: 'var(--text-subdued)' }}>
-            <li>
-              <button
-                type="button"
-                onClick={() => onNavigate && onNavigate('landing', '/')}
-                style={{ background: 'none', border: 'none', color: 'var(--text-subdued)', cursor: 'pointer', padding: 0, fontSize: 'inherit' }}
-              >
-                Home
-              </button>
-            </li>
-            <li>&rsaquo;</li>
-            <li style={{ color: 'var(--spotify-green)', fontWeight: 600 }}>Download Center</li>
-          </ol>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: 'var(--cursor-ink-muted)' }}>
+            <button
+              type="button"
+              onClick={() => onNavigate && onNavigate('landing', '/')}
+              style={{ background: 'none', border: 'none', color: 'var(--cursor-ink-muted)', cursor: 'pointer', padding: 0, fontSize: 'inherit', textDecoration: 'none' }}
+            >
+              Home
+            </button>
+            <span style={{ opacity: 0.5 }}>&rsaquo;</span>
+            <span style={{ color: 'var(--spotify-green)', fontWeight: 600 }}>Download Center</span>
+          </div>
         </nav>
 
         {/* Hero Header Block */}
         <div className="legal-header-block" style={{ textAlign: 'center', maxWidth: '780px', margin: '0 auto 40px' }}>
-          <div className="legal-eyebrow-tag" style={{ display: 'inline-block', color: 'var(--spotify-green)', borderColor: 'rgba(30, 215, 96, 0.3)' }}>
+          <div className="legal-eyebrow-tag">
             OFFICIAL DISTRIBUTIONS &bull; WINDOWS &bull; ANDROID &bull; MACOS
           </div>
-          <h1 className="legal-page-h1" style={{ fontSize: 'clamp(32px, 5vw, 46px)', marginTop: '12px' }}>
+          <h1 className="legal-page-h1" style={{ fontSize: 'clamp(32px, 5vw, 44px)', marginTop: '8px' }}>
             Download SonicWave
           </h1>
-          <p style={{ fontSize: '16px', color: 'var(--text-subdued)', lineHeight: 1.6, margin: '14px 0 0' }}>
+          <p style={{ fontSize: '15px', color: 'var(--cursor-ink-muted)', lineHeight: 1.6, margin: '10px 0 0' }}>
             Choose the package tailored to your device. Every version is 100% free, open-source, features our 16-stream parallel turbo engine, and operates with zero telemetry, ads, or artificial limits.
           </p>
         </div>
