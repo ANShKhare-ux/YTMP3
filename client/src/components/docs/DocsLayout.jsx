@@ -5,8 +5,6 @@ import {
   Layers,
   Terminal,
   ArrowLeft,
-  Sun,
-  Moon,
   ExternalLink,
   ShieldCheck,
   FileText,
@@ -59,24 +57,6 @@ export default function DocsLayout({
   onNavigate,
   children
 }) {
-  const [theme, setTheme] = useState(() => {
-    try {
-      return localStorage.getItem('sonicwave_landing_theme') || 'dark';
-    } catch {
-      return 'dark';
-    }
-  });
-
-  const toggleTheme = () => {
-    setTheme((prev) => {
-      const next = prev === 'dark' ? 'light' : 'dark';
-      try {
-        localStorage.setItem('sonicwave_landing_theme', next);
-      } catch {}
-      return next;
-    });
-  };
-
   const handleLinkClick = (e, path, view) => {
     e.preventDefault();
     if (onNavigate) {
@@ -97,7 +77,7 @@ export default function DocsLayout({
   };
 
   return (
-    <div className={`cursor-canvas-root legal-shell ${theme === 'light' ? 'light-mode' : ''}`} data-theme={theme}>
+    <div className="cursor-canvas-root legal-shell" data-theme="dark">
       {/* Top Navigation Bar */}
       <header className="cursor-top-nav" role="banner">
         <div className="cursor-nav-container">
@@ -124,16 +104,6 @@ export default function DocsLayout({
           </nav>
 
           <div className="cursor-nav-actions">
-            <button
-              type="button"
-              className="cursor-button-secondary cursor-nav-theme-btn"
-              onClick={toggleTheme}
-              title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-              aria-label={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-            >
-              {theme === 'dark' ? <Sun size={14} aria-hidden="true" /> : <Moon size={14} aria-hidden="true" />}
-            </button>
-
             <button
               type="button"
               className="cursor-button-primary cursor-nav-download-btn"

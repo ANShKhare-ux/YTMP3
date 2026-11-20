@@ -89,13 +89,7 @@ export default function PrivacyPolicy({ onNavigate }) {
 
         <h3>2.3 Website Local Storage Usage</h3>
         <p>
-          The Website uses the browser&rsquo;s <code>localStorage</code> API solely for functional display preferences:
-        </p>
-        <ul>
-          <li><code>sonicwave_landing_theme</code>: Remembers your selected UI appearance (<code>dark</code> or <code>light</code> mode) across browser visits.</li>
-        </ul>
-        <p>
-          This value contains no personally identifying information and remains exclusively on your device.
+          The Website operates exclusively in dark theme and does not use tracking cookies, advertising beacons, or persistent tracking tokens in your browser.
         </p>
       </section>
 

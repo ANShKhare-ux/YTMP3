@@ -50,7 +50,7 @@
   - Added `app.disableHardwareAcceleration()` for Windows (`process.platform === 'win32'`) in `electron/main.js` to eliminate Chromium D3D11/GPU driver black-screen hangs.
   - Implemented `show: false` paired with `mainWindow.once('ready-to-show', () => mainWindow.show())` to eliminate black window rendering before the DOM is painted.
   - Ensured `userData` directory creation before writing `sonicwave.log` to prevent unhandled I/O failures on clean installations.
-- **UI Design System**: Spotify-inspired dark theme (`#121212`, Spotify Green `#1ed760`) for converter studio, paired with a Linear-styled marketing landing page featuring a light mode toggle (`Sun` / `Moon`) that preserves dark mode in the converter. Configured CSS easing variables and `prefers-reduced-motion` media queries.
+- **UI Design System**: Unified Spotify-inspired dark theme (`#121212`, Spotify Green `#1ed760`) paired with Linear-styled dark surfaces across the entire application and website. Light mode and all light mode toggles (`Sun` / `Moon` buttons) have been completely removed from all pages (`LandingPage.jsx`, `DownloadPage.jsx`, `NotFound.jsx`, `DocsLayout.jsx`, `LegalLayout.jsx`, `PrivacyPolicy.jsx`, and `client/src/index.css`), ensuring a consistent, distraction-free dark experience everywhere. Configured CSS easing variables and `prefers-reduced-motion` media queries.
 - **Technical SEO & Search Console Verification**:
   - Global Search Console verification meta tag (`vyi8Qkc4E4RP878V8Gc8VFv05oWR53YLsP0m6eWjYCI`) configured in `<head>` of `client/index.html`.
   - Canonical URL anchored to live production deployment (`https://ytmp-3-five.vercel.app/`).

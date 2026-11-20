@@ -18,8 +18,6 @@ import {
   Smartphone,
   Sparkles,
   ArrowLeft,
-  Sun,
-  Moon,
   ExternalLink,
   Copy,
   Check,
@@ -95,13 +93,6 @@ export default function DownloadPage({ onNavigate }) {
   const [isDownloadSuccessOpen, setIsDownloadSuccessOpen] = useState(false);
   const [downloadType, setDownloadType] = useState('exe');
   const [copiedCmd, setCopiedCmd] = useState('');
-  const [theme, setTheme] = useState(() => {
-    try {
-      return localStorage.getItem('sonicwave_landing_theme') || 'dark';
-    } catch {
-      return 'dark';
-    }
-  });
 
   const [userPlatform, setUserPlatform] = useState(() => {
     if (typeof window === 'undefined' || typeof navigator === 'undefined') return 'win';
@@ -116,16 +107,6 @@ export default function DownloadPage({ onNavigate }) {
     description: 'Download SonicWave v1.0.0 for Windows (Custom Native Installer & Portable ZIP), Android (Embedded Engine APK), and macOS. 100% free, open-source, with 16x parallel turbo media conversion.',
     canonical: 'https://ytmp-3-five.vercel.app/download'
   });
-
-  const toggleTheme = () => {
-    setTheme((prev) => {
-      const next = prev === 'dark' ? 'light' : 'dark';
-      try {
-        localStorage.setItem('sonicwave_landing_theme', next);
-      } catch {}
-      return next;
-    });
-  };
 
   const handleCopy = (text, id) => {
     navigator.clipboard.writeText(text);
@@ -143,7 +124,7 @@ export default function DownloadPage({ onNavigate }) {
   };
 
   return (
-    <div className={`cursor-canvas-root legal-shell ${theme === 'light' ? 'light-mode' : ''}`} data-theme={theme} style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <div className="cursor-canvas-root legal-shell download-page-main" data-theme="dark" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       {/* Top Navbar */}
       <header className="cursor-top-nav" role="banner">
         <div className="cursor-nav-container">
@@ -179,16 +160,6 @@ export default function DownloadPage({ onNavigate }) {
           </nav>
 
           <div className="cursor-nav-actions">
-            <button
-              type="button"
-              className="cursor-button-secondary cursor-nav-theme-btn"
-              onClick={toggleTheme}
-              title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-              aria-label={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-            >
-              {theme === 'dark' ? <Sun size={14} aria-hidden="true" /> : <Moon size={14} aria-hidden="true" />}
-            </button>
-
             <button
               type="button"
               className="cursor-button-secondary cursor-btn-sm"

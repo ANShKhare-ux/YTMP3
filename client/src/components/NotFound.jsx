@@ -11,8 +11,6 @@ import {
   Cpu,
   ShieldCheck,
   ExternalLink,
-  Sun,
-  Moon,
   FileQuestion,
   Download
 } from 'lucide-react';
@@ -103,23 +101,6 @@ const DESTINATION_CARDS = [
 
 export default function NotFound({ onNavigate }) {
   const [isDownloadSuccessOpen, setIsDownloadSuccessOpen] = useState(false);
-  const [theme, setTheme] = useState(() => {
-    try {
-      return localStorage.getItem('sonicwave_landing_theme') || 'dark';
-    } catch {
-      return 'dark';
-    }
-  });
-
-  const toggleTheme = () => {
-    setTheme((prev) => {
-      const next = prev === 'dark' ? 'light' : 'dark';
-      try {
-        localStorage.setItem('sonicwave_landing_theme', next);
-      } catch {}
-      return next;
-    });
-  };
 
   useDocumentMetadata({
     title: '404: Page Not Found : SonicWave',
@@ -144,7 +125,7 @@ export default function NotFound({ onNavigate }) {
   };
 
   return (
-    <div className={`cursor-canvas-root legal-shell ${theme === 'light' ? 'light-mode' : ''}`} data-theme={theme}>
+    <div className="cursor-canvas-root legal-shell" data-theme="dark">
       {/* Top Navigation */}
       <header className="cursor-top-nav" role="banner">
         <div className="cursor-nav-container">
@@ -167,15 +148,6 @@ export default function NotFound({ onNavigate }) {
           </nav>
 
           <div className="cursor-nav-actions">
-            <button
-              type="button"
-              className="cursor-button-secondary cursor-theme-toggle"
-              onClick={toggleTheme}
-              aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-              title={theme === 'dark' ? 'Light mode' : 'Dark mode'}
-            >
-              {theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
-            </button>
             <button
               type="button"
               className="cursor-button-primary cursor-nav-download-btn"

@@ -26,8 +26,6 @@ import {
   FileCode,
   FolderArchive,
   ArrowRight,
-  Sun,
-  Moon,
   ChevronUp
 } from 'lucide-react';
 import FaqAccordion from './ui/FaqAccordion';
@@ -283,23 +281,6 @@ export default function LandingPage({
     return /Mac|iPhone|iPad/i.test(ua) ? 'mac' : 'win';
   });
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [theme, setTheme] = useState(() => {
-    try {
-      return localStorage.getItem('sonicwave_landing_theme') || 'dark';
-    } catch {
-      return 'dark';
-    }
-  });
-
-  const toggleTheme = () => {
-    setTheme((prev) => {
-      const next = prev === 'dark' ? 'light' : 'dark';
-      try {
-        localStorage.setItem('sonicwave_landing_theme', next);
-      } catch {}
-      return next;
-    });
-  };
   const [selectedDemoTrack, setSelectedDemoTrack] = useState(DEMO_TRACKS[0]);
   const [isPlayingDemo, setIsPlayingDemo] = useState(false);
   const [demoProgress, setDemoProgress] = useState(32);
@@ -980,7 +961,7 @@ export default function LandingPage({
   };
 
   return (
-    <div className={`cursor-canvas-root ${theme === 'light' ? 'light-mode' : ''}`} data-theme={theme} ref={containerRef}>
+    <div className="cursor-canvas-root" data-theme="dark" ref={containerRef}>
       {/* Keyboard Accessibility: Skip to Main Content Link */}
       <a href="#main-content" className="cursor-skip-link" onClick={(e) => handleSmoothScroll(e, '#main-content')}>
         Skip to main content
@@ -1084,16 +1065,6 @@ export default function LandingPage({
           </nav>
 
           <div className="cursor-nav-actions">
-            <button
-              type="button"
-              className="cursor-button-secondary cursor-nav-theme-btn"
-              onClick={toggleTheme}
-              title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-              aria-label={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-            >
-              {theme === 'dark' ? <Sun size={14} aria-hidden="true" /> : <Moon size={14} aria-hidden="true" />}
-            </button>
-
             <button
               type="button"
               className={`cursor-button-primary cursor-nav-download-btn ${ctaElevated ? 'is-elevated' : ''}`}
@@ -1242,18 +1213,6 @@ export default function LandingPage({
               >
                 <AppleIcon size={16} />
                 <span>macOS Package (.zip)</span>
-              </button>
-              <button
-                type="button"
-                className="cursor-button-secondary cursor-mobile-theme-btn"
-                onClick={() => {
-                  toggleTheme();
-                  setIsMobileMenuOpen(false);
-                }}
-                aria-label={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-              >
-                {theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
-                <span>{theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}</span>
               </button>
             </div>
           </div>
