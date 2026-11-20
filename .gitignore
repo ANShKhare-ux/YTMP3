@@ -8,6 +8,7 @@ dist/
 dist-electron/
 dist-installer/
 client/dist/
+launcher/*.exe
 
 # Binaries and downloaded media files
 server/bin/

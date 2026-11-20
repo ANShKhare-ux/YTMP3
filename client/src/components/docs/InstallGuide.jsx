@@ -133,7 +133,7 @@ export default function InstallGuide({ onNavigate }) {
                 setIsDownloadSuccessOpen(true);
               }}
             >
-              <Download size={14} /> Download Custom Installer (.exe) &mdash; 330 MB
+              <Download size={14} /> Download Windows Native Installer (.exe)
             </a>
           </div>
           <p style={{ margin: '0 0 10px', fontSize: 13.5, color: 'var(--cursor-ink-muted)' }}>

@@ -251,8 +251,8 @@ export default function DownloadSuccessModal({
                     : isMac
                     ? '2.7 MB \u2022 macOS 12+ (Sonoma/Ventura/Monterey) \u2022 M1-M4 & Intel'
                     : isExe
-                    ? '1.45 MB \u2022 Windows 10 & 11 \u2022 Standalone Dark GUI Installer'
-                    : '1.3 MB \u2022 Windows 10 & 11 \u2022 SHA-256 Verified'}
+                    ? 'Windows 10 & 11 \u2022 Native Standalone Desktop Window (.exe)'
+                    : 'Windows 10 & 11 \u2022 Web Portable Package in Browser (.zip)'}
                 </span>
               </div>
             </div>

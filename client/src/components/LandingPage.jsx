@@ -1094,40 +1094,16 @@ export default function LandingPage({
               {theme === 'dark' ? <Sun size={14} aria-hidden="true" /> : <Moon size={14} aria-hidden="true" />}
             </button>
 
-            {userPlatform === 'android' ? (
-              <button
-                type="button"
-                className={`cursor-button-primary cursor-nav-download-btn ${ctaElevated ? 'is-elevated' : ''}`}
-                onClick={handleDownloadApk}
-                id="nav-download-btn"
-                aria-label="Download SonicWave for Android (.apk)"
-              >
-                <AndroidIcon size={14} />
-                <span className="cursor-nav-download-text">Download for Android</span>
-              </button>
-            ) : userPlatform === 'mac' ? (
-              <button
-                type="button"
-                className={`cursor-button-primary cursor-nav-download-btn ${ctaElevated ? 'is-elevated' : ''}`}
-                onClick={handleDownloadMac}
-                id="nav-download-btn"
-                aria-label="Download SonicWave for macOS"
-              >
-                <AppleIcon size={14} />
-                <span className="cursor-nav-download-text">Download for Mac</span>
-              </button>
-            ) : (
-              <button
-                type="button"
-                className={`cursor-button-primary cursor-nav-download-btn ${ctaElevated ? 'is-elevated' : ''}`}
-                onClick={handleDownloadClick}
-                id="nav-download-btn"
-                aria-label="Download SonicWave for Windows"
-              >
-                <WindowsIcon size={14} />
-                <span className="cursor-nav-download-text">Download for Windows</span>
-              </button>
-            )}
+            <button
+              type="button"
+              className={`cursor-button-primary cursor-nav-download-btn ${ctaElevated ? 'is-elevated' : ''}`}
+              onClick={handleDownloadClick}
+              id="nav-download-btn"
+              aria-label="DOWNLOAD NOW"
+            >
+              <Download size={14} />
+              <span className="cursor-nav-download-text">DOWNLOAD NOW</span>
+            </button>
 
             <button
               type="button"
@@ -1226,88 +1202,47 @@ export default function LandingPage({
               </a>
             </nav>
             <div className="cursor-mobile-menu-actions">
-              {userPlatform === 'android' ? (
-                <>
-                  <button
-                    type="button"
-                    className="cursor-button-primary cursor-mobile-download-btn"
-                    onClick={(e) => { setIsMobileMenuOpen(false); handleDownloadApk(e); }}
-                  >
-                    <AndroidIcon size={16} />
-                    <span>Download for Android (.apk)</span>
-                  </button>
-                  <button
-                    type="button"
-                    className="cursor-button-secondary cursor-mobile-download-btn"
-                    onClick={(e) => { setIsMobileMenuOpen(false); handleDownloadExe(e); }}
-                  >
-                    <WindowsIcon size={16} />
-                    <span>Windows Installer (.exe)</span>
-                  </button>
-                  <button
-                    type="button"
-                    className="cursor-button-secondary cursor-mobile-download-btn"
-                    onClick={(e) => { setIsMobileMenuOpen(false); handleDownloadMac(e); }}
-                  >
-                    <AppleIcon size={16} />
-                    <span>macOS Package (.zip)</span>
-                  </button>
-                </>
-              ) : userPlatform === 'mac' ? (
-                <>
-                  <button
-                    type="button"
-                    className="cursor-button-primary cursor-mobile-download-btn"
-                    onClick={(e) => { setIsMobileMenuOpen(false); handleDownloadMac(e); }}
-                  >
-                    <AppleIcon size={16} />
-                    <span>Download for macOS (.zip)</span>
-                  </button>
-                  <button
-                    type="button"
-                    className="cursor-button-secondary cursor-mobile-download-btn"
-                    onClick={(e) => { setIsMobileMenuOpen(false); handleDownloadExe(e); }}
-                  >
-                    <WindowsIcon size={16} />
-                    <span>Windows Installer (.exe)</span>
-                  </button>
-                  <button
-                    type="button"
-                    className="cursor-button-secondary cursor-mobile-download-btn"
-                    onClick={(e) => { setIsMobileMenuOpen(false); handleDownloadApk(e); }}
-                  >
-                    <AndroidIcon size={16} />
-                    <span>Android APK (.apk)</span>
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button
-                    type="button"
-                    className="cursor-button-primary cursor-mobile-download-btn"
-                    onClick={(e) => { setIsMobileMenuOpen(false); handleDownloadClick(e); }}
-                  >
-                    <WindowsIcon size={16} />
-                    <span>Download for Windows (.exe)</span>
-                  </button>
-                  <button
-                    type="button"
-                    className="cursor-button-secondary cursor-mobile-download-btn"
-                    onClick={(e) => { setIsMobileMenuOpen(false); handleDownloadApk(e); }}
-                  >
-                    <AndroidIcon size={16} />
-                    <span>Android Standalone (.apk)</span>
-                  </button>
-                  <button
-                    type="button"
-                    className="cursor-button-secondary cursor-mobile-download-btn"
-                    onClick={(e) => { setIsMobileMenuOpen(false); handleDownloadMac(e); }}
-                  >
-                    <AppleIcon size={16} />
-                    <span>macOS Package (.zip)</span>
-                  </button>
-                </>
-              )}
+              <button
+                type="button"
+                className="cursor-button-primary cursor-mobile-download-btn cursor-btn-download-now"
+                onClick={(e) => { setIsMobileMenuOpen(false); handleDownloadClick(e); }}
+                aria-label="DOWNLOAD NOW"
+              >
+                <Download size={16} />
+                <span>DOWNLOAD NOW</span>
+              </button>
+              <button
+                type="button"
+                className="cursor-button-secondary cursor-mobile-download-btn"
+                onClick={(e) => { setIsMobileMenuOpen(false); handleDownloadExe(e); }}
+              >
+                <WindowsIcon size={16} />
+                <span>Windows Native (.exe)</span>
+              </button>
+              <button
+                type="button"
+                className="cursor-button-secondary cursor-mobile-download-btn"
+                onClick={(e) => { setIsMobileMenuOpen(false); handleDownloadZip(e); }}
+              >
+                <FolderArchive size={16} />
+                <span>Web Portable (.zip)</span>
+              </button>
+              <button
+                type="button"
+                className="cursor-button-secondary cursor-mobile-download-btn"
+                onClick={(e) => { setIsMobileMenuOpen(false); handleDownloadApk(e); }}
+              >
+                <AndroidIcon size={16} />
+                <span>Android Standalone (.apk)</span>
+              </button>
+              <button
+                type="button"
+                className="cursor-button-secondary cursor-mobile-download-btn"
+                onClick={(e) => { setIsMobileMenuOpen(false); handleDownloadMac(e); }}
+              >
+                <AppleIcon size={16} />
+                <span>macOS Package (.zip)</span>
+              </button>
               <button
                 type="button"
                 className="cursor-button-secondary cursor-mobile-theme-btn"
@@ -1351,126 +1286,16 @@ export default function LandingPage({
           </p>
 
           <div className="cursor-hero-cta-row">
-            {userPlatform === 'android' ? (
-              <>
-                <button
-                  type="button"
-                  className="cursor-button-primary cursor-btn-lg"
-                  onClick={handleDownloadApk}
-                  id="hero-download-btn"
-                  aria-label="Download SonicWave for Android (.apk)"
-                >
-                  <AndroidIcon size={16} />
-                  <span>Download for Android (.apk)</span>
-                  <Download size={15} className="cursor-cta-icon" aria-hidden="true" />
-                </button>
-
-                <button
-                  type="button"
-                  className="cursor-button-secondary cursor-btn-lg"
-                  onClick={handleDownloadExe}
-                  id="hero-download-win-btn"
-                  aria-label="Download SonicWave Custom Installer for Windows"
-                >
-                  <WindowsIcon size={15} aria-hidden="true" />
-                  <span>Windows Installer (.exe)</span>
-                </button>
-
-                <button
-                  type="button"
-                  className="cursor-button-secondary cursor-btn-lg"
-                  onClick={handleDownloadMac}
-                  id="hero-download-mac-btn"
-                  aria-label="Download SonicWave for macOS"
-                >
-                  <AppleIcon size={15} aria-hidden="true" />
-                  <span>macOS (.zip)</span>
-                </button>
-              </>
-            ) : userPlatform === 'mac' ? (
-              <>
-                <button
-                  type="button"
-                  className="cursor-button-primary cursor-btn-lg"
-                  onClick={handleDownloadMac}
-                  id="hero-download-btn"
-                  aria-label="Download SonicWave for macOS"
-                >
-                  <AppleIcon size={16} />
-                  <span>Download for macOS (.zip)</span>
-                  <Download size={15} className="cursor-cta-icon" aria-hidden="true" />
-                </button>
-
-                <button
-                  type="button"
-                  className="cursor-button-secondary cursor-btn-lg"
-                  onClick={handleDownloadExe}
-                  id="hero-download-win-btn"
-                  aria-label="Download SonicWave Custom Installer for Windows"
-                >
-                  <WindowsIcon size={15} aria-hidden="true" />
-                  <span>Windows Installer (.exe)</span>
-                </button>
-
-                <button
-                  type="button"
-                  className="cursor-button-secondary cursor-btn-lg"
-                  onClick={handleDownloadApk}
-                  id="hero-download-apk-btn"
-                  aria-label="Download SonicWave for Android (.apk)"
-                >
-                  <AndroidIcon size={15} aria-hidden="true" />
-                  <span>Android (.apk)</span>
-                </button>
-              </>
-            ) : (
-              <>
-                <button
-                  type="button"
-                  className="cursor-button-primary cursor-btn-lg"
-                  onClick={handleDownloadClick}
-                  id="hero-download-btn"
-                  aria-label="Download SonicWave Custom Installer for Windows"
-                >
-                  <WindowsIcon size={16} />
-                  <span>Download Custom Installer (.exe)</span>
-                  <Download size={15} className="cursor-cta-icon" aria-hidden="true" />
-                </button>
-
-                <button
-                  type="button"
-                  className="cursor-button-secondary cursor-btn-lg"
-                  onClick={handleDownloadApk}
-                  id="hero-download-apk-btn"
-                  aria-label="Download SonicWave for Android (.apk)"
-                >
-                  <AndroidIcon size={15} aria-hidden="true" />
-                  <span>Android (.apk)</span>
-                </button>
-
-                <button
-                  type="button"
-                  className="cursor-button-secondary cursor-btn-lg"
-                  onClick={handleDownloadZip}
-                  id="hero-download-zip-btn"
-                  aria-label="Download SonicWave portable ZIP package"
-                >
-                  <FolderArchive size={15} aria-hidden="true" />
-                  <span>Portable ZIP (.zip)</span>
-                </button>
-
-                <button
-                  type="button"
-                  className="cursor-button-secondary cursor-btn-lg"
-                  onClick={handleDownloadMac}
-                  id="hero-download-mac-btn"
-                  aria-label="Download SonicWave for macOS"
-                >
-                  <AppleIcon size={15} aria-hidden="true" />
-                  <span>macOS (.zip)</span>
-                </button>
-              </>
-            )}
+            <button
+              type="button"
+              className="cursor-button-primary cursor-btn-lg cursor-btn-download-now"
+              onClick={handleDownloadClick}
+              id="hero-download-btn"
+              aria-label="DOWNLOAD NOW"
+            >
+              <Download size={18} className="cursor-cta-icon" aria-hidden="true" />
+              <span>DOWNLOAD NOW</span>
+            </button>
 
             <a
               href="#how-it-works"
@@ -1481,6 +1306,28 @@ export default function LandingPage({
               <Terminal size={14} aria-hidden="true" />
               <span>Installation guide</span>
             </a>
+          </div>
+
+          <div className="cursor-hero-sub-formats">
+            <span className="cursor-hero-format-pill">
+              {userPlatform === 'android' ? 'Detected: Android' : userPlatform === 'mac' ? 'Detected: macOS' : 'Detected: Windows'}
+            </span>
+            <span className="cursor-hero-format-divider">&bull;</span>
+            <button type="button" className="cursor-hero-format-link" onClick={handleDownloadExe}>
+              <WindowsIcon size={13} /> Windows Native (.exe)
+            </button>
+            <span className="cursor-hero-format-divider">&bull;</span>
+            <button type="button" className="cursor-hero-format-link" onClick={handleDownloadZip}>
+              <FolderArchive size={13} /> Web Portable (.zip)
+            </button>
+            <span className="cursor-hero-format-divider">&bull;</span>
+            <button type="button" className="cursor-hero-format-link" onClick={handleDownloadApk}>
+              <AndroidIcon size={13} /> Android (.apk)
+            </button>
+            <span className="cursor-hero-format-divider">&bull;</span>
+            <button type="button" className="cursor-hero-format-link" onClick={handleDownloadMac}>
+              <AppleIcon size={13} /> macOS (.zip)
+            </button>
           </div>
 
           {/* CRO Friction Reduction: Micro-proof directly below primary CTA */}
@@ -2216,109 +2063,34 @@ export default function LandingPage({
               Download SonicWave to extract audio and video at 16x parallel turbo speed with zero ads or limits.
             </p>
             <div className="cursor-cta-actions">
-              {userPlatform === 'android' ? (
-                <>
-                  <button
-                    type="button"
-                    className="cursor-button-primary cursor-btn-lg"
-                    onClick={handleDownloadApk}
-                    id="bottom-download-btn"
-                    aria-label="Download SonicWave for Android (.apk)"
-                  >
-                    <AndroidIcon size={16} />
-                    <span>Download for Android (.apk)</span>
-                    <Download size={15} className="cursor-cta-icon" aria-hidden="true" />
-                  </button>
+              <button
+                type="button"
+                className="cursor-button-primary cursor-btn-lg cursor-btn-download-now"
+                onClick={handleDownloadClick}
+                id="bottom-download-btn"
+                aria-label="DOWNLOAD NOW"
+              >
+                <Download size={18} className="cursor-cta-icon" aria-hidden="true" />
+                <span>DOWNLOAD NOW</span>
+              </button>
+            </div>
 
-                  <button
-                    type="button"
-                    className="cursor-button-secondary cursor-btn-lg"
-                    onClick={handleDownloadExe}
-                    aria-label="Download SonicWave Custom Installer for Windows"
-                  >
-                    <WindowsIcon size={15} aria-hidden="true" />
-                    <span>Windows Installer (.exe)</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    className="cursor-button-secondary cursor-btn-lg"
-                    onClick={handleDownloadMac}
-                    aria-label="Download SonicWave for macOS"
-                  >
-                    <AppleIcon size={15} aria-hidden="true" />
-                    <span>macOS Package (.zip)</span>
-                  </button>
-                </>
-              ) : userPlatform === 'mac' ? (
-                <>
-                  <button
-                    type="button"
-                    className="cursor-button-primary cursor-btn-lg"
-                    onClick={handleDownloadMac}
-                    id="bottom-download-btn"
-                    aria-label="Download SonicWave for macOS"
-                  >
-                    <AppleIcon size={16} />
-                    <span>Download for macOS (.zip)</span>
-                    <Download size={15} className="cursor-cta-icon" aria-hidden="true" />
-                  </button>
-
-                  <button
-                    type="button"
-                    className="cursor-button-secondary cursor-btn-lg"
-                    onClick={handleDownloadExe}
-                    aria-label="Download SonicWave Custom Installer for Windows"
-                  >
-                    <WindowsIcon size={15} aria-hidden="true" />
-                    <span>Windows Installer (.exe)</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    className="cursor-button-secondary cursor-btn-lg"
-                    onClick={handleDownloadApk}
-                    aria-label="Download SonicWave for Android (.apk)"
-                  >
-                    <AndroidIcon size={15} aria-hidden="true" />
-                    <span>Android (.apk)</span>
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button
-                    type="button"
-                    className="cursor-button-primary cursor-btn-lg"
-                    onClick={handleDownloadClick}
-                    id="bottom-download-btn"
-                    aria-label="Download SonicWave Custom Installer for Windows"
-                  >
-                    <WindowsIcon size={16} />
-                    <span>Download Custom Installer (.exe)</span>
-                    <Download size={15} className="cursor-cta-icon" aria-hidden="true" />
-                  </button>
-
-                  <button
-                    type="button"
-                    className="cursor-button-secondary cursor-btn-lg"
-                    onClick={handleDownloadApk}
-                    aria-label="Download SonicWave for Android (.apk)"
-                  >
-                    <AndroidIcon size={15} aria-hidden="true" />
-                    <span>Android (.apk)</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    className="cursor-button-secondary cursor-btn-lg"
-                    onClick={handleDownloadMac}
-                    aria-label="Download SonicWave for macOS"
-                  >
-                    <AppleIcon size={15} aria-hidden="true" />
-                    <span>macOS Package (.zip)</span>
-                  </button>
-                </>
-              )}
+            <div className="cursor-hero-sub-formats" style={{ marginTop: '16px' }}>
+              <button type="button" className="cursor-hero-format-link" onClick={handleDownloadExe}>
+                <WindowsIcon size={13} /> Windows Native (.exe)
+              </button>
+              <span className="cursor-hero-format-divider">&bull;</span>
+              <button type="button" className="cursor-hero-format-link" onClick={handleDownloadZip}>
+                <FolderArchive size={13} /> Web Portable (.zip)
+              </button>
+              <span className="cursor-hero-format-divider">&bull;</span>
+              <button type="button" className="cursor-hero-format-link" onClick={handleDownloadApk}>
+                <AndroidIcon size={13} /> Android (.apk)
+              </button>
+              <span className="cursor-hero-format-divider">&bull;</span>
+              <button type="button" className="cursor-hero-format-link" onClick={handleDownloadMac}>
+                <AppleIcon size={13} /> macOS (.zip)
+              </button>
             </div>
             <span className="cursor-micro-note">
               Android 8.0+ &bull; Windows 11 &amp; 10 &bull; macOS Sonoma, Ventura &amp; Monterey (Apple Silicon &amp; Intel) &bull; 100% Free &amp; Open Source

@@ -25,9 +25,11 @@
 - **Persistent History**: Server-side JSON storage (`server/data/history.json`, capped at 50 records) and client-side `localStorage` cache.
 - **Desktop Packaging**: `scripts/package-desktop.mjs` generates `SonicWave-v1.0.0-Windows.zip` stripped of marketing landing components.
 - **Main Website Installer Integration & Live Binary Delivery**:
-  - Replaced the large 330 MB Electron installer with a standalone 1.45 MB C# WPF native frameless installer (`SonicWave-Custom-Installer.exe`) built against .NET 4.0/4.8 (present on all Windows 10/11 installations).
-  - Embedded the full offline application payload (`SonicWavePackage.zip`, 1.38 MB) directly into the installer executable, allowing 100% offline installation with zero GitHub/Vercel size limit issues (< 100 MB).
-  - Pushed to `origin main` and verified live on Vercel CDN (`https://ytmp-3-five.vercel.app/SonicWave-Custom-Installer.exe` returns `Content-Type: application/x-msdos-program`, `Content-Length: 1458176`), resolving the issue where browser downloads previously received `index.html`.
+  - Replaced browser-launching web scripts with a true native desktop application launcher (`SonicWave.exe` compiled from C# against .NET Framework 4.0/4.8) that starts the local engine silently in the background (no console window) and hosts the Spotify-dark Converter Studio inside a dedicated native desktop window (no browser address bar, no tabs).
+  - Cleanly manages the backend process lifetime by automatically terminating the background Node engine upon window closure.
+  - The standalone custom installer (`SonicWave-Custom-Installer.exe`, 1.52 MB) extracts `SonicWave.exe`, generates Desktop and Start Menu shortcuts targeting `SonicWave.exe`, and auto-launches the native window application.
+  - The portable ZIP archive (`SonicWave-v1.0.0-Windows.zip`, 1.45 MB) serves the web version with `start.bat` for users wanting local browser execution.
+  - Streamlined the landing page hero and bottom CTA rows: removed the cluttered 4-button cluster and replaced it with a prominent, high-converting **"DOWNLOAD NOW"** primary CTA button paired with subtle platform selector sublinks (`Windows Native (.exe)`, `Web Portable (.zip)`, `Android (.apk)`, `macOS (.zip)`).
 - **Electron Black Screen Remediation**:
   - Added `app.disableHardwareAcceleration()` for Windows (`process.platform === 'win32'`) in `electron/main.js` to eliminate Chromium D3D11/GPU driver black-screen hangs.
   - Implemented `show: false` paired with `mainWindow.once('ready-to-show', () => mainWindow.show())` to eliminate black window rendering before the DOM is painted.

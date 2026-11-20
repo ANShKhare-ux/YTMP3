@@ -71,7 +71,23 @@ fs.mkdirSync(path.join(stagingDir, 'client', 'src'), { recursive: true });
 fs.mkdirSync(path.join(stagingDir, 'client', 'src', 'components'), { recursive: true });
 fs.mkdirSync(path.join(stagingDir, 'client', 'dist'), { recursive: true });
 
-// 3. Copy root files
+// 3. Compile native SonicWave.exe launcher & copy root files
+const cscPath = 'C:\\Windows\\Microsoft.NET\\Framework64\\v4.0.30319\\csc.exe';
+const launcherSrc = path.join(rootDir, 'launcher', 'SonicWaveApp.cs');
+const launcherExe = path.join(rootDir, 'launcher', 'SonicWave.exe');
+const iconPath = path.join(rootDir, 'electron', 'icon.ico');
+
+if (process.platform === 'win32' && fs.existsSync(cscPath) && fs.existsSync(launcherSrc)) {
+  console.log('[NATIVE] Compiling native standalone SonicWave.exe...');
+  fs.mkdirSync(path.join(rootDir, 'launcher'), { recursive: true });
+  execSync(`"${cscPath}" /target:winexe /optimize+ /win32icon:"${iconPath}" /r:System.Windows.Forms.dll /r:System.Drawing.dll /out:"${launcherExe}" "${launcherSrc}"`, { stdio: 'inherit' });
+}
+
+if (fs.existsSync(launcherExe)) {
+  fs.copyFileSync(launcherExe, path.join(stagingDir, 'SonicWave.exe'));
+  console.log('[STAGING] Bundled native SonicWave.exe inside package.');
+}
+
 fs.copyFileSync(path.join(rootDir, 'start.bat'), path.join(stagingDir, 'start.bat'));
 if (fs.existsSync(path.join(rootDir, 'start.sh'))) {
   fs.copyFileSync(path.join(rootDir, 'start.sh'), path.join(stagingDir, 'start.sh'));
@@ -114,8 +130,8 @@ function copyDirSync(src, dest) {
     if (entry.isDirectory()) {
       copyDirSync(srcPath, destPath);
     } else {
-      // Do not copy existing zip into client/dist/ in staging
-      if (entry.name.endsWith('.zip')) continue;
+      // Do not copy existing heavy binaries (zip, apk, exe) into client/dist/ in staging
+      if (entry.name.endsWith('.zip') || entry.name.endsWith('.apk') || entry.name.endsWith('.exe')) continue;
       fs.copyFileSync(srcPath, destPath);
     }
   }
@@ -191,4 +207,27 @@ if (hasLandingPage) {
   process.exit(1);
 } else {
   console.log('[SUCCESS] Downloadable ZIP package is 100% free of LandingPage.jsx!');
+}
+
+// 8. Compile standalone SonicWave-Custom-Installer.exe with embedded native package
+const installerCs = path.join(rootDir, 'installer', 'native', 'InstallerForm.cs');
+const installerOut = path.join(rootDir, 'client', 'public', 'SonicWave-Custom-Installer.exe');
+if (process.platform === 'win32' && fs.existsSync(cscPath) && fs.existsSync(installerCs)) {
+  console.log('[INSTALLER] Compiling native SonicWave-Custom-Installer.exe with embedded package...');
+  const wpfLib = 'C:\\Windows\\Microsoft.NET\\Framework64\\v4.0.30319\\WPF';
+  execSync(`"${cscPath}" /target:winexe /optimize+ /win32icon:"${iconPath}" /lib:"${wpfLib}" /r:PresentationCore.dll /r:PresentationFramework.dll /r:WindowsBase.dll /r:System.Xaml.dll /r:System.IO.Compression.dll /r:System.IO.Compression.FileSystem.dll /resource:"${zipOutputFilePublic}",SonicWavePackage.zip /out:"${installerOut}" "${installerCs}"`, { stdio: 'inherit' });
+  if (fs.existsSync(path.join(rootDir, 'client', 'dist'))) {
+    fs.copyFileSync(installerOut, path.join(rootDir, 'client', 'dist', 'SonicWave-Custom-Installer.exe'));
+  }
+  console.log('[SUCCESS] Native Custom Installer compiled and staged to client/public.');
+}
+
+// Copy direct standalone SonicWave.exe into client/public
+if (fs.existsSync(launcherExe)) {
+  const directExePublic = path.join(rootDir, 'client', 'public', 'SonicWave.exe');
+  fs.copyFileSync(launcherExe, directExePublic);
+  if (fs.existsSync(path.join(rootDir, 'client', 'dist'))) {
+    fs.copyFileSync(launcherExe, path.join(rootDir, 'client', 'dist', 'SonicWave.exe'));
+  }
+  console.log('[SUCCESS] Standalone native SonicWave.exe staged to client/public.');
 }
