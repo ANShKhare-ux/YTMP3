@@ -152,6 +152,785 @@ function detectPlatform(url) {
 }
 
 /**
+ * Classify media content between Posts, Reels, Shorts, and standard media
+ * along with specific social media platform detection and aspect ratios.
+ */
+function classifyMediaContent(url, data = {}) {
+  if (!url || typeof url !== 'string') {
+    return {
+      platform: 'Web Media',
+      platformId: 'web',
+      contentType: 'video',
+      contentCategory: 'Media',
+      contentLabel: 'Web Media',
+      isReel: false,
+      isPost: false,
+      isShort: false,
+      isAudio: false,
+      isPhoto: false,
+      badge: 'Web Media',
+      aspectRatio: '16:9'
+    };
+  }
+
+  let hostname = '';
+  let pathname = '';
+  try {
+    const parsed = new URL(url.includes('://') ? url : `https://${url}`);
+    hostname = parsed.hostname.toLowerCase();
+    pathname = parsed.pathname.toLowerCase();
+  } catch {
+    return {
+      platform: 'Web Media',
+      platformId: 'web',
+      contentType: 'video',
+      contentCategory: 'Media',
+      contentLabel: 'Web Media',
+      isReel: false,
+      isPost: false,
+      isShort: false,
+      isAudio: false,
+      isPhoto: false,
+      badge: 'Web Media',
+      aspectRatio: '16:9'
+    };
+  }
+
+  const isDomain = (dom) => hostname === dom || hostname.endsWith('.' + dom);
+
+  const duration = Number(data.duration) || 0;
+  const width = Number(data.width) || 0;
+  const height = Number(data.height) || 0;
+  const isVertical = height > width && width > 0;
+  const isSquare = Math.abs(width - height) < 25 && width > 0;
+  const aspectRatio = isVertical ? '9:16' : (isSquare ? '1:1' : '16:9');
+
+  // 1. Instagram: Distinguish between Reels (/reel/, /reels/) and Posts (/p/)
+  if (isDomain('instagram.com') || isDomain('instagr.am')) {
+    const isReelUrl = pathname.includes('/reel/') || pathname.includes('/reels/') || pathname.includes('reels_video');
+    const isPostUrl = pathname.includes('/p/');
+    const isStoryUrl = pathname.includes('/stories/');
+    const isTvUrl = pathname.includes('/tv/');
+
+    if (isReelUrl || isStoryUrl || (!isPostUrl && !isTvUrl && isVertical)) {
+      return {
+        platform: 'Instagram',
+        platformId: 'instagram',
+        contentType: 'reel',
+        contentCategory: 'Reel',
+        contentLabel: 'Instagram Reel',
+        isReel: true,
+        isPost: false,
+        isShort: false,
+        isAudio: false,
+        isPhoto: false,
+        badge: 'Instagram Reel \u2022 9:16',
+        aspectRatio: '9:16'
+      };
+    }
+
+    if (isTvUrl) {
+      return {
+        platform: 'Instagram',
+        platformId: 'instagram',
+        contentType: 'video',
+        contentCategory: 'IGTV',
+        contentLabel: 'Instagram Video',
+        isReel: false,
+        isPost: true,
+        isShort: false,
+        isAudio: false,
+        isPhoto: false,
+        badge: 'Instagram Video',
+        aspectRatio: aspectRatio
+      };
+    }
+
+    // Default Instagram post (/p/)
+    const hasOnlyImages = (data.ext === 'jpg' || data.ext === 'png' || data.ext === 'webp') || 
+      (duration === 0 && Array.isArray(data.formats) && !data.formats.some(f => f.vcodec && f.vcodec !== 'none'));
+
+    if (hasOnlyImages) {
+      return {
+        platform: 'Instagram',
+        platformId: 'instagram',
+        contentType: 'photo',
+        contentCategory: 'Post',
+        contentLabel: 'Instagram Post (Photo)',
+        isReel: false,
+        isPost: true,
+        isShort: false,
+        isAudio: false,
+        isPhoto: true,
+        badge: 'Instagram Post \u2022 Photo',
+        aspectRatio: aspectRatio
+      };
+    }
+
+    return {
+      platform: 'Instagram',
+      platformId: 'instagram',
+      contentType: 'post',
+      contentCategory: 'Post',
+      contentLabel: 'Instagram Post (Video)',
+      isReel: false,
+      isPost: true,
+      isShort: false,
+      isAudio: false,
+      isPhoto: false,
+      badge: 'Instagram Post \u2022 Video',
+      aspectRatio: aspectRatio
+    };
+  }
+
+  // 2. YouTube: Distinguish between Shorts (/shorts/) and standard Videos (/watch)
+  if (isDomain('youtube.com') || isDomain('youtu.be')) {
+    const isShortUrl = pathname.includes('/shorts/');
+    const isShortByDims = duration > 0 && duration <= 65 && isVertical;
+
+    if (isShortUrl || isShortByDims) {
+      return {
+        platform: 'YouTube',
+        platformId: 'youtube',
+        contentType: 'reel',
+        contentCategory: 'Short',
+        contentLabel: 'YouTube Short',
+        isReel: true,
+        isPost: false,
+        isShort: true,
+        isAudio: false,
+        isPhoto: false,
+        badge: 'YouTube Short \u2022 9:16',
+        aspectRatio: '9:16'
+      };
+    }
+
+    return {
+      platform: 'YouTube',
+      platformId: 'youtube',
+      contentType: 'video',
+      contentCategory: 'Video',
+      contentLabel: 'YouTube Video',
+      isReel: false,
+      isPost: false,
+      isShort: false,
+      isAudio: false,
+      isPhoto: false,
+      badge: 'YouTube Video \u2022 16:9',
+      aspectRatio: '16:9'
+    };
+  }
+
+  // 3. TikTok: Vertical video clips / Reels
+  if (isDomain('tiktok.com')) {
+    return {
+      platform: 'TikTok',
+      platformId: 'tiktok',
+      contentType: 'reel',
+      contentCategory: 'Reel',
+      contentLabel: 'TikTok Video / Reel',
+      isReel: true,
+      isPost: false,
+      isShort: false,
+      isAudio: false,
+      isPhoto: false,
+      badge: 'TikTok Reel \u2022 9:16',
+      aspectRatio: '9:16'
+    };
+  }
+
+  // 4. Facebook: Distinguish between Reels (/reel/, /share/r/) and Posts (/posts/, /videos/)
+  if (isDomain('facebook.com') || isDomain('fb.watch') || isDomain('fb.com')) {
+    const isReelUrl = pathname.includes('/reel/') || pathname.includes('/reels/') || pathname.includes('/share/r/') || isDomain('fb.watch');
+    if (isReelUrl || (isVertical && duration <= 90)) {
+      return {
+        platform: 'Facebook',
+        platformId: 'facebook',
+        contentType: 'reel',
+        contentCategory: 'Reel',
+        contentLabel: 'Facebook Reel',
+        isReel: true,
+        isPost: false,
+        isShort: false,
+        isAudio: false,
+        isPhoto: false,
+        badge: 'Facebook Reel \u2022 9:16',
+        aspectRatio: '9:16'
+      };
+    }
+
+    return {
+      platform: 'Facebook',
+      platformId: 'facebook',
+      contentType: 'post',
+      contentCategory: 'Post',
+      contentLabel: 'Facebook Post',
+      isReel: false,
+      isPost: true,
+      isShort: false,
+      isAudio: false,
+      isPhoto: false,
+      badge: 'Facebook Post',
+      aspectRatio: aspectRatio
+    };
+  }
+
+  // 5. Twitter / X: Posts / Tweets
+  if (isDomain('twitter.com') || isDomain('x.com') || isDomain('t.co')) {
+    return {
+      platform: 'Twitter / X',
+      platformId: 'twitter',
+      contentType: 'post',
+      contentCategory: 'Post',
+      contentLabel: 'X / Twitter Post',
+      isReel: false,
+      isPost: true,
+      isShort: false,
+      isAudio: false,
+      isPhoto: false,
+      badge: 'X / Twitter Post',
+      aspectRatio: aspectRatio
+    };
+  }
+
+  // 6. Reddit: Posts / Clips
+  if (isDomain('reddit.com') || isDomain('redd.it')) {
+    return {
+      platform: 'Reddit',
+      platformId: 'reddit',
+      contentType: 'post',
+      contentCategory: 'Post',
+      contentLabel: 'Reddit Post',
+      isReel: false,
+      isPost: true,
+      isShort: false,
+      isAudio: false,
+      isPhoto: false,
+      badge: 'Reddit Post',
+      aspectRatio: aspectRatio
+    };
+  }
+
+  // 7. SoundCloud: Audio Tracks
+  if (isDomain('soundcloud.com')) {
+    return {
+      platform: 'SoundCloud',
+      platformId: 'soundcloud',
+      contentType: 'audio',
+      contentCategory: 'Audio',
+      contentLabel: 'SoundCloud Track',
+      isReel: false,
+      isPost: false,
+      isShort: false,
+      isAudio: true,
+      isPhoto: false,
+      badge: 'SoundCloud Audio',
+      aspectRatio: '1:1'
+    };
+  }
+
+  // 8. Pinterest: Pins / Video Pins
+  if (isDomain('pinterest.com') || isDomain('pin.it')) {
+    return {
+      platform: 'Pinterest',
+      platformId: 'pinterest',
+      contentType: isVertical ? 'reel' : 'post',
+      contentCategory: 'Pin',
+      contentLabel: isVertical ? 'Pinterest Video Pin' : 'Pinterest Pin',
+      isReel: isVertical,
+      isPost: !isVertical,
+      isShort: false,
+      isAudio: false,
+      isPhoto: !isVertical,
+      badge: 'Pinterest Pin',
+      aspectRatio: aspectRatio
+    };
+  }
+
+  // 9. Threads: Posts
+  if (isDomain('threads.net')) {
+    return {
+      platform: 'Threads',
+      platformId: 'threads',
+      contentType: 'post',
+      contentCategory: 'Post',
+      contentLabel: 'Threads Post',
+      isReel: false,
+      isPost: true,
+      isShort: false,
+      isAudio: false,
+      isPhoto: false,
+      badge: 'Threads Post',
+      aspectRatio: aspectRatio
+    };
+  }
+
+  // 10. Vimeo / Twitch / Other
+  if (isDomain('vimeo.com')) {
+    return {
+      platform: 'Vimeo',
+      platformId: 'vimeo',
+      contentType: 'video',
+      contentCategory: 'Video',
+      contentLabel: 'Vimeo Video',
+      isReel: false,
+      isPost: false,
+      isShort: false,
+      isAudio: false,
+      isPhoto: false,
+      badge: 'Vimeo Video',
+      aspectRatio: '16:9'
+    };
+  }
+
+  const detected = detectPlatform(url);
+  return {
+    platform: detected,
+    platformId: detected.toLowerCase().replace(/[^a-z0-9]/g, ''),
+    contentType: 'video',
+    contentCategory: 'Media',
+    contentLabel: `${detected} Media`,
+    isReel: false,
+    isPost: false,
+    isShort: false,
+    isAudio: false,
+    isPhoto: false,
+    badge: `${detected} Media`,
+    aspectRatio: aspectRatio
+  };
+}
+
+/**
+ * Generate tailored download presets specifically customized for each social
+ * media app and content type (Reel vs Post vs Video).
+ */
+function getTailoredDownloadOptions({ platformId, contentType, isReel, isPost, duration, data = {} }) {
+  // 1. Instagram Reel
+  if (platformId === 'instagram' && isReel) {
+    return {
+      appTheme: 'instagram',
+      appColor: '#e1306c',
+      headline: 'Instagram Reel Options',
+      subhead: 'Optimized vertical 9:16 video & viral sound extraction',
+      presets: [
+        {
+          id: 'reel-hd-video',
+          label: 'HD Reel Video',
+          format: 'mp4',
+          quality: '1080p',
+          badge: '1080p FHD',
+          icon: 'video',
+          desc: 'Original vertical MP4 video with reel audio',
+          recommended: true
+        },
+        {
+          id: 'reel-audio-320',
+          label: 'Reel Sound (MP3)',
+          format: 'mp3',
+          quality: '320k',
+          badge: '320 kbps HQ',
+          icon: 'music',
+          desc: 'Extract trending reel background audio'
+        },
+        {
+          id: 'reel-stream-copy',
+          label: 'Fast Audio Stream',
+          format: 'm4a',
+          quality: 'best',
+          badge: 'Direct AAC',
+          icon: 'zap',
+          desc: 'Instant direct audio copy (<5s)'
+        },
+        {
+          id: 'reel-cover-art',
+          label: 'Reel Cover Art',
+          format: 'cover',
+          quality: 'original',
+          badge: 'HD Image',
+          icon: 'image',
+          desc: 'Download full-res reel cover image'
+        }
+      ]
+    };
+  }
+
+  // 2. Instagram Post
+  if (platformId === 'instagram' && isPost) {
+    const isPhoto = contentType === 'photo';
+    return {
+      appTheme: 'instagram',
+      appColor: '#c13584',
+      headline: isPhoto ? 'Instagram Photo Post Options' : 'Instagram Video Post Options',
+      subhead: isPhoto ? 'High-resolution photo & audio extraction' : 'Feed video & audio options',
+      presets: isPhoto ? [
+        {
+          id: 'post-photo-hd',
+          label: 'Original Photo (HD)',
+          format: 'cover',
+          quality: 'original',
+          badge: 'Full Res Image',
+          icon: 'image',
+          desc: 'Download uncompressed original photo',
+          recommended: true
+        },
+        {
+          id: 'post-audio-extract',
+          label: 'Attached Music (MP3)',
+          format: 'mp3',
+          quality: '320k',
+          badge: '320 kbps',
+          icon: 'music',
+          desc: 'Extract post background music track'
+        }
+      ] : [
+        {
+          id: 'post-video-hd',
+          label: 'Feed Video (MP4)',
+          format: 'mp4',
+          quality: '1080p',
+          badge: '1080p HD',
+          icon: 'video',
+          desc: 'High-definition feed video with audio',
+          recommended: true
+        },
+        {
+          id: 'post-audio-320',
+          label: 'Post Audio (MP3)',
+          format: 'mp3',
+          quality: '320k',
+          badge: '320 kbps HQ',
+          icon: 'music',
+          desc: 'Extract audio track from video post'
+        },
+        {
+          id: 'post-cover-thumb',
+          label: 'Post Cover Art',
+          format: 'cover',
+          quality: 'original',
+          badge: 'HD Image',
+          icon: 'image',
+          desc: 'Download original post preview image'
+        }
+      ]
+    };
+  }
+
+  // 3. YouTube Short
+  if (platformId === 'youtube' && isReel) {
+    return {
+      appTheme: 'youtube-shorts',
+      appColor: '#ff0000',
+      headline: 'YouTube Shorts Options',
+      subhead: 'Optimized 1080x1920 Short video & music extraction',
+      presets: [
+        {
+          id: 'short-hd-video',
+          label: 'Full HD Short (MP4)',
+          format: 'mp4',
+          quality: '1080p',
+          badge: '1080p Vertical',
+          icon: 'video',
+          desc: 'Pristine 1080x1920 Full HD short video',
+          recommended: true
+        },
+        {
+          id: 'short-audio-320',
+          label: 'Shorts Music (MP3)',
+          format: 'mp3',
+          quality: '320k',
+          badge: '320 kbps HQ',
+          icon: 'music',
+          desc: 'Extract full audio track from this Short'
+        },
+        {
+          id: 'short-stream-m4a',
+          label: 'Direct Stream Copy',
+          format: 'm4a',
+          quality: 'best',
+          badge: 'Instant AAC',
+          icon: 'zap',
+          desc: 'Ultra-fast direct AAC copy'
+        },
+        {
+          id: 'short-cover-thumb',
+          label: 'Short Thumbnail',
+          format: 'cover',
+          quality: 'maxres',
+          badge: 'HD Art',
+          icon: 'image',
+          desc: 'Download high-res short cover'
+        }
+      ]
+    };
+  }
+
+  // 4. YouTube Standard Video
+  if (platformId === 'youtube') {
+    return {
+      appTheme: 'youtube',
+      appColor: '#ff0000',
+      headline: 'YouTube Video & Audio Options',
+      subhead: 'Select studio audio or high-definition MP4 video',
+      presets: [
+        {
+          id: 'yt-mp3-320',
+          label: 'Studio Audio (MP3)',
+          format: 'mp3',
+          quality: '320k',
+          badge: '320 kbps Ultra',
+          icon: 'music',
+          desc: 'Maximum 320 kbps studio sound with ID3 tags',
+          recommended: true
+        },
+        {
+          id: 'yt-mp4-1080',
+          label: 'Full HD Video (MP4)',
+          format: 'mp4',
+          quality: '1080p',
+          badge: '1080p FHD',
+          icon: 'video',
+          desc: 'Crisp 1080p video with AAC audio stream'
+        },
+        {
+          id: 'yt-m4a-fast',
+          label: 'Fast Copy (M4A)',
+          format: 'm4a',
+          quality: 'best',
+          badge: 'Direct Copy',
+          icon: 'zap',
+          desc: 'Direct AAC copy with zero CPU transcoding'
+        },
+        {
+          id: 'yt-wav-lossless',
+          label: 'Lossless WAV',
+          format: 'wav',
+          quality: 'best',
+          badge: 'Lossless Master',
+          icon: 'music',
+          desc: 'Uncompressed audio master for editing'
+        }
+      ]
+    };
+  }
+
+  // 5. TikTok Reel / Video
+  if (platformId === 'tiktok') {
+    return {
+      appTheme: 'tiktok',
+      appColor: '#00f2fe',
+      headline: 'TikTok Video & Sound Options',
+      subhead: 'Pristine vertical video stream & trending sound extraction',
+      presets: [
+        {
+          id: 'tiktok-hd-video',
+          label: 'TikTok HD Video (MP4)',
+          format: 'mp4',
+          quality: 'best',
+          badge: 'Direct Stream',
+          icon: 'video',
+          desc: 'Clean MP4 video stream with audio',
+          recommended: true
+        },
+        {
+          id: 'tiktok-audio-320',
+          label: 'Trending Sound (MP3)',
+          format: 'mp3',
+          quality: '320k',
+          badge: '320 kbps HQ',
+          icon: 'music',
+          desc: 'Extract viral background audio track'
+        },
+        {
+          id: 'tiktok-stream-m4a',
+          label: 'Fast Audio Copy',
+          format: 'm4a',
+          quality: 'best',
+          badge: 'Direct AAC',
+          icon: 'zap',
+          desc: 'Instant audio extraction'
+        },
+        {
+          id: 'tiktok-cover-art',
+          label: 'TikTok Cover Poster',
+          format: 'cover',
+          quality: 'original',
+          badge: 'HD Image',
+          icon: 'image',
+          desc: 'Download high-res video poster'
+        }
+      ]
+    };
+  }
+
+  // 6. Facebook (Reel vs Post)
+  if (platformId === 'facebook') {
+    return {
+      appTheme: 'facebook',
+      appColor: '#1877f2',
+      headline: isReel ? 'Facebook Reel Options' : 'Facebook Post Options',
+      subhead: isReel ? 'Vertical Reel video & audio extraction' : 'Standard video & audio extraction',
+      presets: [
+        {
+          id: 'fb-video-hd',
+          label: isReel ? 'Facebook Reel (MP4)' : 'Post Video (MP4)',
+          format: 'mp4',
+          quality: 'best',
+          badge: 'Best HD',
+          icon: 'video',
+          desc: 'Original high-definition video with audio',
+          recommended: true
+        },
+        {
+          id: 'fb-audio-320',
+          label: 'Extract Audio (MP3)',
+          format: 'mp3',
+          quality: '320k',
+          badge: '320 kbps HQ',
+          icon: 'music',
+          desc: 'High-quality MP3 audio extraction'
+        },
+        {
+          id: 'fb-audio-m4a',
+          label: 'Fast Copy (M4A)',
+          format: 'm4a',
+          quality: 'best',
+          badge: 'Instant Copy',
+          icon: 'zap',
+          desc: 'Direct audio stream copy'
+        }
+      ]
+    };
+  }
+
+  // 7. Twitter / X Post
+  if (platformId === 'twitter') {
+    return {
+      appTheme: 'twitter',
+      appColor: '#1d9bf0',
+      headline: 'X / Twitter Post Options',
+      subhead: 'Direct video clip & voice track extraction',
+      presets: [
+        {
+          id: 'twitter-video-hd',
+          label: 'Tweet Video (MP4)',
+          format: 'mp4',
+          quality: 'best',
+          badge: 'Best MP4',
+          icon: 'video',
+          desc: 'Highest bitrate video stream from post',
+          recommended: true
+        },
+        {
+          id: 'twitter-audio-320',
+          label: 'Tweet Audio (MP3)',
+          format: 'mp3',
+          quality: '320k',
+          badge: '320 kbps',
+          icon: 'music',
+          desc: 'Extract speech and audio from tweet'
+        },
+        {
+          id: 'twitter-cover-art',
+          label: 'Media Thumbnail',
+          format: 'cover',
+          quality: 'original',
+          badge: 'HD Image',
+          icon: 'image',
+          desc: 'Download media preview image'
+        }
+      ]
+    };
+  }
+
+  // 8. SoundCloud
+  if (platformId === 'soundcloud') {
+    return {
+      appTheme: 'soundcloud',
+      appColor: '#ff5500',
+      headline: 'SoundCloud Audio Options',
+      subhead: 'Studio audio extraction & lossless downloads',
+      presets: [
+        {
+          id: 'sc-mp3-320',
+          label: 'Studio Audio (MP3)',
+          format: 'mp3',
+          quality: '320k',
+          badge: '320 kbps Ultra',
+          icon: 'music',
+          desc: 'Maximum fidelity MP3 with album artwork',
+          recommended: true
+        },
+        {
+          id: 'sc-wav-lossless',
+          label: 'Lossless WAV',
+          format: 'wav',
+          quality: 'best',
+          badge: 'Master Quality',
+          icon: 'music',
+          desc: 'Studio master without compression'
+        },
+        {
+          id: 'sc-flac-lossless',
+          label: 'FLAC Audio',
+          format: 'flac',
+          quality: 'best',
+          badge: 'Lossless FLAC',
+          icon: 'music',
+          desc: 'Lossless compressed audio'
+        },
+        {
+          id: 'sc-art-hd',
+          label: 'Album Artwork',
+          format: 'cover',
+          quality: 'original',
+          badge: 'HD Cover Art',
+          icon: 'image',
+          desc: 'Download original track artwork'
+        }
+      ]
+    };
+  }
+
+  // Default Web Media
+  return {
+    appTheme: 'web',
+    appColor: '#1ed760',
+    headline: 'Media Download Options',
+    subhead: 'Select your preferred audio or video format',
+    presets: [
+      {
+        id: 'web-mp3-320',
+        label: 'High-Quality MP3',
+        format: 'mp3',
+        quality: '320k',
+        badge: '320 kbps HQ',
+        icon: 'music',
+        desc: 'Studio-grade MP3 audio extraction',
+        recommended: true
+      },
+      {
+        id: 'web-mp4-video',
+        label: 'HD Video (MP4)',
+        format: 'mp4',
+        quality: 'best',
+        badge: 'Best Available',
+        icon: 'video',
+        desc: 'Original video format with sound'
+      },
+      {
+        id: 'web-m4a-fast',
+        label: 'Fast Copy (M4A)',
+        format: 'm4a',
+        quality: 'best',
+        badge: 'Direct Copy',
+        icon: 'zap',
+        desc: 'Direct audio stream copy'
+      }
+    ]
+  };
+}
+
+/**
  * Clean & normalize any media URL with SSRF & protocol validation
  */
 function normalizeUrl(rawUrl) {
@@ -310,12 +1089,35 @@ function getVideoInfo(rawUrl) {
 
         const duration = data.duration || 0;
         const platform = detectPlatform(url);
+        const classification = classifyMediaContent(url, data);
+        const tailoredOptions = getTailoredDownloadOptions({
+          platformId: classification.platformId,
+          contentType: classification.contentType,
+          isReel: classification.isReel,
+          isPost: classification.isPost,
+          duration: duration,
+          data: data
+        });
+
         const info = {
           id: data.id,
           url: data.webpage_url || url,
           title: data.title || `${platform} Media`,
           uploader: data.uploader || data.channel || data.creator || `${platform} Creator`,
-          platform: platform,
+          platform: classification.platform || platform,
+          platformId: classification.platformId,
+          contentType: classification.contentType,
+          contentCategory: classification.contentCategory,
+          contentLabel: classification.contentLabel,
+          isReel: classification.isReel,
+          isPost: classification.isPost,
+          isShort: classification.isShort,
+          isAudio: classification.isAudio,
+          isPhoto: classification.isPhoto,
+          aspectRatio: classification.aspectRatio,
+          contentBadge: classification.badge,
+          tailoredOptions: tailoredOptions,
+          presets: tailoredOptions.presets || [],
           channelUrl: data.channel_url || data.uploader_url || null,
           duration: duration,
           durationFormatted: formatDuration(duration),
@@ -848,6 +1650,8 @@ module.exports = {
   getHistory,
   formatDuration,
   detectPlatform,
+  classifyMediaContent,
+  getTailoredDownloadOptions,
   getActiveJobCount,
   normalizeUrl,
   DOWNLOADS_DIR,

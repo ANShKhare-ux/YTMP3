@@ -180,6 +180,13 @@ export default function App({ onNavigate }) {
       }
 
       setVideoInfo(json.data);
+      if (json.data && Array.isArray(json.data.presets) && json.data.presets.length > 0) {
+        const recommended = json.data.presets.find((p) => p.recommended) || json.data.presets[0];
+        if (recommended) {
+          setFormat(recommended.format);
+          if (recommended.quality) setBitrate(recommended.quality);
+        }
+      }
     } catch (err) {
       setError(err.message || 'Unable to load YouTube video. Please check the URL.');
     } finally {
@@ -190,6 +197,20 @@ export default function App({ onNavigate }) {
   // Trigger conversion
   const handleStartConversion = async () => {
     if (!videoInfo && !url) return;
+
+    if (format === 'cover') {
+      const coverUrl = videoInfo?.thumbnail;
+      if (coverUrl) {
+        const a = document.createElement('a');
+        a.href = coverUrl;
+        a.download = `${(videoInfo?.title || 'media').replace(/[^a-zA-Z0-9_-]/g, '_')}_cover.jpg`;
+        a.target = '_blank';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        return;
+      }
+    }
 
     setError(null);
     setIsConverting(true);
@@ -422,6 +443,13 @@ export default function App({ onNavigate }) {
       .then((json) => {
         if (json.success && json.data) {
           setVideoInfo(json.data);
+      if (json.data && Array.isArray(json.data.presets) && json.data.presets.length > 0) {
+        const recommended = json.data.presets.find((p) => p.recommended) || json.data.presets[0];
+        if (recommended) {
+          setFormat(recommended.format);
+          if (recommended.quality) setBitrate(recommended.quality);
+        }
+      }
         } else {
           throw new Error(json.error || 'Failed to fetch video details.');
         }

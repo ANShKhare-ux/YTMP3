@@ -1,5 +1,5 @@
 import React from 'react';
-import { User, Eye, Zap, Clock } from 'lucide-react';
+import { User, Eye, Zap, Film, FileText, Image, Smartphone } from 'lucide-react';
 
 export default function VideoPreview({ video }) {
   if (!video) return null;
@@ -12,6 +12,19 @@ export default function VideoPreview({ video }) {
     if (num >= 1000) return `${(num / 1000).toFixed(1)}K views`;
     return `${num} views`;
   };
+
+  const getPlatformColor = (platform) => {
+    const p = (platform || '').toLowerCase();
+    if (p.includes('instagram')) return '#E1306C';
+    if (p.includes('youtube')) return '#FF0000';
+    if (p.includes('tiktok')) return '#FE2C55';
+    if (p.includes('facebook')) return '#1877F2';
+    if (p.includes('twitter') || p.includes('x')) return '#1DA1F2';
+    if (p.includes('soundcloud')) return '#FF5500';
+    return 'var(--spotify-green)';
+  };
+
+  const platformColor = getPlatformColor(video.platform);
 
   return (
     <div className="spotify-video-card" id="video-preview-card">
@@ -28,10 +41,30 @@ export default function VideoPreview({ video }) {
       </div>
 
       <div className="spotify-track-meta">
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-          <span style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '1.2px', color: 'var(--spotify-green)', textTransform: 'uppercase' }}>
-            {video.platform ? `${video.platform} Media` : 'Social Media Track'}
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+          <span style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '1.2px', color: platformColor, textTransform: 'uppercase' }}>
+            {video.platform ? `${video.platform}` : 'Social Media Track'}
           </span>
+
+          {video.isReel ? (
+            <span className="spotify-tag-badge reel-badge" style={{ borderColor: 'rgba(254, 44, 85, 0.4)', background: 'rgba(254, 44, 85, 0.12)', color: '#ff4d6d' }}>
+              <Film size={11} />
+              {video.isShort ? 'YouTube Short' : 'Reel (9:16)'}
+            </span>
+          ) : video.isPost ? (
+            <span className="spotify-tag-badge post-badge" style={{ borderColor: 'rgba(59, 130, 246, 0.4)', background: 'rgba(59, 130, 246, 0.12)', color: '#60a5fa' }}>
+              {video.isPhoto ? <Image size={11} /> : <FileText size={11} />}
+              {video.isPhoto ? 'Feed Post (Photo)' : 'Feed Post (Video)'}
+            </span>
+          ) : null}
+
+          {video.aspectRatio && (
+            <span className="spotify-tag-badge aspect-badge" style={{ opacity: 0.85 }}>
+              <Smartphone size={10} />
+              {video.aspectRatio}
+            </span>
+          )}
+
           {isUltraLong && (
             <span className="spotify-tag-badge">
               <Zap size={11} />
@@ -46,7 +79,7 @@ export default function VideoPreview({ video }) {
 
         <div className="spotify-track-details">
           <div className="spotify-artist-tag">
-            <User size={14} style={{ color: 'var(--spotify-green)' }} />
+            <User size={14} style={{ color: platformColor }} />
             <span>{video.uploader}</span>
           </div>
 

@@ -35,7 +35,23 @@ export default function OptionsSelector({
 }) {
   const isVideo = format === 'mp4';
   const isLossless = format === 'wav' || format === 'flac';
+  const isCover = format === 'cover';
   const isUltraLong = videoInfo && (videoInfo.isUltraLong || (videoInfo.duration && videoInfo.duration >= 7200));
+
+  const presets = videoInfo?.presets || videoInfo?.tailoredOptions?.presets || [];
+  const tailoredOptions = videoInfo?.tailoredOptions;
+
+  const handlePresetClick = (preset) => {
+    if (preset.format === 'cover') {
+      setFormat('cover');
+      setBitrate('original');
+    } else {
+      handleFormatChange(preset.format);
+      if (preset.quality) {
+        setBitrate(preset.quality);
+      }
+    }
+  };
 
   const handleFormatChange = (newFormat) => {
     setFormat(newFormat);
@@ -45,6 +61,8 @@ export default function OptionsSelector({
       }
     } else if (newFormat === 'wav' || newFormat === 'flac') {
       setBitrate('best');
+    } else if (newFormat === 'cover') {
+      setBitrate('original');
     } else {
       if (!['320k', '256k', '192k', '128k'].includes(bitrate)) {
         setBitrate('320k');
@@ -54,6 +72,55 @@ export default function OptionsSelector({
 
   return (
     <div className="selectors-wrapper">
+      {/* 1-Click Tailored Social Media Presets */}
+      {presets.length > 0 && (
+        <div className="tailored-presets-section">
+          <div className="tailored-presets-header">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Sparkles size={14} style={{ color: tailoredOptions?.appColor || 'var(--spotify-green)' }} />
+              <span className="tailored-presets-title">
+                {tailoredOptions?.headline || 'Tailored Download Presets'}
+              </span>
+            </div>
+            {tailoredOptions?.subhead && (
+              <span className="tailored-presets-subhead">{tailoredOptions.subhead}</span>
+            )}
+          </div>
+          <div className="tailored-presets-grid">
+            {presets.map((preset) => {
+              const isPresetActive =
+                format === preset.format && (preset.format === 'cover' || bitrate === preset.quality);
+              return (
+                <button
+                  key={preset.id}
+                  type="button"
+                  className={`tailored-preset-card ${isPresetActive ? 'active' : ''}`}
+                  onClick={() => handlePresetClick(preset)}
+                  disabled={isConverting}
+                >
+                  <div className="preset-card-top">
+                    <span
+                      className="preset-badge"
+                      style={{
+                        backgroundColor: isPresetActive
+                          ? tailoredOptions?.appColor || 'var(--spotify-green)'
+                          : 'rgba(255, 255, 255, 0.08)',
+                        color: isPresetActive ? '#000000' : 'var(--text-subdued)'
+                      }}
+                    >
+                      {preset.badge}
+                    </span>
+                    {preset.recommended && <span className="preset-recommended-tag">Best Pick</span>}
+                  </div>
+                  <div className="preset-card-title">{preset.label}</div>
+                  <div className="preset-card-desc">{preset.desc}</div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* 100h+ Ultra-Speed Engine Banner */}
       <div className="turbo-engine-card">
         <div className="turbo-header">

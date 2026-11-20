@@ -15,7 +15,12 @@
 ## 2. Current Implementation Status
 
 ### Verified Implemented Features
-- **Multi-Platform Metadata Resolution**: Extracts title, artist, thumbnail, duration, and view count from YouTube, Instagram, TikTok, Twitter/X, SoundCloud, Reddit, Vimeo via `yt-dlp`.
+- **Multi-Platform Metadata Resolution & Tailored Social Options**:
+  - Distinguishes between **Reels** (Instagram Reel, YouTube Short, TikTok, Facebook Reel) and **Posts** (Instagram feed photo/carousel/video, Facebook post, Twitter/X post, Reddit, SoundCloud audio) with precise aspect ratio tags (`9:16`, `1:1`, `16:9`).
+  - Dynamic content classification via `classifyMediaContent(url, data)` in `server/converter.js`.
+  - App-specific tailored download presets generated via `getTailoredDownloadOptions` (e.g. 1080p MP4, 320k MP3 audio track, M4A fast stream copy, high-res photo/cover download).
+  - Spotify-themed interactive preview badges (`🎬 Reel • 9:16`, `⚡ YouTube Short`, `📄 Feed Post`) in `VideoPreview.jsx`.
+  - 1-click tailored download presets with active highlights in `OptionsSelector.jsx` and direct photo/cover download in `AppDesktop.jsx`.
 - **Audio Extraction**: Multi-bitrate MP3 (`320k`, `256k`, `192k`, `128k`), M4A (instant stream copy), lossless WAV, and FLAC.
 - **Video Conversion**: High-definition MP4 packaging (`1080p`, `720p`, `480p`, `best`) with direct stream copy audio muxing.
 - **Live Progress Updates**: Server-Sent Events (SSE) tracking download percentage, speed, ETA, and re-encoding stage every 400ms.

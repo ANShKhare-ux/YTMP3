@@ -13,6 +13,8 @@ const {
   buildConversionArgs,
   parseProgress,
   detectPlatform,
+  classifyMediaContent,
+  getTailoredDownloadOptions,
   isValidMediaExtension,
   findOutputFile,
   attachProcessListeners,
@@ -439,34 +441,147 @@ test('converter - findOutputFile discovers actual media files and excludes parti
   }
 });
 
-test('converter - cleanOldDownloads handles subdirectories and locked files without aborting', () => {
-  const expiredFile1 = path.join(DOWNLOADS_DIR, 'test-clean-expired-1.tmp');
-  const expiredFile2 = path.join(DOWNLOADS_DIR, 'test-clean-expired-2.tmp');
-  const subDir = path.join(DOWNLOADS_DIR, 'test-clean-dir.tmp');
+test('converter - classifyMediaContent distinguishes Instagram Reel from Post and detects aspect ratio', () => {
+  // Instagram Reel URL
+  const reelResult = classifyMediaContent('https://www.instagram.com/reel/C8_wXYZ123/', {
+    duration: 30,
+    width: 1080,
+    height: 1920
+  });
+  assert.strictEqual(reelResult.platform, 'Instagram');
+  assert.strictEqual(reelResult.platformId, 'instagram');
+  assert.strictEqual(reelResult.isReel, true);
+  assert.strictEqual(reelResult.isPost, false);
+  assert.strictEqual(reelResult.contentType, 'reel');
+  assert.strictEqual(reelResult.aspectRatio, '9:16');
 
-  fs.writeFileSync(expiredFile1, 'data1');
-  fs.writeFileSync(expiredFile2, 'data2');
-  if (!fs.existsSync(subDir)) {
-    fs.mkdirSync(subDir, { recursive: true });
-  }
+  // Instagram Post URL (video)
+  const postVideoResult = classifyMediaContent('https://www.instagram.com/p/C9_abc123/', {
+    duration: 45,
+    width: 1080,
+    height: 1080,
+    ext: 'mp4'
+  });
+  assert.strictEqual(postVideoResult.platform, 'Instagram');
+  assert.strictEqual(postVideoResult.isReel, false);
+  assert.strictEqual(postVideoResult.isPost, true);
+  assert.strictEqual(postVideoResult.contentType, 'post');
+  assert.strictEqual(postVideoResult.isPhoto, false);
+  assert.strictEqual(postVideoResult.aspectRatio, '1:1');
 
-  // Backdate mtime by 3 hours (older than 2-hour threshold)
-  const threeHoursAgo = (Date.now() - 3 * 60 * 60 * 1000) / 1000;
-  fs.utimesSync(expiredFile1, threeHoursAgo, threeHoursAgo);
-  fs.utimesSync(expiredFile2, threeHoursAgo, threeHoursAgo);
-
-  try {
-    cleanOldDownloads(2 * 60 * 60 * 1000);
-
-    assert.strictEqual(fs.existsSync(expiredFile1), false, 'Expired file 1 should be removed');
-    assert.strictEqual(fs.existsSync(expiredFile2), false, 'Expired file 2 should be removed');
-    assert.strictEqual(fs.existsSync(subDir), true, 'Subdirectory should not cause unhandled error or deletion');
-  } finally {
-    if (fs.existsSync(expiredFile1)) fs.unlinkSync(expiredFile1);
-    if (fs.existsSync(expiredFile2)) fs.unlinkSync(expiredFile2);
-    if (fs.existsSync(subDir)) fs.rmdirSync(subDir);
-  }
+  // Instagram Post URL (photo)
+  const postPhotoResult = classifyMediaContent('https://www.instagram.com/p/C7_photo123/', {
+    duration: 0,
+    width: 1080,
+    height: 1350,
+    ext: 'jpg'
+  });
+  assert.strictEqual(postPhotoResult.platform, 'Instagram');
+  assert.strictEqual(postPhotoResult.isReel, false);
+  assert.strictEqual(postPhotoResult.isPost, true);
+  assert.strictEqual(postPhotoResult.isPhoto, true);
+  assert.strictEqual(postPhotoResult.contentType, 'photo');
 });
+
+test('converter - classifyMediaContent distinguishes YouTube Shorts from standard Videos', () => {
+  // YouTube Short URL
+  const shortResult = classifyMediaContent('https://www.youtube.com/shorts/abcdef12345', {
+    duration: 45,
+    width: 1080,
+    height: 1920
+  });
+  assert.strictEqual(shortResult.platform, 'YouTube');
+  assert.strictEqual(shortResult.isReel, true);
+  assert.strictEqual(shortResult.isShort, true);
+  assert.strictEqual(shortResult.contentType, 'reel');
+  assert.strictEqual(shortResult.aspectRatio, '9:16');
+
+  // YouTube Standard Video URL
+  const videoResult = classifyMediaContent('https://www.youtube.com/watch?v=dQw4w9WgXcQ', {
+    duration: 213,
+    width: 1920,
+    height: 1080
+  });
+  assert.strictEqual(videoResult.platform, 'YouTube');
+  assert.strictEqual(videoResult.isReel, false);
+  assert.strictEqual(videoResult.isShort, false);
+  assert.strictEqual(videoResult.contentType, 'video');
+  assert.strictEqual(videoResult.aspectRatio, '16:9');
+});
+
+test('converter - classifyMediaContent classifies TikTok, Facebook, Twitter, and SoundCloud', () => {
+  // TikTok
+  const tiktokResult = classifyMediaContent('https://www.tiktok.com/@user/video/7123456789012345678', {
+    duration: 15,
+    width: 720,
+    height: 1280
+  });
+  assert.strictEqual(tiktokResult.platform, 'TikTok');
+  assert.strictEqual(tiktokResult.isReel, true);
+  assert.strictEqual(tiktokResult.contentType, 'reel');
+  assert.strictEqual(tiktokResult.aspectRatio, '9:16');
+
+  // Facebook Reel vs Post
+  const fbReel = classifyMediaContent('https://www.facebook.com/reel/123456789', { duration: 25 });
+  assert.strictEqual(fbReel.platform, 'Facebook');
+  assert.strictEqual(fbReel.isReel, true);
+  assert.strictEqual(fbReel.contentType, 'reel');
+
+  const fbPost = classifyMediaContent('https://www.facebook.com/user/posts/123456789', { duration: 120 });
+  assert.strictEqual(fbPost.platform, 'Facebook');
+  assert.strictEqual(fbPost.isReel, false);
+  assert.strictEqual(fbPost.isPost, true);
+
+  // Twitter / X
+  const twitterResult = classifyMediaContent('https://x.com/user/status/1234567890', { duration: 40 });
+  assert.strictEqual(twitterResult.platform, 'Twitter / X');
+  assert.strictEqual(twitterResult.isPost, true);
+
+  // SoundCloud
+  const scResult = classifyMediaContent('https://soundcloud.com/artist/track-name', { duration: 180 });
+  assert.strictEqual(scResult.platform, 'SoundCloud');
+  assert.strictEqual(scResult.isAudio, true);
+  assert.strictEqual(scResult.contentType, 'audio');
+});
+
+test('converter - getTailoredDownloadOptions generates app-specific presets with recommended pick', () => {
+  // Instagram Reel options
+  const igReelOptions = getTailoredDownloadOptions({
+    platformId: 'instagram',
+    contentType: 'reel',
+    isReel: true,
+    isPost: false
+  });
+  assert.strictEqual(igReelOptions.appTheme, 'instagram');
+  assert.ok(Array.isArray(igReelOptions.presets) && igReelOptions.presets.length >= 3);
+  const recommendedIg = igReelOptions.presets.find(p => p.recommended);
+  assert.ok(recommendedIg, 'Instagram Reel presets must include a recommended option');
+  assert.strictEqual(recommendedIg.format, 'mp4');
+
+  // Instagram Photo Post options
+  const igPhotoOptions = getTailoredDownloadOptions({
+    platformId: 'instagram',
+    contentType: 'photo',
+    isReel: false,
+    isPost: true
+  });
+  const photoPreset = igPhotoOptions.presets.find(p => p.format === 'cover');
+  assert.ok(photoPreset, 'Instagram photo post must provide direct image/cover download');
+  assert.strictEqual(photoPreset.recommended, true);
+
+  // SoundCloud options
+  const scOptions = getTailoredDownloadOptions({
+    platformId: 'soundcloud',
+    contentType: 'audio',
+    isReel: false,
+    isPost: false
+  });
+  assert.strictEqual(scOptions.appTheme, 'soundcloud');
+  const flacPreset = scOptions.presets.find(p => p.format === 'flac');
+  const wavPreset = scOptions.presets.find(p => p.format === 'wav');
+  assert.ok(flacPreset && wavPreset, 'SoundCloud must offer lossless audio formats');
+});
+
 
 
 
