@@ -551,7 +551,7 @@ export default function App({ onNavigate }) {
                   title={item.title}
                 >
                   {item.thumbnail ? (
-                    <img src={item.thumbnail} alt={item.title} className="sidebar-history-thumb" />
+                    <img src={item.thumbnail} alt={item.title} className="sidebar-history-thumb" loading="lazy" decoding="async" />
                   ) : (
                     <div
                       className="sidebar-history-thumb"

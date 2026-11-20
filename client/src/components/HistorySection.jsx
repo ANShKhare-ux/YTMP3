@@ -58,7 +58,7 @@ export default function HistorySection({ history, onSelectTrack, onClearHistory,
 
               <div className="track-main-col">
                 {item.thumbnail ? (
-                  <img src={item.thumbnail} alt={item.title} className="track-table-thumb" />
+                  <img src={item.thumbnail} alt={item.title} className="track-table-thumb" loading="lazy" decoding="async" />
                 ) : (
                   <div
                     className="track-table-thumb"

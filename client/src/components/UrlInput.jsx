@@ -21,7 +21,22 @@ export default function UrlInput({
   };
 
   const handleKeyDown = (e) => {
-    if (e.key === 'Enter' && url && !isLoading) {
+    if (e.key === 'Enter') {
+      // Modern Web Guidance: ime-safe-enter-submit
+      // Block submission if composing text with an IME (Japanese, Chinese, Korean, etc.) or if keyCode is 229
+      if (e.isComposing || e.keyCode === 229) {
+        return;
+      }
+      e.preventDefault();
+      if (url && !isLoading) {
+        onSubmit();
+      }
+    }
+  };
+
+  const handleFormSubmit = (e) => {
+    e.preventDefault();
+    if (url && !isLoading) {
       onSubmit();
     }
   };
@@ -36,21 +51,25 @@ export default function UrlInput({
   };
 
   return (
-    <div className="search-wrapper">
-      <div className="input-container">
+    <search className="search-wrapper" role="search">
+      <form className="input-container" onSubmit={handleFormSubmit}>
         <div className="input-icon">
           <Search size={18} />
         </div>
         <input
           id="yt-url-input"
-          type="text"
+          type="url"
+          inputMode="url"
+          enterKeyHint="go"
+          autoCorrect="off"
+          autoCapitalize="none"
+          spellCheck="false"
+          autoComplete="url"
           className="search-input"
           placeholder="Paste any link from YouTube, Instagram, TikTok, Twitter/X, Facebook, SoundCloud, Reddit..."
           value={url}
           onChange={(e) => setUrl(e.target.value)}
           onKeyDown={handleKeyDown}
-          autoComplete="off"
-          spellCheck="false"
           aria-label="Media URL from YouTube, Instagram, TikTok, or other supported platforms"
         />
         <div className="input-actions">
@@ -95,9 +114,8 @@ export default function UrlInput({
 
           <button
             id="fetch-btn"
-            type="button"
+            type="submit"
             className="btn-spotify-green"
-            onClick={onSubmit}
             disabled={!url || isLoading}
             style={{ padding: '8px 20px', fontSize: '13px' }}
             aria-label="Fetch media details and options"
@@ -115,7 +133,7 @@ export default function UrlInput({
             )}
           </button>
         </div>
-      </div>
+      </form>
 
       {/* Onboarding Interactive Sample Links (When empty) */}
       {!url && (
@@ -177,7 +195,7 @@ export default function UrlInput({
           </span>
         ))}
       </div>
-    </div>
+    </search>
   );
 }
 

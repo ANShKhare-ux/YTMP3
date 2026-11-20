@@ -91,6 +91,7 @@
   --ease-in-out: cubic-bezier(0.66, 0, 0.34, 1);           /* EasingWizard Cubic In-Out (0a0b2c20E) */
 
   color-scheme: dark;
+  accent-color: var(--spotify-green);
 }
 
 /* ==========================================================================
@@ -105,6 +106,7 @@
 html {
   scroll-behavior: smooth;
   scroll-padding-top: 72px;
+  scrollbar-gutter: stable;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -125,6 +127,46 @@ html, body {
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* ==========================================================================
+   MODERN WEB GUIDANCE: TYPOGRAPHY BALANCING & ORPHAN PREVENTION
+   Standards: improve-text-layout-and-legibility
+   ========================================================================== */
+h1, h2, h3, h4, h5, h6,
+.cursor-hero-title,
+.download-main-title,
+.pricing-title,
+.not-found-title,
+.v-faq-question {
+  text-wrap: balance;
+}
+
+p, li, blockquote,
+.cursor-hero-subtitle,
+.download-main-subtitle,
+.download-card-guide,
+.v-faq-answer {
+  text-wrap: pretty;
+}
+
+/* Modern Web Guidance: Scroll containment preventing body gesture chaining */
+.cursor-modal-backdrop,
+.cmd-palette-backdrop,
+.cursor-mobile-menu-drawer,
+dialog:modal {
+  overscroll-behavior: contain;
+}
+
+/* Modern Web Guidance: Below-the-fold layout rendering deferral */
+.cursor-features-section,
+.cursor-platforms-section,
+.cursor-table-section,
+.cursor-specs-section,
+.cursor-faq-section,
+.v-animated-footer-root {
+  content-visibility: auto;
+  contain-intrinsic-size: auto none auto 600px;
 }
 
 /* Keep studio converter desktop app fixed when active */

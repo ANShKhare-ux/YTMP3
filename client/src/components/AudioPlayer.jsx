@@ -297,7 +297,7 @@ export default function AudioPlayer({
         {/* Left Column: Artwork & Title */}
         <div className="player-left-col">
           {track.thumbnail ? (
-            <img src={track.thumbnail} alt={track.title} className="player-artwork" />
+            <img src={track.thumbnail} alt={track.title} className="player-artwork" loading="lazy" decoding="async" />
           ) : (
             <div
               className="player-artwork"

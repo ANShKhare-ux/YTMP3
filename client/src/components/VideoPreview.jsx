@@ -33,7 +33,8 @@ export default function VideoPreview({ video }) {
           src={video.thumbnail}
           alt={video.title}
           className="spotify-thumb-img"
-          loading="lazy"
+          fetchPriority="high"
+          decoding="async"
         />
         <div className="spotify-duration-pill">
           {video.durationFormatted || '0:00'}
