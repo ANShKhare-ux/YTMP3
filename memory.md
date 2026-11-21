@@ -46,6 +46,10 @@
     - Features dynamic client OS auto-detection highlighting the user's specific platform, actionable 1-click download buttons, complete step-by-step installation & usage walkthroughs for each package, comparison matrix, and SmartScreen / Android sideloading diagnostic FAQs.
     - Top header branding styled cleanly with design tokens (`cursor-nav-brand`, explicit text colors, version badge) and `Back to Home` navigation button.
     - Full SPA routing (`/download`, `/downloads`), sitemap indexing (`sitemap.xml` priority 1.0), and AI crawler discovery (`llms.txt`).
+    - **4-Card Single-Line Aligned Grid**: Configured `.download-methods-grid` with `grid-template-columns: repeat(4, minmax(0, 1fr))` and flexible spacing (`clamp(12px, 1.4vw, 20px)`) ensuring all 4 cards align in a single horizontal row on desktop and laptop displays (down to 960px) with equalized heights, unbreakable specs pills, and pinned installation guides. Responsive fallback uses a balanced 2x2 grid (`repeat(2, minmax(0, 1fr))`) on tablets (<= 960px) and a single-column stack on mobile (<= 580px).
+- **Tip Jar & Creator Monetization Integration**:
+  - `client/src/components/TipJarModal.jsx`: Configurable, accessible Spotify-dark modal supporting 1-click external links (Buy Me a Coffee, Ko-fi) and 1-click copyable crypto tip addresses (Bitcoin Bech32, Ethereum/USDT/USDC ERC-20 & Arbitrum, Solana SPL, Monero XMR) with visual "Copied!" feedback and checkmark animations.
+  - Global navigation and footer entry points: Styled `.cursor-nav-tip-btn` buttons added in top nav actions across `LandingPage.jsx`, `DownloadPage.jsx`, `DocsLayout.jsx`, `LegalLayout.jsx`, and `AppDesktop.jsx`, plus footer links in `FOOTER_COLUMNS` and URL hash trigger support (`#tipjar`, `#donate`, `/tipjar`).
 - **Electron Black Screen Remediation**:
   - Added `app.disableHardwareAcceleration()` for Windows (`process.platform === 'win32'`) in `electron/main.js` to eliminate Chromium D3D11/GPU driver black-screen hangs.
   - Implemented `show: false` paired with `mainWindow.once('ready-to-show', () => mainWindow.show())` to eliminate black window rendering before the DOM is painted.

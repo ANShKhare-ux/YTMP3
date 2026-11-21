@@ -24,7 +24,8 @@ import HistorySection from './components/HistorySection';
 import Logo from './components/Logo';
 import CommandPalette from './components/CommandPalette';
 import PricingModal from './components/PricingModal';
-import { Crown, Command as CommandIcon } from 'lucide-react';
+import TipJarModal from './components/TipJarModal';
+import { Crown, Command as CommandIcon, Coffee } from 'lucide-react';
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
@@ -41,6 +42,7 @@ export default function App({ onNavigate }) {
   const [error, setError] = useState(null);
   const [isCmdOpen, setIsCmdOpen] = useState(false);
   const [isPricingOpen, setIsPricingOpen] = useState(false);
+  const [isTipJarOpen, setIsTipJarOpen] = useState(false);
   const eventSourceRef = useRef(null);
 
   // Global Command Palette shortcut (⌘K / Ctrl+K)
@@ -643,6 +645,17 @@ export default function App({ onNavigate }) {
               <span>Studio Pro</span>
             </button>
 
+            <button
+              type="button"
+              className="top-bar-action-pill"
+              onClick={() => setIsTipJarOpen(true)}
+              title="Tip Jar & Support"
+              style={{ background: 'rgba(255, 221, 0, 0.08)', borderColor: 'rgba(255, 221, 0, 0.25)', color: '#ffd700' }}
+            >
+              <Coffee size={12} />
+              <span>Tip Jar</span>
+            </button>
+
             {onNavigate && (
               <button
                 type="button"
@@ -881,6 +894,12 @@ export default function App({ onNavigate }) {
         onNavigateStudio={() => { if (onNavigate) onNavigate('app', '/#app'); }}
         onNavigateLanding={() => { if (onNavigate) onNavigate('landing', '/'); }}
         currentView="app"
+      />
+
+      {/* Tip Jar Modal */}
+      <TipJarModal
+        isOpen={isTipJarOpen}
+        onClose={() => setIsTipJarOpen(false)}
       />
 
       {/* SaaS Studio Capabilities & Tier Comparison Modal */}

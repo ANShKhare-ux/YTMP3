@@ -374,6 +374,38 @@ test('workspace - dedicated DownloadPage component and /download routing integri
   assert.ok(llmsSrc.includes('https://ytmp-3-five.vercel.app/download'), 'llms.txt must include /download');
 });
 
+test('workspace - Tip Jar modal and download cards alignment integrity', () => {
+  // 1. Verify TipJarModal.jsx exists and exports TIP_DESTINATIONS
+  const tipJarModalPath = path.join(rootDir, 'client', 'src', 'components', 'TipJarModal.jsx');
+  assert.ok(fs.existsSync(tipJarModalPath), 'client/src/components/TipJarModal.jsx must exist');
+  const tipJarModalSrc = fs.readFileSync(tipJarModalPath, 'utf8');
+  assert.ok(tipJarModalSrc.includes('export const TIP_DESTINATIONS'), 'TipJarModal.jsx must export TIP_DESTINATIONS');
+  assert.ok(tipJarModalSrc.includes('buyMeACoffee'), 'TipJarModal.jsx must include Buy Me a Coffee');
+  assert.ok(tipJarModalSrc.includes('kofi'), 'TipJarModal.jsx must include Ko-fi');
+  assert.ok(tipJarModalSrc.includes('crypto: ['), 'TipJarModal.jsx must include Crypto tip options');
+  assert.ok(tipJarModalSrc.includes('export default function TipJarModal'), 'TipJarModal.jsx must export default function TipJarModal');
+
+  // 2. Verify Tip Jar integration in LandingPage, DownloadPage, DocsLayout, and LegalLayout
+  const landingSrc = fs.readFileSync(path.join(rootDir, 'client', 'src', 'components', 'LandingPage.jsx'), 'utf8');
+  assert.ok(landingSrc.includes('TipJarModal'), 'LandingPage must import and render TipJarModal');
+  assert.ok(landingSrc.includes('cursor-nav-tip-btn'), 'LandingPage must include nav tip button');
+
+  const downloadSrc = fs.readFileSync(path.join(rootDir, 'client', 'src', 'components', 'DownloadPage.jsx'), 'utf8');
+  assert.ok(downloadSrc.includes('TipJarModal'), 'DownloadPage must import and render TipJarModal');
+  assert.ok(downloadSrc.includes('cursor-nav-tip-btn'), 'DownloadPage must include nav tip button');
+
+  const docsSrc = fs.readFileSync(path.join(rootDir, 'client', 'src', 'components', 'docs', 'DocsLayout.jsx'), 'utf8');
+  assert.ok(docsSrc.includes('TipJarModal'), 'DocsLayout must import and render TipJarModal');
+
+  const legalSrc = fs.readFileSync(path.join(rootDir, 'client', 'src', 'components', 'legal', 'LegalLayout.jsx'), 'utf8');
+  assert.ok(legalSrc.includes('TipJarModal'), 'LegalLayout must import and render TipJarModal');
+
+  // 3. Verify Download methods grid in index.css has repeat(4, minmax(0, 1fr))
+  const cssSrc = fs.readFileSync(path.join(rootDir, 'client', 'src', 'index.css'), 'utf8');
+  assert.ok(cssSrc.includes('grid-template-columns: repeat(4, minmax(0, 1fr));'), 'index.css must configure 4-column aligned grid with minmax(0, 1fr)');
+  assert.ok(cssSrc.includes('.cursor-nav-tip-btn'), 'index.css must define .cursor-nav-tip-btn');
+});
+
 
 
 

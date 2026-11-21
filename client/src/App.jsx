@@ -25,6 +25,7 @@ function resolveRoute(pathname, hash) {
   if (pathname === '/terms' || hash === '#terms' || hash === '#/terms') return 'terms';
   if (pathname === '/copyright-acceptable-use' || hash === '#copyright-acceptable-use' || hash === '#/copyright-acceptable-use') return 'copyright';
   if (pathname === '/contact' || hash === '#contact' || hash === '#/contact') return 'contact';
+  if (pathname === '/tipjar' || pathname === '/donate' || hash === '#tipjar' || hash === '#/tipjar' || hash === '#donate') return 'landing';
   if (pathname === '/landing' || hash === '#landing' || hash === '#/landing') return 'landing';
   if (pathname === '/app' || hash === '#app' || hash === '#/app' || (typeof window !== 'undefined' && window.sonicWaveDesktop?.isDesktop)) return 'app';
   if (pathname === '/404' || hash === '#404' || hash === '#/404') return 'not-found';

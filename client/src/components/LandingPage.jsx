@@ -26,10 +26,12 @@ import {
   FileCode,
   FolderArchive,
   ArrowRight,
-  ChevronUp
+  ChevronUp,
+  Coffee
 } from 'lucide-react';
 import FaqAccordion from './ui/FaqAccordion';
 import HalftoneWordmarkFooter from './ui/halftone-wordmark-footer';
+import TipJarModal from './TipJarModal';
 import DownloadSuccessModal, { triggerZipDownload, triggerExeDownload, triggerMacZipDownload, triggerApkDownload } from './DownloadSuccessModal';
 import { gsap } from 'gsap';
 import { useGSAP } from '@gsap/react';
@@ -246,6 +248,7 @@ const FOOTER_COLUMNS = [
       { label: 'Terms of Use', href: '/terms' },
       { label: 'Copyright & Abuse', href: '/copyright-acceptable-use' },
       { label: 'Contact & Support', href: '/contact' },
+      { label: '☕ Tip Jar / Support Us', href: '#tipjar' },
     ],
   },
   {
@@ -268,6 +271,7 @@ export default function LandingPage({
 }) {
   const [isDownloadSuccessOpen, setIsDownloadSuccessOpen] = useState(false);
   const [downloadType, setDownloadType] = useState('exe');
+  const [isTipJarOpen, setIsTipJarOpen] = useState(false);
   const [userPlatform, setUserPlatform] = useState(() => {
     if (typeof window === 'undefined' || typeof navigator === 'undefined') return 'win';
     const ua = navigator.userAgent || navigator.platform || '';
@@ -360,6 +364,20 @@ export default function LandingPage({
       window.removeEventListener('scroll', handleScroll);
       observer.disconnect();
     };
+  }, []);
+
+  // Listen for #tipjar or #donate hash triggers
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const checkHash = () => {
+        if (window.location.hash === '#tipjar' || window.location.hash === '#donate' || window.location.pathname === '/tipjar') {
+          setIsTipJarOpen(true);
+        }
+      };
+      checkHash();
+      window.addEventListener('hashchange', checkHash);
+      return () => window.removeEventListener('hashchange', checkHash);
+    }
   }, []);
   useGSAP(() => {
     // Accessibility: Honor reduced motion preference immediately
@@ -1064,7 +1082,18 @@ export default function LandingPage({
             </a>
           </nav>
 
-          <div className="cursor-nav-actions">
+          <div className="cursor-nav-actions" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <button
+              type="button"
+              className="cursor-nav-tip-btn"
+              onClick={() => setIsTipJarOpen(true)}
+              aria-label="Support SonicWave Tip Jar"
+              title="Tip Jar & Support"
+            >
+              <Coffee size={14} style={{ color: '#ffd700' }} />
+              <span>Tip Jar</span>
+            </button>
+
             <button
               type="button"
               className={`cursor-button-primary cursor-nav-download-btn ${ctaElevated ? 'is-elevated' : ''}`}
@@ -1213,6 +1242,15 @@ export default function LandingPage({
               >
                 <AppleIcon size={16} />
                 <span>macOS Package (.zip)</span>
+              </button>
+              <button
+                type="button"
+                className="cursor-button-secondary cursor-mobile-download-btn"
+                onClick={() => { setIsMobileMenuOpen(false); setIsTipJarOpen(true); }}
+                style={{ borderColor: 'rgba(255, 221, 0, 0.4)', color: '#ffd700', marginTop: '6px' }}
+              >
+                <Coffee size={16} />
+                <span>☕ Tip Jar / Support SonicWave</span>
               </button>
             </div>
           </div>
@@ -2075,7 +2113,9 @@ export default function LandingPage({
         grain={0.4}
         preset="night"
         onNavigate={(href) => {
-          if (href === '/SonicWave-Custom-Installer.exe') {
+          if (href === '#tipjar' || href === '/tipjar') {
+            setIsTipJarOpen(true);
+          } else if (href === '/SonicWave-Custom-Installer.exe') {
             handleDownloadExe();
           } else if (href === '/SonicWave-v1.0.0-Windows.zip') {
             handleDownloadZip();
@@ -2102,6 +2142,12 @@ export default function LandingPage({
           ink: '#f0f3f6',
           warm: '#5e69d1',
         }}
+      />
+
+      {/* Tip Jar Modal */}
+      <TipJarModal
+        isOpen={isTipJarOpen}
+        onClose={() => setIsTipJarOpen(false)}
       />
 
       {/* Download Success Dialogbox */}
