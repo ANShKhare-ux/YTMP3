@@ -5,7 +5,6 @@ import DownloadSuccessModal, {
   triggerMacZipDownload,
   triggerApkDownload
 } from './DownloadSuccessModal';
-import TipJarModal from './TipJarModal';
 import { useDocumentMetadata } from './legal/useDocumentMetadata';
 import {
   Download,
@@ -27,8 +26,7 @@ import {
   HelpCircle,
   Zap,
   Info,
-  AlertTriangle,
-  Coffee
+  AlertTriangle
 } from 'lucide-react';
 
 function WindowsIcon({ size = 16, className = '' }) {
@@ -95,7 +93,6 @@ export default function DownloadPage({ onNavigate }) {
   const [isDownloadSuccessOpen, setIsDownloadSuccessOpen] = useState(false);
   const [downloadType, setDownloadType] = useState('exe');
   const [copiedCmd, setCopiedCmd] = useState('');
-  const [isTipJarOpen, setIsTipJarOpen] = useState(false);
 
   const [userPlatform, setUserPlatform] = useState(() => {
     if (typeof window === 'undefined' || typeof navigator === 'undefined') return 'win';
@@ -116,19 +113,6 @@ export default function DownloadPage({ onNavigate }) {
     setCopiedCmd(id);
     setTimeout(() => setCopiedCmd(''), 2500);
   };
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const checkHash = () => {
-        if (window.location.hash === '#tipjar' || window.location.hash === '#donate') {
-          setIsTipJarOpen(true);
-        }
-      };
-      checkHash();
-      window.addEventListener('hashchange', checkHash);
-      return () => window.removeEventListener('hashchange', checkHash);
-    }
-  }, []);
 
   const startDownload = (type) => {
     setDownloadType(type);
@@ -175,18 +159,7 @@ export default function DownloadPage({ onNavigate }) {
             </a>
           </nav>
 
-          <div className="cursor-nav-actions" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <button
-              type="button"
-              className="cursor-nav-tip-btn"
-              onClick={() => setIsTipJarOpen(true)}
-              aria-label="Tip Jar"
-              title="Tip Jar & Support"
-            >
-              <Coffee size={13} style={{ color: '#ffd700' }} />
-              <span>Tip Jar</span>
-            </button>
-
+          <div className="cursor-nav-actions">
             <button
               type="button"
               className="cursor-button-secondary cursor-btn-sm"
@@ -652,16 +625,7 @@ export default function DownloadPage({ onNavigate }) {
       <footer style={{ borderTop: '1px solid rgba(255, 255, 255, 0.08)', padding: '32px 20px', background: '#0e0e0e', fontSize: '13px', color: 'var(--text-subdued)', textAlign: 'center' }}>
         <div style={{ maxWidth: '1120px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
           <div>&copy; 2026 SonicWave Media Technologies. Licensed under MIT.</div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '20px', flexWrap: 'wrap' }}>
-            <button
-              type="button"
-              onClick={() => setIsTipJarOpen(true)}
-              style={{ background: 'none', border: 'none', color: '#ffd700', cursor: 'pointer', padding: 0, display: 'inline-flex', alignItems: 'center', gap: '5px', fontWeight: 600 }}
-              title="Tip Jar & Support"
-            >
-              <Coffee size={13} />
-              <span>☕ Tip Jar</span>
-            </button>
+          <div style={{ display: 'flex', gap: '20px' }}>
             <button type="button" onClick={() => onNavigate && onNavigate('install', '/install')} style={{ background: 'none', border: 'none', color: 'var(--text-subdued)', cursor: 'pointer', padding: 0 }}>Install Guide</button>
             <button type="button" onClick={() => onNavigate && onNavigate('platforms-guide', '/supported-platforms')} style={{ background: 'none', border: 'none', color: 'var(--text-subdued)', cursor: 'pointer', padding: 0 }}>Platforms</button>
             <button type="button" onClick={() => onNavigate && onNavigate('troubleshooting', '/troubleshooting')} style={{ background: 'none', border: 'none', color: 'var(--text-subdued)', cursor: 'pointer', padding: 0 }}>Troubleshooting</button>
@@ -669,12 +633,6 @@ export default function DownloadPage({ onNavigate }) {
           </div>
         </div>
       </footer>
-
-      {/* Tip Jar Modal */}
-      <TipJarModal
-        isOpen={isTipJarOpen}
-        onClose={() => setIsTipJarOpen(false)}
-      />
 
       {/* Download Success Dialogbox Modal */}
       <DownloadSuccessModal

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import DownloadSuccessModal, { triggerZipDownload, triggerExeDownload } from '../DownloadSuccessModal';
-import TipJarModal from '../TipJarModal';
 import {
   Download,
   Layers,
@@ -13,8 +12,7 @@ import {
   HelpCircle,
   CheckCircle2,
   BookOpen,
-  Music2,
-  Coffee
+  Music2
 } from 'lucide-react';
 
 function WindowsIcon({ size = 16, className = '' }) {
@@ -70,7 +68,6 @@ export default function DocsLayout({
 
   const [isDownloadSuccessOpen, setIsDownloadSuccessOpen] = useState(false);
   const [downloadType, setDownloadType] = useState('exe');
-  const [isTipJarOpen, setIsTipJarOpen] = useState(false);
 
   const handleDownload = (e) => {
     if (e && e.preventDefault) e.preventDefault();
@@ -106,18 +103,7 @@ export default function DocsLayout({
             </a>
           </nav>
 
-          <div className="cursor-nav-actions" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <button
-              type="button"
-              className="cursor-nav-tip-btn"
-              onClick={() => setIsTipJarOpen(true)}
-              aria-label="Tip Jar"
-              title="Tip Jar & Support"
-            >
-              <Coffee size={13} style={{ color: '#ffd700' }} />
-              <span>Tip Jar</span>
-            </button>
-
+          <div className="cursor-nav-actions">
             <button
               type="button"
               className="cursor-button-primary cursor-nav-download-btn"
@@ -220,15 +206,6 @@ export default function DocsLayout({
               <a href="/terms" onClick={(e) => handleLinkClick(e, '/terms', 'terms')}>Terms</a>
               <a href="/copyright-acceptable-use" onClick={(e) => handleLinkClick(e, '/copyright-acceptable-use', 'copyright')}>Copyright</a>
               <a href="/contact" onClick={(e) => handleLinkClick(e, '/contact', 'contact')}>Support</a>
-              <button
-                type="button"
-                onClick={() => setIsTipJarOpen(true)}
-                style={{ background: 'none', border: 'none', color: '#ffd700', cursor: 'pointer', padding: 0, display: 'inline-flex', alignItems: 'center', gap: '4px', fontWeight: 600, fontSize: 'inherit' }}
-                title="Tip Jar & Support"
-              >
-                <Coffee size={12} />
-                <span>☕ Tip Jar</span>
-              </button>
               <a
                 href="https://github.com/ANShKhare-ux/YTMP3"
                 target="_blank"
@@ -245,12 +222,6 @@ export default function DocsLayout({
           </div>
         </div>
       </footer>
-
-      {/* Tip Jar Modal */}
-      <TipJarModal
-        isOpen={isTipJarOpen}
-        onClose={() => setIsTipJarOpen(false)}
-      />
 
       {/* SaaS Download Success Dialogbox */}
       <DownloadSuccessModal
