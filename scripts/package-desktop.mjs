@@ -96,7 +96,7 @@ fs.copyFileSync(path.join(rootDir, 'README.md'), path.join(stagingDir, 'README.m
 fs.copyFileSync(path.join(rootDir, 'package.json'), path.join(stagingDir, 'package.json'));
 
 // 4. Copy server files
-const serverFiles = ['index.js', 'converter.js', 'binManager.js', 'package.json'];
+const serverFiles = ['index.js', 'converter.js', 'binManager.js', 'photoResolver.js', 'package.json'];
 for (const file of serverFiles) {
   const src = path.join(rootDir, 'server', file);
   if (fs.existsSync(src)) {
