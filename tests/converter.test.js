@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const {
   formatDuration,
+  formatYtDlpError,
   getJob,
   getHistory,
   cancelConversion,
@@ -625,6 +626,63 @@ test('converter - classifyMediaContent and getTailoredDownloadOptions handle Ins
   const playlistItemsIndex = conversionArgs.args.indexOf('--playlist-items');
   assert.notStrictEqual(playlistItemsIndex, -1, 'Must include --playlist-items for Instagram posts');
   assert.strictEqual(conversionArgs.args[playlistItemsIndex + 1], '1', '--playlist-items should target item 1');
+});
+
+test('converter - formatYtDlpError sanitizes yt-dlp error output and formats friendly Instagram photo messages', () => {
+  // Test Instagram photo carousel / no video formats found
+  const rawIgPhotoStderr = `ERROR: [Instagram] DgBNZl4tY0P: No video formats found!; please report this issue on  https://github.com/yt-dlp/yt-dlp/issues?q= , filling out the appropriate issue template. Confirm you are on the latest version using  yt-dlp -U`;
+  const igPhotoResult = formatYtDlpError(rawIgPhotoStderr);
+  assert.ok(
+    igPhotoResult.includes('This Instagram post contains only photos/images (no video or audio stream)'),
+    'Should identify Instagram photo-only posts'
+  );
+  assert.ok(
+    !igPhotoResult.includes('please report this issue'),
+    'Should not leak yt-dlp github issue template to users'
+  );
+
+  // Test "There is no video in this post"
+  const rawNoVideoMsg = 'ERROR: [Instagram] DgBNZl4tY0P: There is no video in this post';
+  assert.ok(
+    formatYtDlpError(rawNoVideoMsg).includes('This Instagram post contains only photos/images'),
+    'Should detect "no video in this post"'
+  );
+
+  // Test silent audio / missing audio codec
+  const ffprobeAudioErr = 'ERROR: Post-process error: unable to obtain file audio codec with ffprobe';
+  assert.ok(
+    formatYtDlpError(ffprobeAudioErr).includes('This post does not contain an audio stream'),
+    'Should detect missing audio stream'
+  );
+
+  // Test age-restricted content
+  const ageErr = 'ERROR: Sign in to confirm your age. This video may be inappropriate for some users.';
+  assert.strictEqual(
+    formatYtDlpError(ageErr),
+    'This media is age-restricted and requires sign-in.'
+  );
+
+  // Test platform verification / bot detection
+  const botErr = 'ERROR: Sign in to confirm you’re not a bot';
+  assert.strictEqual(
+    formatYtDlpError(botErr),
+    'Platform verification or login required. Please try another link or export cookies.txt.'
+  );
+
+  // Test generic ERROR line sanitization (stripping yt-dlp report issue link)
+  const genericReportErr = 'ERROR: [generic] abc123: Some unexpected server response; please report this issue on https://github.com/yt-dlp/yt-dlp/issues?q=123';
+  const genericResult = formatYtDlpError(genericReportErr);
+  assert.strictEqual(genericResult, 'abc123: Some unexpected server response');
+
+  // Test fallback message on empty/null input
+  assert.strictEqual(
+    formatYtDlpError('', 'Custom fallback'),
+    'Custom fallback'
+  );
+  assert.strictEqual(
+    formatYtDlpError(null, 'Custom fallback'),
+    'Custom fallback'
+  );
 });
 
 

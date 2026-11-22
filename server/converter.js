@@ -1105,6 +1105,49 @@ function getCookiePath() {
 }
 
 /**
+ * Normalizes and translates raw yt-dlp error output into user-friendly error messages.
+ * Prevents raw stack traces and internal bug-report URLs from leaking to the frontend.
+ *
+ * @param {string|Error} rawErrorText - Raw stderr or error string from yt-dlp / FFmpeg
+ * @param {string} [fallbackMessage] - Default fallback message if no pattern matches
+ * @returns {string} Sanitized, user-friendly error message
+ */
+function formatYtDlpError(rawErrorText, fallbackMessage = 'Unable to process media. Please verify the URL or try again.') {
+  const errText = (rawErrorText || '').toString();
+
+  if (errText.includes('This video is unavailable') || errText.includes('Video unavailable')) {
+    return 'This media is unavailable or has been deleted.';
+  }
+  if (errText.includes('Private') || errText.includes('private')) {
+    return 'This content is marked private or restricted.';
+  }
+  if (
+    errText.includes('No video formats found') ||
+    errText.includes('There is no video in this post') ||
+    errText.includes('no video in this post') ||
+    errText.includes('does not contain any video')
+  ) {
+    return 'This Instagram post contains only photos/images (no video or audio stream). SonicWave converts video and audio media (Reels, Videos, MP3, MP4). Photo-only posts cannot be converted to media files.';
+  }
+  if (errText.includes('unable to obtain file audio codec with ffprobe') || errText.includes('does not contain any audio stream')) {
+    return 'This post does not contain an audio stream (silent video or photo). Please select MP4 to download the video or Cover for the photo.';
+  }
+  if (errText.includes('Sign in to confirm your age')) {
+    return 'This media is age-restricted and requires sign-in.';
+  }
+  if (errText.includes('Sign in') || errText.includes('bot')) {
+    return 'Platform verification or login required. Please try another link or export cookies.txt.';
+  }
+
+  const match = errText.match(/ERROR:\s*(?:\[[^\]]+\]\s*)?([^\r\n]+)/i);
+  if (match && match[1]) {
+    return match[1].replace(/;\s*please report this issue on\s*https?:\/\/[^\s]+/i, '').trim();
+  }
+
+  return fallbackMessage;
+}
+
+/**
  * Get Video/Audio Metadata via yt-dlp across all social platforms
  */
 function getVideoInfo(rawUrl) {
@@ -1138,25 +1181,10 @@ function getVideoInfo(rawUrl) {
     execFile(ytDlp, args, { maxBuffer: 20 * 1024 * 1024 }, (error, stdout, stderr) => {
       if (error) {
         console.error('[converter] Error fetching media info:', stderr || error.message);
-        
-        let errorMsg = 'Unable to fetch media details. Please verify the URL or try again.';
-        const errText = (stderr || error.message || '').toString();
-
-        if (errText.includes('This video is unavailable') || errText.includes('Video unavailable')) {
-          errorMsg = 'This media is unavailable or has been deleted.';
-        } else if (errText.includes('Private') || errText.includes('private')) {
-          errorMsg = 'This content is marked private or restricted.';
-        } else if (errText.includes('Sign in to confirm your age')) {
-          errorMsg = 'This media is age-restricted and requires sign-in.';
-        } else if (errText.includes('Sign in') || errText.includes('bot')) {
-          errorMsg = 'Platform verification or login required. Please try another link.';
-        } else {
-          const match = errText.match(/ERROR:\s*(?:\[[^\]]+\]\s*)?([^\r\n]+)/i);
-          if (match && match[1]) {
-            errorMsg = match[1].trim();
-          }
-        }
-
+        const errorMsg = formatYtDlpError(
+          stderr || error.message,
+          'Unable to fetch media details. Please verify the URL or try again.'
+        );
         return reject(new Error(errorMsg));
       }
 
@@ -1569,19 +1597,10 @@ function attachProcessListeners(jobState, child, targetFormat) {
       }
     } else {
       jobState.status = 'failed';
-      let errorMsg = `Conversion failed (exit code ${code})`;
-      if (stderrBuffer.includes('unable to obtain file audio codec with ffprobe') || stderrBuffer.includes('does not contain any audio stream')) {
-        errorMsg = 'This post does not contain an audio stream (silent video or photo). Please select MP4 to download the video or Cover for the photo.';
-      } else if (stderrBuffer.includes('Sign in to confirm your age')) {
-        errorMsg = 'This video is age-restricted and requires sign-in.';
-      } else if (stderrBuffer.includes('Sign in') || stderrBuffer.includes('bot')) {
-        errorMsg = 'YouTube flagged this video with bot/login verification. Try another video link or export cookies.txt.';
-      } else {
-        const match = stderrBuffer.match(/ERROR:\s*(?:\[[^\]]+\]\s*)?([^\r\n]+)/i);
-        if (match && match[1]) {
-          errorMsg = match[1].trim();
-        }
-      }
+      const errorMsg = formatYtDlpError(
+        stderrBuffer,
+        `Conversion failed (exit code ${code})`
+      );
       jobState.error = errorMsg;
       console.error(`[converter] Job ${jobState.id} failed: ${errorMsg}`);
 
@@ -1771,6 +1790,7 @@ function getActiveJobCount() {
 
 module.exports = {
   getVideoInfo,
+  formatYtDlpError,
   startConversion,
   cancelConversion,
   getJob,

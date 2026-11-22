@@ -26,6 +26,11 @@
     - Detects silent media (`acodec === 'none'`), recommending pristine Full HD MP4 video and full-resolution photo downloads rather than failing postprocessing with `unable to obtain file audio codec with ffprobe`.
     - Added `--playlist-items 1` in `buildConversionArgs` for Instagram multi-item posts, preventing yt-dlp file output template collisions and downloading slide 1 cleanly in seconds.
     - Added clear user error messaging in `attachProcessListeners` when audio extraction is attempted on silent media without crashing the backend process.
+    - **Sanitized Error Reporting & Photo Post Detection (`formatYtDlpError`)**:
+      - Centralized error normalization in `formatYtDlpError` (`server/converter.js`) across both `getVideoInfo` and `attachProcessListeners`.
+      - Detects Instagram photo carousel / photo-only posts (`No video formats found`, `There is no video in this post`, `no video in this post`) and provides a clear, friendly error explaining that the post contains only static photos/images and cannot be converted to media streams.
+      - Strips internal yt-dlp bug report links (e.g. `; please report this issue on https://github.com/yt-dlp/yt-dlp/issues...`) so raw upstream stack traces and developer URLs are never exposed to end users.
+      - Tested with comprehensive assertions in `tests/converter.test.js`.
 - **Audio Extraction**: Multi-bitrate MP3 (`320k`, `256k`, `192k`, `128k`), M4A (instant stream copy), lossless WAV, and FLAC.
 - **Video Conversion**: High-definition MP4 packaging (`1080p`, `720p`, `480p`, `best`) with direct stream copy audio muxing.
 - **Live Progress Updates**: Server-Sent Events (SSE) tracking download percentage, speed, ETA, and re-encoding stage every 400ms.
