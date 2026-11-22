@@ -1667,7 +1667,8 @@ function startConversion({
   photos = [],
   title = '',
   artist = '',
-  thumbnail = ''
+  thumbnail = '',
+  slideIndex = null
 }) {
   const targetFmt = (format || 'mp3').toLowerCase();
   const isPhotoJob = Boolean(isPhoto) || ['zip', 'jpg', 'jpeg', 'png', 'webp'].includes(targetFmt);
@@ -1694,6 +1695,7 @@ function startConversion({
       thumbnail: thumbnail || '',
       duration: 0,
       photos: Array.isArray(photos) ? photos : [],
+      slideIndex: slideIndex ? Number(slideIndex) : null,
       filePath: null,
       fileName: null,
       error: null,

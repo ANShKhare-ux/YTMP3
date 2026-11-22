@@ -111,7 +111,8 @@ app.post('/api/convert', (req, res) => {
     duration = 0,
     turbo = true,
     isPhoto = false,
-    photos = []
+    photos = [],
+    slideIndex = null
   } = req.body || {};
 
   if (!url) {
@@ -146,6 +147,7 @@ app.post('/api/convert', (req, res) => {
       turbo,
       isPhoto: Boolean(isPhoto),
       photos: Array.isArray(photos) ? photos : [],
+      slideIndex: slideIndex ? Number(slideIndex) : null,
       title,
       artist,
       thumbnail
@@ -385,6 +387,42 @@ app.get('/api/download/:jobId', (req, res) => {
       res.status(500).send('Error downloading file.');
     }
   });
+});
+
+// Direct photo proxy download (enables instant 1-click download of any carousel slide)
+app.get('/api/photo-download', async (req, res) => {
+  const { url, filename } = req.query;
+  if (!url || typeof url !== 'string' || !url.startsWith('https://')) {
+    return res.status(400).json({ success: false, error: 'Valid HTTPS photo URL is required' });
+  }
+
+  try {
+    const upstreamRes = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+      }
+    });
+
+    if (!upstreamRes.ok) {
+      return res.status(upstreamRes.status).json({ success: false, error: `Upstream error (${upstreamRes.status})` });
+    }
+
+    const safeName = path.basename(filename || 'photo.jpg')
+      .replace(/[/\\?%*:|"<>/\0\r\n]/g, '_')
+      .slice(0, 100);
+    const asciiName = safeName.replace(/[^\x20-\x7E]/g, '_').replace(/["\r\n]/g, '_');
+    const utf8Encoded = encodeURIComponent(safeName);
+
+    const contentType = upstreamRes.headers.get('content-type') || 'image/jpeg';
+    res.setHeader('Content-Type', contentType);
+    res.setHeader('Content-Disposition', `attachment; filename="${asciiName}"; filename*=UTF-8''${utf8Encoded}`);
+    res.setHeader('Cache-Control', 'public, max-age=86400');
+
+    const arrayBuffer = await upstreamRes.arrayBuffer();
+    return res.send(Buffer.from(arrayBuffer));
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message || 'Failed to download photo' });
+  }
 });
 
 // Get conversion history

@@ -31,7 +31,9 @@ export default function OptionsSelector({
   isConverting,
   videoInfo,
   turbo = true,
-  setTurbo
+  setTurbo,
+  activeSlideIndex = 0,
+  setActiveSlideIndex
 }) {
   const isVideo = format === 'mp4';
   const isLossless = format === 'wav' || format === 'flac';
@@ -170,9 +172,9 @@ export default function OptionsSelector({
             {videoInfo?.isPhoto ? (
               (videoInfo.isCarousel
                 ? [
-                    { value: 'zip', label: `ZIP Archive (${videoInfo.itemCount || 'All'} Photos)`, speedBadge: 'All Slides' },
-                    { value: 'jpg', label: 'Primary Photo (.JPG)', speedBadge: 'Slide 1' },
-                    { value: 'png', label: 'Lossless Photo (.PNG)' }
+                    { value: 'zip', label: `ZIP Archive (${videoInfo.photos?.length || videoInfo.itemCount || 'All'} Photos)`, speedBadge: 'All Slides' },
+                    { value: 'jpg', label: `Slide #${activeSlideIndex + 1} (.JPG)`, speedBadge: `Slide ${activeSlideIndex + 1}` },
+                    { value: 'png', label: `Slide #${activeSlideIndex + 1} (.PNG)` }
                   ]
                 : [
                     { value: 'jpg', label: 'Original Photo (.JPG)', speedBadge: 'Full Res' },
@@ -226,6 +228,41 @@ export default function OptionsSelector({
               ))
             )}
           </div>
+
+          {/* Carousel Slide Quick Picker */}
+          {videoInfo?.isCarousel && Array.isArray(videoInfo.photos) && videoInfo.photos.length > 1 && (
+            <div style={{ marginTop: '12px', width: '100%' }}>
+              <span style={{ fontSize: '11px', color: 'var(--text-subdued)', fontWeight: 600, display: 'block', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.6px' }}>
+                Select Photo to Download:
+              </span>
+              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  className={`spotify-pill-btn ${format === 'zip' ? 'active' : ''}`}
+                  onClick={() => handleFormatChange('zip')}
+                  disabled={isConverting}
+                  style={{ fontSize: '11.5px', padding: '5px 12px' }}
+                >
+                  <span>All ({videoInfo.photos.length} Photos .ZIP)</span>
+                </button>
+                {videoInfo.photos.map((item, idx) => (
+                  <button
+                    key={item.index || idx}
+                    type="button"
+                    className={`spotify-pill-btn ${format !== 'zip' && activeSlideIndex === idx ? 'active' : ''}`}
+                    onClick={() => {
+                      if (setActiveSlideIndex) setActiveSlideIndex(idx);
+                      if (format === 'zip') handleFormatChange('jpg');
+                    }}
+                    disabled={isConverting}
+                    style={{ fontSize: '11.5px', padding: '5px 12px' }}
+                  >
+                    <span>Slide #{idx + 1}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Quality / Resolution Selector */}

@@ -34,6 +34,7 @@ export default function App({ onNavigate }) {
   const [videoInfo, setVideoInfo] = useState(null);
   const [bitrate, setBitrate] = useState('320k');
   const [format, setFormat] = useState('mp3');
+  const [activeSlideIndex, setActiveSlideIndex] = useState(0);
 
   const [isLoadingInfo, setIsLoadingInfo] = useState(false);
   const [isConverting, setIsConverting] = useState(false);
@@ -162,6 +163,7 @@ export default function App({ onNavigate }) {
     setIsLoadingInfo(true);
     setVideoInfo(null);
     setCurrentJob(null);
+    setActiveSlideIndex(0);
 
     try {
       const res = await fetch(`${API_BASE}/api/info`, {
@@ -195,11 +197,29 @@ export default function App({ onNavigate }) {
     }
   };
 
+  // 1-Click Direct Individual Slide Download (Non-blocking browser stream)
+  const handleDownloadSpecificSlide = (slideIdx) => {
+    if (!videoInfo || !videoInfo.photos || !videoInfo.photos[slideIdx]) return;
+    setActiveSlideIndex(slideIdx);
+    const photo = videoInfo.photos[slideIdx];
+    const safeTitle = (videoInfo.title || 'photo').replace(/[/\\?%*:|"<>/\0\r\n]/g, '_').slice(0, 50).trim();
+    const filename = `${safeTitle}_slide_${String(slideIdx + 1).padStart(2, '0')}.jpg`;
+    const directUrl = `${API_BASE}/api/photo-download?url=${encodeURIComponent(photo.url)}&filename=${encodeURIComponent(filename)}`;
+    const a = document.createElement('a');
+    a.href = directUrl;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
   // Trigger conversion
-  const handleStartConversion = async () => {
+  const handleStartConversion = async (overrideFormat) => {
     if (!videoInfo && !url) return;
 
-    if (format === 'cover') {
+    const targetFormat = overrideFormat || format;
+
+    if (targetFormat === 'cover') {
       const coverUrl = videoInfo?.thumbnail;
       if (coverUrl) {
         const a = document.createElement('a');
@@ -213,12 +233,17 @@ export default function App({ onNavigate }) {
       }
     }
 
+    const isSelectiveSlide = videoInfo?.isPhoto && targetFormat !== 'zip';
+    const targetPhotos = isSelectiveSlide && Array.isArray(videoInfo.photos) && videoInfo.photos.length > 0
+      ? [videoInfo.photos[activeSlideIndex] || videoInfo.photos[0]]
+      : (Array.isArray(videoInfo?.photos) ? videoInfo.photos : []);
+
     setError(null);
     setIsConverting(true);
     setCurrentJob({
       status: 'starting',
       progress: 0,
-      format,
+      format: targetFormat,
       quality: bitrate
     });
 
@@ -228,14 +253,21 @@ export default function App({ onNavigate }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           url: videoInfo ? (videoInfo.url || url) : url,
-          format,
+          format: targetFormat,
           quality: bitrate,
           turbo: true,
-          title: videoInfo ? videoInfo.title : '',
+          title: videoInfo
+            ? (isSelectiveSlide && videoInfo.isCarousel
+                ? `${videoInfo.title} - Slide ${activeSlideIndex + 1}`
+                : videoInfo.title)
+            : '',
           artist: videoInfo ? (videoInfo.uploader || videoInfo.author || '') : '',
-          thumbnail: videoInfo ? videoInfo.thumbnail : '',
+          thumbnail: isSelectiveSlide && videoInfo.photos?.[activeSlideIndex]?.url
+            ? videoInfo.photos[activeSlideIndex].url
+            : (videoInfo ? videoInfo.thumbnail : ''),
           isPhoto: Boolean(videoInfo?.isPhoto),
-          photos: Array.isArray(videoInfo?.photos) ? videoInfo.photos : []
+          photos: targetPhotos,
+          slideIndex: isSelectiveSlide ? activeSlideIndex + 1 : undefined
         })
       });
 
@@ -437,6 +469,7 @@ export default function App({ onNavigate }) {
     setVideoInfo(null);
     setCurrentJob(null);
 
+    setActiveSlideIndex(0);
     fetch(`${API_BASE}/api/info`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -473,6 +506,7 @@ export default function App({ onNavigate }) {
     setVideoInfo(null);
     setCurrentJob(null);
     setError(null);
+    setActiveSlideIndex(0);
   };
 
   const handleSelectHistoryTrack = (item) => {
@@ -769,7 +803,17 @@ export default function App({ onNavigate }) {
             {/* Video Preview & Options */}
             {videoInfo && (
               <div style={{ marginTop: '20px' }}>
-                <VideoPreview video={videoInfo} />
+                <VideoPreview
+                  video={videoInfo}
+                  activeSlideIndex={activeSlideIndex}
+                  setActiveSlideIndex={setActiveSlideIndex}
+                  onDownloadSlide={handleDownloadSpecificSlide}
+                  onDownloadAll={() => {
+                    setFormat('zip');
+                    handleStartConversion('zip');
+                  }}
+                  isConverting={isConverting}
+                />
 
                 <OptionsSelector
                   bitrate={bitrate}
@@ -778,6 +822,8 @@ export default function App({ onNavigate }) {
                   setFormat={setFormat}
                   isConverting={isConverting}
                   videoInfo={videoInfo}
+                  activeSlideIndex={activeSlideIndex}
+                  setActiveSlideIndex={setActiveSlideIndex}
                 />
 
                 <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'flex-end' }}>
@@ -785,7 +831,7 @@ export default function App({ onNavigate }) {
                     id="start-convert-btn"
                     type="button"
                     className="btn-spotify-green"
-                    onClick={handleStartConversion}
+                    onClick={() => handleStartConversion()}
                     disabled={isConverting || systemStatus?.disconnected || !systemStatus?.ready}
                     style={{
                       opacity: (systemStatus?.disconnected || !systemStatus?.ready) ? 0.6 : 1,
@@ -801,7 +847,11 @@ export default function App({ onNavigate }) {
                           : !systemStatus?.ready
                             ? 'BOOTSTRAPPING ENGINE...'
                             : videoInfo?.isPhoto
-                              ? (videoInfo.isCarousel ? `DOWNLOAD ${videoInfo.itemCount || ''} PHOTOS (.ZIP)` : 'DOWNLOAD ORIGINAL PHOTO')
+                              ? (format === 'zip'
+                                  ? `DOWNLOAD ALL ${videoInfo.photos?.length || videoInfo.itemCount || ''} PHOTOS (.ZIP)`
+                                  : (videoInfo.isCarousel
+                                      ? `DOWNLOAD SLIDE #${activeSlideIndex + 1} (${format.toUpperCase()})`
+                                      : `DOWNLOAD ORIGINAL PHOTO (${format.toUpperCase()})`))
                               : format === 'mp4'
                                 ? `DOWNLOAD MP4 VIDEO (${bitrate})`
                                 : `CONVERT TO ${format.toUpperCase()} (${bitrate})`}

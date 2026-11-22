@@ -189,6 +189,28 @@ test('photoResolver - downloadPhotoJob produces completed single photo and multi
     if (fs.existsSync(singleJobState.filePath)) {
       fs.unlinkSync(singleJobState.filePath);
     }
+
+    // 3. Test Selective Carousel Slide Download (slideIndex specified)
+    const selectiveSlideJobState = {
+      id: `${testJobId}-slide-3`,
+      title: 'Macro Photography Tips',
+      isCarousel: true,
+      slideIndex: 3,
+      photos: [testPhotos[0]],
+      status: 'starting',
+      progress: 0,
+      speed: ''
+    };
+
+    await downloadPhotoJob(selectiveSlideJobState, 'jpg', DOWNLOADS_DIR);
+    assert.strictEqual(selectiveSlideJobState.status, 'completed', 'Selective slide job must transition to completed');
+    assert.ok(selectiveSlideJobState.filePath && fs.existsSync(selectiveSlideJobState.filePath), 'Selective slide output file must exist on disk');
+    assert.ok(selectiveSlideJobState.fileName.includes('_slide_03.jpg'), `Filename must include _slide_03.jpg, got ${selectiveSlideJobState.fileName}`);
+
+    // Clean up selective slide file
+    if (fs.existsSync(selectiveSlideJobState.filePath)) {
+      fs.unlinkSync(selectiveSlideJobState.filePath);
+    }
   } finally {
     global.fetch = originalFetch;
   }

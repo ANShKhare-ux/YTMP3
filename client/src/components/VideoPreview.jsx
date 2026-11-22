@@ -1,7 +1,33 @@
-import React from 'react';
-import { User, Eye, Zap, Film, FileText, Image, Smartphone, Layers, VolumeX } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import {
+  User,
+  Eye,
+  Zap,
+  Film,
+  FileText,
+  Image,
+  Smartphone,
+  Layers,
+  VolumeX,
+  ChevronLeft,
+  ChevronRight,
+  Download,
+  Maximize2,
+  X,
+  FolderArchive,
+  Sparkles
+} from 'lucide-react';
 
-export default function VideoPreview({ video }) {
+export default function VideoPreview({
+  video,
+  activeSlideIndex = 0,
+  setActiveSlideIndex,
+  onDownloadSlide,
+  onDownloadAll,
+  isConverting = false
+}) {
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+
   if (!video) return null;
 
   const isUltraLong = video.isUltraLong || (video.duration && video.duration >= 7200);
@@ -26,19 +52,95 @@ export default function VideoPreview({ video }) {
 
   const platformColor = getPlatformColor(video.platform);
 
+  // Carousel photo calculations
+  const photos = Array.isArray(video.photos) && video.photos.length > 0 ? video.photos : [];
+  const isMultiPhoto = video.isCarousel && photos.length > 1;
+  const safeIdx = activeSlideIndex >= 0 && activeSlideIndex < photos.length ? activeSlideIndex : 0;
+  const currentPhoto = isMultiPhoto ? photos[safeIdx] : null;
+  const currentPhotoUrl = currentPhoto?.url || video.thumbnail;
+
+  const handlePrevSlide = (e) => {
+    e?.stopPropagation();
+    if (setActiveSlideIndex && safeIdx > 0) {
+      setActiveSlideIndex(safeIdx - 1);
+    }
+  };
+
+  const handleNextSlide = (e) => {
+    e?.stopPropagation();
+    if (setActiveSlideIndex && safeIdx < photos.length - 1) {
+      setActiveSlideIndex(safeIdx + 1);
+    }
+  };
+
+  // Keyboard navigation for Lightbox
+  useEffect(() => {
+    if (!isLightboxOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'ArrowLeft') handlePrevSlide();
+      else if (e.key === 'ArrowRight') handleNextSlide();
+      else if (e.key === 'Escape') setIsLightboxOpen(false);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isLightboxOpen, safeIdx, photos.length]);
+
   return (
     <div className="spotify-video-card" id="video-preview-card">
-      <div className="spotify-thumb-box">
+      {/* Thumbnail Box / Interactive Carousel Slide */}
+      <div className="spotify-thumb-box carousel-thumb-container">
         <img
-          src={video.thumbnail}
+          src={currentPhotoUrl}
           alt={video.title}
           className="spotify-thumb-img"
           fetchPriority="high"
           decoding="async"
+          onClick={() => isMultiPhoto && setIsLightboxOpen(true)}
+          style={{ cursor: isMultiPhoto ? 'pointer' : 'default' }}
         />
+
+        {/* Carousel Navigation Arrows Overlaid on Preview */}
+        {isMultiPhoto && (
+          <>
+            <button
+              type="button"
+              className="carousel-arrow-btn prev"
+              onClick={handlePrevSlide}
+              disabled={safeIdx === 0}
+              aria-label="Previous Slide"
+              title="Previous Slide"
+            >
+              <ChevronLeft size={16} />
+            </button>
+            <button
+              type="button"
+              className="carousel-arrow-btn next"
+              onClick={handleNextSlide}
+              disabled={safeIdx === photos.length - 1}
+              aria-label="Next Slide"
+              title="Next Slide"
+            >
+              <ChevronRight size={16} />
+            </button>
+
+            {/* Expand / Lightbox Button */}
+            <button
+              type="button"
+              className="carousel-expand-btn"
+              onClick={() => setIsLightboxOpen(true)}
+              title="Expand Carousel Gallery (Fullscreen View)"
+              aria-label="Expand Gallery"
+            >
+              <Maximize2 size={12} />
+              <span>Full View</span>
+            </button>
+          </>
+        )}
+
+        {/* Duration / Carousel Slide Counter Pill */}
         <div className="spotify-duration-pill">
           {video.isPhoto
-            ? (video.isCarousel ? `${video.itemCount || 'Multi'} Photos` : 'Photo')
+            ? (isMultiPhoto ? `📸 Slide ${safeIdx + 1} of ${photos.length}` : 'Photo')
             : (video.durationFormatted || '0:00')}
         </div>
       </div>
@@ -52,7 +154,7 @@ export default function VideoPreview({ video }) {
           {video.isCarousel ? (
             <span className="spotify-tag-badge carousel-badge" style={{ borderColor: 'rgba(168, 85, 247, 0.4)', background: 'rgba(168, 85, 247, 0.12)', color: '#c084fc' }}>
               <Layers size={11} />
-              Carousel ({video.itemCount || 'Multi'} items)
+              Carousel ({photos.length || video.itemCount || 'Multi'} photos)
             </span>
           ) : video.isReel ? (
             <span className="spotify-tag-badge reel-badge" style={{ borderColor: 'rgba(254, 44, 85, 0.4)', background: 'rgba(254, 44, 85, 0.12)', color: '#ff4d6d' }}>
@@ -105,7 +207,187 @@ export default function VideoPreview({ video }) {
             </div>
           ) : null}
         </div>
+
+        {/* Carousel 1-Click Quick Download Action Buttons */}
+        {isMultiPhoto && (
+          <div className="carousel-quick-bar">
+            <button
+              type="button"
+              className="carousel-action-btn primary"
+              onClick={() => onDownloadSlide && onDownloadSlide(safeIdx)}
+              disabled={isConverting}
+              title={`Download Slide #${safeIdx + 1} as high-resolution JPG`}
+            >
+              <Download size={13} />
+              <span>Download Slide #{safeIdx + 1} (.JPG)</span>
+            </button>
+
+            <button
+              type="button"
+              className="carousel-action-btn secondary"
+              onClick={() => onDownloadAll && onDownloadAll()}
+              disabled={isConverting}
+              title="Download all carousel photos in a single .ZIP archive"
+            >
+              <FolderArchive size={13} />
+              <span>Download All ({photos.length} Photos .ZIP)</span>
+            </button>
+
+            <button
+              type="button"
+              className="carousel-action-btn ghost"
+              onClick={() => setIsLightboxOpen(true)}
+              title="Open full interactive carousel gallery"
+            >
+              <Maximize2 size={13} />
+              <span>View Gallery</span>
+            </button>
+          </div>
+        )}
+
+        {/* Carousel Thumbnail Strip: View and Download any individual photo */}
+        {isMultiPhoto && (
+          <div className="carousel-strip-wrapper">
+            <div className="carousel-strip-header">
+              <span>All Photos in Carousel ({photos.length}) &bull; Click to preview &bull; 1-click download</span>
+            </div>
+            <div className="carousel-strip-scroll">
+              {photos.map((item, idx) => (
+                <div
+                  key={item.index || idx}
+                  className={`carousel-strip-item ${idx === safeIdx ? 'active' : ''}`}
+                  onClick={() => setActiveSlideIndex && setActiveSlideIndex(idx)}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`Select Slide ${idx + 1}`}
+                  title={`Slide ${idx + 1} (Click to preview)`}
+                >
+                  <img src={item.url} alt={`Slide ${idx + 1}`} loading="lazy" />
+                  <span className="strip-slide-num">#{idx + 1}</span>
+                  <button
+                    type="button"
+                    className="strip-download-btn"
+                    title={`Download Slide #${idx + 1} (.JPG)`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (onDownloadSlide) onDownloadSlide(idx);
+                    }}
+                    disabled={isConverting}
+                    aria-label={`Download Slide ${idx + 1}`}
+                  >
+                    <Download size={11} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
+
+      {/* Fullscreen Interactive Lightbox Modal */}
+      {isLightboxOpen && isMultiPhoto && (
+        <div
+          className="carousel-lightbox-overlay"
+          onClick={() => setIsLightboxOpen(false)}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Carousel Gallery Lightbox"
+        >
+          <div
+            className="carousel-lightbox-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Lightbox Header */}
+            <div className="carousel-lightbox-header">
+              <div className="lightbox-title-box">
+                <span className="lightbox-counter">
+                  Slide {safeIdx + 1} of {photos.length}
+                </span>
+                <span className="lightbox-caption" title={video.title}>
+                  {video.title}
+                </span>
+              </div>
+              <div className="lightbox-actions">
+                <button
+                  type="button"
+                  className="carousel-action-btn primary"
+                  onClick={() => onDownloadSlide && onDownloadSlide(safeIdx)}
+                  disabled={isConverting}
+                  title="Download active photo"
+                >
+                  <Download size={14} />
+                  <span>Download This Photo (.JPG)</span>
+                </button>
+                <button
+                  type="button"
+                  className="carousel-action-btn secondary"
+                  onClick={() => onDownloadAll && onDownloadAll()}
+                  disabled={isConverting}
+                  title="Download all photos in ZIP"
+                >
+                  <FolderArchive size={14} />
+                  <span>Download All ({photos.length} Photos .ZIP)</span>
+                </button>
+                <button
+                  type="button"
+                  className="lightbox-close-btn"
+                  onClick={() => setIsLightboxOpen(false)}
+                  aria-label="Close Lightbox"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+            </div>
+
+            {/* Lightbox Main View */}
+            <div className="carousel-lightbox-body">
+              <button
+                type="button"
+                className="lightbox-nav-btn prev"
+                onClick={handlePrevSlide}
+                disabled={safeIdx === 0}
+                aria-label="Previous Photo"
+              >
+                <ChevronLeft size={30} />
+              </button>
+
+              <div className="lightbox-img-wrapper">
+                <img
+                  src={currentPhotoUrl}
+                  alt={`Slide ${safeIdx + 1}`}
+                  className="carousel-lightbox-img"
+                />
+              </div>
+
+              <button
+                type="button"
+                className="lightbox-nav-btn next"
+                onClick={handleNextSlide}
+                disabled={safeIdx === photos.length - 1}
+                aria-label="Next Photo"
+              >
+                <ChevronRight size={30} />
+              </button>
+            </div>
+
+            {/* Lightbox Bottom Thumbnail Filmstrip */}
+            <div className="carousel-lightbox-footer">
+              <div className="lightbox-filmstrip">
+                {photos.map((item, idx) => (
+                  <div
+                    key={item.index || idx}
+                    className={`lightbox-filmstrip-item ${idx === safeIdx ? 'active' : ''}`}
+                    onClick={() => setActiveSlideIndex && setActiveSlideIndex(idx)}
+                  >
+                    <img src={item.url} alt={`Thumbnail ${idx + 1}`} />
+                    <span className="strip-slide-num">#{idx + 1}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

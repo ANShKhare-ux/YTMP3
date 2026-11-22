@@ -807,11 +807,14 @@ async function downloadPhotoJob(jobState, targetFormat, downloadsDir, saveHistor
       const imgPath = path.join(downloadsDir, `${jobState.id}.${formatExt}`);
       fs.writeFileSync(imgPath, buf);
 
+      const slideNum = jobState.slideIndex || (photos.length === 1 && photos[0].index > 0 ? photos[0].index : null);
+      const slideSuffix = slideNum ? `_slide_${String(slideNum).padStart(2, '0')}` : '';
+
       jobState.status = 'completed';
       jobState.progress = 100;
       jobState.speed = 'Complete';
       jobState.filePath = imgPath;
-      jobState.fileName = `${safeTitle}.${formatExt}`;
+      jobState.fileName = `${safeTitle}${slideSuffix}.${formatExt}`;
 
       if (typeof saveHistoryFn === 'function') {
         saveHistoryFn(jobState);

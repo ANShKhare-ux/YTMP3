@@ -32,7 +32,13 @@
       - **Reddit & Twitter Support**: Native parsing for Reddit multi-image galleries (`media_metadata`) and Twitter/X photo tweets via `api.vxtwitter.com`.
       - **Direct PKZip Packaging (`createZipBuffer`)**: Zero-dependency, pure Node.js in-memory ZIP builder using standard PKZip local/central directory headers and `zlib.deflateRawSync` (bundles all slides into `${safeTitle}_photos.zip` in seconds with zero external npm dependencies).
       - **Single Photo Download**: Fast direct high-res image download (`.jpg` / `.png`).
-      - **Frontend UX**: Dynamic Spotify-themed photo badges (`📸 Carousel • N photos`), tailored presets (`Download All (N Photos .ZIP)`, `Primary Photo (.JPG)`), and responsive CTA button states (`DOWNLOAD PHOTOS (.ZIP)` / `DOWNLOAD PHOTO`).
+      - **Frontend UX & Interactive Carousel Viewer (`VideoPreview.jsx`, `OptionsSelector.jsx`)**:
+        - **Interactive Carousel Slider**: Live slide switching with previous/next navigation buttons, active slide counter pill (`📸 Slide {i} of {n}`), and full-size image preview.
+        - **Scrollable Thumbnail Filmstrip**: Displays all carousel slides with visual index badges (`#1`, `#2`, ...), active Spotify-green border highlights, and instant click-to-preview.
+        - **1-Click Individual Slide Downloads**: Instant download button on every thumbnail card and quick-action bar streaming high-res photos via dedicated non-blocking backend proxy (`GET /api/photo-download?url=...&filename=...`), avoiding conversion worker slot congestion.
+        - **Fullscreen Lightbox Gallery Modal**: Expandable full-screen lightbox modal with keyboard navigation (`ArrowLeft`, `ArrowRight`, `Escape`), slide caption, and high-resolution display.
+        - **Selective Slide Format Picker**: Dynamic format selector allowing users to choose between downloading the full multi-photo ZIP archive or specific slides (`Slide #1`, `Slide #2`, etc.) in `.JPG` or `.PNG`.
+        - Responsive CTA button states dynamically updating between `DOWNLOAD ALL {N} PHOTOS (.ZIP)` and `DOWNLOAD SLIDE #{N} (.JPG)`.
       - Full test coverage in `tests/photoResolver.test.js` and `tests/converter.test.js` (**90/90 tests passing**).
     - **Sanitized Error Reporting & Photo Post Detection (`formatYtDlpError`)**:
       - Centralized error normalization in `formatYtDlpError` (`server/converter.js`) across both `getVideoInfo` and `attachProcessListeners`.
