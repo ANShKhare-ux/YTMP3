@@ -5,6 +5,7 @@ const path = require('node:path');
 const {
   formatDuration,
   formatYtDlpError,
+  startConversion,
   getJob,
   getHistory,
   cancelConversion,
@@ -683,6 +684,25 @@ test('converter - formatYtDlpError sanitizes yt-dlp error output and formats fri
     formatYtDlpError(null, 'Custom fallback'),
     'Custom fallback'
   );
+});
+
+test('converter - startConversion initializes photo job and delegates to downloadPhotoJob', () => {
+  const photoJobId = 'test-start-photo-' + Date.now();
+  const job = startConversion({
+    url: 'https://example.com/photo.jpg',
+    format: 'zip',
+    quality: 'original',
+    jobId: photoJobId,
+    isPhoto: true,
+    photos: [{ index: 1, url: 'https://example.com/photo.jpg' }],
+    title: 'Test Photo Post'
+  });
+
+  assert.strictEqual(job.id, photoJobId);
+  assert.strictEqual(job.isPhoto, true);
+  assert.strictEqual(job.format, 'zip');
+  assert.strictEqual(job.title, 'Test Photo Post');
+  assert.ok(getJob(photoJobId), 'Job must be registered in jobs Map');
 });
 
 

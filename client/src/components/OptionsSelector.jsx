@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sliders, Music, Video, Sparkles, Monitor, Zap, Info, ShieldCheck, VolumeX } from 'lucide-react';
+import { Sliders, Music, Video, Sparkles, Monitor, Zap, Info, ShieldCheck, VolumeX, Image as ImageIcon } from 'lucide-react';
 
 const BITRATES = [
   { value: '320k', label: '320 kbps', badge: 'Ultra HQ', desc: 'Studio grade sound' },
@@ -61,7 +61,7 @@ export default function OptionsSelector({
       }
     } else if (newFormat === 'wav' || newFormat === 'flac') {
       setBitrate('best');
-    } else if (newFormat === 'cover') {
+    } else if (newFormat === 'cover' || newFormat === 'zip' || newFormat === 'jpg' || newFormat === 'png') {
       setBitrate('original');
     } else {
       if (!['320k', '256k', '192k', '128k'].includes(bitrate)) {
@@ -163,48 +163,87 @@ export default function OptionsSelector({
         {/* Format Selector */}
         <div className="selector-group">
           <label className="selector-label">
-            {isVideo ? <Video size={14} style={{ color: 'var(--spotify-green)' }} /> : <Music size={14} />}
+            {videoInfo?.isPhoto ? <ImageIcon size={14} style={{ color: 'var(--spotify-green)' }} /> : (isVideo ? <Video size={14} style={{ color: 'var(--spotify-green)' }} /> : <Music size={14} />)}
             <span>Target Output Format</span>
           </label>
           <div className="pills-container">
-            {FORMATS.map((f) => (
-              <button
-                key={f.value}
-                type="button"
-                id={`format-${f.value}`}
-                className={`spotify-pill-btn ${format === f.value ? 'active' : ''}`}
-                onClick={() => handleFormatChange(f.value)}
-                disabled={isConverting}
-              >
-                {f.isVideo ? (
-                  <Video size={13} style={{ marginRight: 2 }} />
-                ) : (
-                  <Music size={13} style={{ marginRight: 2 }} />
-                )}
-                <span>{f.label}</span>
-                {f.value === 'm4a' && (
-                  <span className="badge-tag-small">
-                    ⚡ &lt;5m
-                  </span>
-                )}
-                {f.value === 'mp4' && (
-                  <span className="badge-tag-small">
-                    Video
-                  </span>
-                )}
-              </button>
-            ))}
+            {videoInfo?.isPhoto ? (
+              (videoInfo.isCarousel
+                ? [
+                    { value: 'zip', label: `ZIP Archive (${videoInfo.itemCount || 'All'} Photos)`, speedBadge: 'All Slides' },
+                    { value: 'jpg', label: 'Primary Photo (.JPG)', speedBadge: 'Slide 1' },
+                    { value: 'png', label: 'Lossless Photo (.PNG)' }
+                  ]
+                : [
+                    { value: 'jpg', label: 'Original Photo (.JPG)', speedBadge: 'Full Res' },
+                    { value: 'png', label: 'Lossless Photo (.PNG)', speedBadge: 'Lossless' }
+                  ]
+              ).map((f) => (
+                <button
+                  key={f.value}
+                  type="button"
+                  id={`format-${f.value}`}
+                  className={`spotify-pill-btn ${format === f.value ? 'active' : ''}`}
+                  onClick={() => handleFormatChange(f.value)}
+                  disabled={isConverting}
+                >
+                  <ImageIcon size={13} style={{ marginRight: 4 }} />
+                  <span>{f.label}</span>
+                  {f.speedBadge && (
+                    <span className="badge-tag-small">
+                      {f.speedBadge}
+                    </span>
+                  )}
+                </button>
+              ))
+            ) : (
+              FORMATS.map((f) => (
+                <button
+                  key={f.value}
+                  type="button"
+                  id={`format-${f.value}`}
+                  className={`spotify-pill-btn ${format === f.value ? 'active' : ''}`}
+                  onClick={() => handleFormatChange(f.value)}
+                  disabled={isConverting}
+                >
+                  {f.isVideo ? (
+                    <Video size={13} style={{ marginRight: 2 }} />
+                  ) : (
+                    <Music size={13} style={{ marginRight: 2 }} />
+                  )}
+                  <span>{f.label}</span>
+                  {f.value === 'm4a' && (
+                    <span className="badge-tag-small">
+                      ⚡ &lt;5m
+                    </span>
+                  )}
+                  {f.value === 'mp4' && (
+                    <span className="badge-tag-small">
+                      Video
+                    </span>
+                  )}
+                </button>
+              ))
+            )}
           </div>
         </div>
 
         {/* Quality / Resolution Selector */}
         <div className="selector-group">
           <label className="selector-label">
-            {isVideo ? <Monitor size={14} style={{ color: 'var(--spotify-green)' }} /> : <Sliders size={14} />}
-            <span>{isVideo ? 'Video Resolution' : (isLossless ? 'Audio Quality' : 'Audio Bitrate Quality')}</span>
+            {videoInfo?.isPhoto ? <Sparkles size={14} style={{ color: 'var(--spotify-green)' }} /> : (isVideo ? <Monitor size={14} style={{ color: 'var(--spotify-green)' }} /> : <Sliders size={14} />)}
+            <span>{videoInfo?.isPhoto ? 'Photo Resolution Quality' : (isVideo ? 'Video Resolution' : (isLossless ? 'Audio Quality' : 'Audio Bitrate Quality'))}</span>
           </label>
           <div className="pills-container">
-            {isVideo
+            {videoInfo?.isPhoto ? (
+              <div
+                className="spotify-pill-btn active"
+                style={{ cursor: 'default', background: 'rgba(30, 215, 96, 0.12)', borderColor: 'var(--spotify-green)', color: 'var(--spotify-green)' }}
+              >
+                <Sparkles size={12} style={{ display: 'inline', marginRight: 4 }} />
+                <span>Original Source Resolution &bull; Direct Uncompressed Stream</span>
+              </div>
+            ) : isVideo
               ? RESOLUTIONS.map((r) => (
                   <button
                     key={r.value}

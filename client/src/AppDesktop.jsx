@@ -13,7 +13,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Headphones,
-  Loader2
+  Loader2,
+  Image as ImageIcon
 } from 'lucide-react';
 import UrlInput from './components/UrlInput';
 import VideoPreview from './components/VideoPreview';
@@ -226,13 +227,15 @@ export default function App({ onNavigate }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          url: videoInfo ? videoInfo.url : url,
+          url: videoInfo ? (videoInfo.url || url) : url,
           format,
           quality: bitrate,
           turbo: true,
           title: videoInfo ? videoInfo.title : '',
-          artist: videoInfo ? videoInfo.uploader : '',
-          thumbnail: videoInfo ? videoInfo.thumbnail : ''
+          artist: videoInfo ? (videoInfo.uploader || videoInfo.author || '') : '',
+          thumbnail: videoInfo ? videoInfo.thumbnail : '',
+          isPhoto: Boolean(videoInfo?.isPhoto),
+          photos: Array.isArray(videoInfo?.photos) ? videoInfo.photos : []
         })
       });
 
@@ -789,17 +792,19 @@ export default function App({ onNavigate }) {
                       cursor: (systemStatus?.disconnected || !systemStatus?.ready) ? 'not-allowed' : 'pointer'
                     }}
                   >
-                    {format === 'mp4' ? <Video size={16} /> : <Music2 size={16} />}
+                    {videoInfo?.isPhoto ? <ImageIcon size={16} /> : (format === 'mp4' ? <Video size={16} /> : <Music2 size={16} />)}
                     <span>
                       {isConverting
-                        ? 'CONVERTING...'
+                        ? (videoInfo?.isPhoto ? 'DOWNLOADING PHOTOS...' : 'CONVERTING...')
                         : systemStatus?.disconnected
                           ? 'BACKEND OFFLINE'
                           : !systemStatus?.ready
                             ? 'BOOTSTRAPPING ENGINE...'
-                            : format === 'mp4'
-                              ? `DOWNLOAD MP4 VIDEO (${bitrate})`
-                              : `CONVERT TO ${format.toUpperCase()} (${bitrate})`}
+                            : videoInfo?.isPhoto
+                              ? (videoInfo.isCarousel ? `DOWNLOAD ${videoInfo.itemCount || ''} PHOTOS (.ZIP)` : 'DOWNLOAD ORIGINAL PHOTO')
+                              : format === 'mp4'
+                                ? `DOWNLOAD MP4 VIDEO (${bitrate})`
+                                : `CONVERT TO ${format.toUpperCase()} (${bitrate})`}
                     </span>
                   </button>
                 </div>

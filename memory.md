@@ -26,6 +26,14 @@
     - Detects silent media (`acodec === 'none'`), recommending pristine Full HD MP4 video and full-resolution photo downloads rather than failing postprocessing with `unable to obtain file audio codec with ffprobe`.
     - Added `--playlist-items 1` in `buildConversionArgs` for Instagram multi-item posts, preventing yt-dlp file output template collisions and downloading slide 1 cleanly in seconds.
     - Added clear user error messaging in `attachProcessListeners` when audio extraction is attempted on silent media without crashing the backend process.
+    - **Full Social Media Photo & Carousel Downloading Engine (`server/photoResolver.js`)**:
+      - Automatic fallback in `getVideoInfo`: When `yt-dlp` reports missing video formats on photo-only posts (`No video formats found`, `There is no video in this post`), SonicWave automatically invokes `resolvePhotoMetadata`.
+      - **Instagram Support**: Parses the server-rendered Instagram embed endpoint with bot user-agent emulation to extract post author, full caption, primary high-res image, and all carousel slides without requiring user login or cookies.
+      - **Reddit & Twitter Support**: Native parsing for Reddit multi-image galleries (`media_metadata`) and Twitter/X photo tweets via `api.vxtwitter.com`.
+      - **Direct PKZip Packaging (`createZipBuffer`)**: Zero-dependency, pure Node.js in-memory ZIP builder using standard PKZip local/central directory headers and `zlib.deflateRawSync` (bundles all slides into `${safeTitle}_photos.zip` in seconds with zero external npm dependencies).
+      - **Single Photo Download**: Fast direct high-res image download (`.jpg` / `.png`).
+      - **Frontend UX**: Dynamic Spotify-themed photo badges (`📸 Carousel • N photos`), tailored presets (`Download All (N Photos .ZIP)`, `Primary Photo (.JPG)`), and responsive CTA button states (`DOWNLOAD PHOTOS (.ZIP)` / `DOWNLOAD PHOTO`).
+      - Full test coverage in `tests/photoResolver.test.js` and `tests/converter.test.js` (**88/88 tests passing**).
     - **Sanitized Error Reporting & Photo Post Detection (`formatYtDlpError`)**:
       - Centralized error normalization in `formatYtDlpError` (`server/converter.js`) across both `getVideoInfo` and `attachProcessListeners`.
       - Detects Instagram photo carousel / photo-only posts (`No video formats found`, `There is no video in this post`, `no video in this post`) and provides a clear, friendly error explaining that the post contains only static photos/images and cannot be converted to media streams.

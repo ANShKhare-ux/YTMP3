@@ -37,7 +37,9 @@ export default function VideoPreview({ video }) {
           decoding="async"
         />
         <div className="spotify-duration-pill">
-          {video.durationFormatted || '0:00'}
+          {video.isPhoto
+            ? (video.isCarousel ? `${video.itemCount || 'Multi'} Photos` : 'Photo')
+            : (video.durationFormatted || '0:00')}
         </div>
       </div>
 

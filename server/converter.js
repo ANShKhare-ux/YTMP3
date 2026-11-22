@@ -2,6 +2,11 @@ const { spawn, execFile, execFileSync } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 const { getYtDlpPath, getFfmpegPath, getFfmpegLocation, getBinDir } = require('./binManager');
+const {
+  isPhotoSupportedUrl,
+  resolvePhotoMetadata,
+  downloadPhotoJob
+} = require('./photoResolver');
 
 const DOWNLOADS_DIR = path.join(__dirname, 'downloads');
 if (!fs.existsSync(DOWNLOADS_DIR)) {
@@ -1178,9 +1183,29 @@ function getVideoInfo(rawUrl) {
       url
     ];
 
-    execFile(ytDlp, args, { maxBuffer: 20 * 1024 * 1024 }, (error, stdout, stderr) => {
+    execFile(ytDlp, args, { maxBuffer: 20 * 1024 * 1024 }, async (error, stdout, stderr) => {
       if (error) {
         console.error('[converter] Error fetching media info:', stderr || error.message);
+        const errText = (stderr || error.message || '').toString();
+
+        // If yt-dlp failed because the link contains static photos (e.g. Instagram photo/carousel, Reddit, Twitter)
+        if (
+          isPhotoSupportedUrl(url) ||
+          errText.includes('No video formats found') ||
+          errText.includes('There is no video in this post') ||
+          errText.includes('no video in this post')
+        ) {
+          try {
+            console.log(`[converter] Attempting photo/carousel fallback resolution for: ${url}`);
+            const photoInfo = await resolvePhotoMetadata(url);
+            if (photoInfo && Array.isArray(photoInfo.photos) && photoInfo.photos.length > 0) {
+              return resolve(photoInfo);
+            }
+          } catch (photoErr) {
+            console.warn(`[converter] Photo resolution fallback failed: ${photoErr.message}`);
+          }
+        }
+
         const errorMsg = formatYtDlpError(
           stderr || error.message,
           'Unable to fetch media details. Please verify the URL or try again.'
@@ -1631,7 +1656,59 @@ function attachProcessListeners(jobState, child, targetFormat) {
 /**
  * Start Conversion Job
  */
-function startConversion({ url, format = 'mp3', quality = '320k', jobId, duration = 0, turbo = true }) {
+function startConversion({
+  url,
+  format = 'mp3',
+  quality = '320k',
+  jobId,
+  duration = 0,
+  turbo = true,
+  isPhoto = false,
+  photos = [],
+  title = '',
+  artist = '',
+  thumbnail = ''
+}) {
+  const targetFmt = (format || 'mp3').toLowerCase();
+  const isPhotoJob = Boolean(isPhoto) || ['zip', 'jpg', 'jpeg', 'png', 'webp'].includes(targetFmt);
+
+  if (isPhotoJob) {
+    const jobState = {
+      id: jobId,
+      url,
+      format: targetFmt,
+      quality: quality || 'original',
+      isVideo: false,
+      isPhoto: true,
+      turbo: Boolean(turbo),
+      downloader: 'builtin',
+      parallelStreams: 1,
+      fragmentInfo: null,
+      status: 'starting',
+      progress: 0,
+      speed: '0 KiB/s',
+      eta: '--:--',
+      totalSize: 'Calculating...',
+      title: title || 'Photo',
+      artist: artist || '',
+      thumbnail: thumbnail || '',
+      duration: 0,
+      photos: Array.isArray(photos) ? photos : [],
+      filePath: null,
+      fileName: null,
+      error: null,
+      createdAt: Date.now()
+    };
+
+    jobs.set(jobId, jobState);
+    console.log(`[converter] Starting photo/carousel download job ${jobId}: ${url} (${targetFmt})`);
+
+    // Run photo download job asynchronously
+    downloadPhotoJob(jobState, targetFmt, DOWNLOADS_DIR, savePersistentHistory);
+
+    return jobState;
+  }
+
   const ytDlp = getYtDlpPath();
   const ffmpeg = getFfmpegPath();
 
@@ -1791,6 +1868,9 @@ function getActiveJobCount() {
 module.exports = {
   getVideoInfo,
   formatYtDlpError,
+  isPhotoSupportedUrl,
+  resolvePhotoMetadata,
+  downloadPhotoJob,
   startConversion,
   cancelConversion,
   getJob,

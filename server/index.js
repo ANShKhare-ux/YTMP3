@@ -101,7 +101,18 @@ app.post('/api/convert', (req, res) => {
     });
   }
 
-  const { url, format = 'mp3', quality = '320k', title = '', artist = '', thumbnail = '', duration = 0, turbo = true } = req.body || {};
+  const {
+    url,
+    format = 'mp3',
+    quality = '320k',
+    title = '',
+    artist = '',
+    thumbnail = '',
+    duration = 0,
+    turbo = true,
+    isPhoto = false,
+    photos = []
+  } = req.body || {};
 
   if (!url) {
     return res.status(400).json({ success: false, error: 'Media URL is required' });
@@ -126,7 +137,19 @@ app.post('/api/convert', (req, res) => {
   const jobId = crypto.randomUUID();
   try {
     const parsedDuration = (typeof duration === 'number' && duration > 0) ? duration : (Number(duration) > 0 ? Number(duration) : 0);
-    const job = startConversion({ url: cleanUrl, format, quality, jobId, duration: parsedDuration, turbo });
+    const job = startConversion({
+      url: cleanUrl,
+      format,
+      quality,
+      jobId,
+      duration: parsedDuration,
+      turbo,
+      isPhoto: Boolean(isPhoto),
+      photos: Array.isArray(photos) ? photos : [],
+      title,
+      artist,
+      thumbnail
+    });
     if (title) job.title = title;
     if (artist) job.artist = artist;
     if (thumbnail) job.thumbnail = thumbnail;
@@ -255,7 +278,12 @@ app.get('/api/stream/:jobId', (req, res) => {
     m4a: 'audio/mp4',
     wav: 'audio/wav',
     flac: 'audio/flac',
-    mp4: 'video/mp4'
+    mp4: 'video/mp4',
+    zip: 'application/zip',
+    jpg: 'image/jpeg',
+    jpeg: 'image/jpeg',
+    png: 'image/png',
+    webp: 'image/webp'
   };
   const ext = path.extname(filePath).replace('.', '').toLowerCase();
   const contentType = contentTypeMap[ext] || (ext === 'mp4' ? 'video/mp4' : 'audio/mpeg');
