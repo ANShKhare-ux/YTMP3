@@ -5,7 +5,6 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import android.os.Environment
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -19,12 +18,15 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -32,14 +34,23 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
+import androidx.compose.material.icons.automirrored.filled.VolumeOff
+import androidx.compose.material.icons.filled.ChevronLeft
+import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.ContentPaste
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Folder
+import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.MusicNote
-import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.OpenInNew
+import androidx.compose.material.icons.filled.PhotoLibrary
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Videocam
+import androidx.compose.material.icons.filled.VolumeOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -55,6 +66,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -63,6 +75,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontFamily
@@ -73,8 +86,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.FileProvider
+import coil.compose.AsyncImage
 import com.sonicwave.app.engine.ConversionEngine
 import com.sonicwave.app.engine.JobStatus
+import com.sonicwave.app.engine.ResolvedMedia
 import kotlinx.coroutines.launch
 import java.io.File
 
@@ -87,6 +103,7 @@ val HairlineBorder = Color(0xFF282828)
 val TextPrimary = Color(0xFFFFFFFF)
 val TextSecondary = Color(0xFFB3B3B3)
 val AccentLavender = Color(0xFF828FFF)
+val WarningYellow = Color(0xFFEAB308)
 
 @Composable
 fun SonicWaveAppScreen(initialUrl: String = "") {
@@ -95,14 +112,44 @@ fun SonicWaveAppScreen(initialUrl: String = "") {
     val focusManager = LocalFocusManager.current
 
     var urlInput by remember { mutableStateOf(initialUrl) }
+    var resolvedMedia by remember { mutableStateOf<ResolvedMedia?>(null) }
+    var isResolving by remember { mutableStateOf(false) }
+    var activeSlideIndex by remember { mutableIntStateOf(0) }
+
     var selectedFormat by remember { mutableStateOf("mp3") }
     var selectedQuality by remember { mutableStateOf("320") }
 
     val currentJob by ConversionEngine.currentJob.collectAsState()
 
+    // Trigger metadata resolution
+    fun triggerResolve(targetUrl: String) {
+        val trimmed = targetUrl.trim()
+        if (trimmed.isBlank()) return
+        focusManager.clearFocus()
+        isResolving = true
+        scope.launch {
+            val result = ConversionEngine.resolveMedia(context, trimmed)
+            isResolving = false
+            result.onSuccess { media ->
+                resolvedMedia = media
+                activeSlideIndex = 0
+                if (media.isPhoto) {
+                    selectedFormat = if (media.isCarousel) "zip" else "jpg"
+                    selectedQuality = "original"
+                } else if (!media.hasAudio) {
+                    selectedFormat = "mp4"
+                    selectedQuality = "1080"
+                }
+            }.onFailure {
+                Toast.makeText(context, "Could not fetch details: ${it.message}", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
     LaunchedEffect(initialUrl) {
         if (initialUrl.isNotBlank()) {
             urlInput = initialUrl
+            triggerResolve(initialUrl)
         }
     }
 
@@ -117,10 +164,10 @@ fun SonicWaveAppScreen(initialUrl: String = "") {
             .fillMaxSize()
             .background(DarkBackground)
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp, vertical = 24.dp),
+            .padding(horizontal = 16.dp, vertical = 20.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
         // Brand Crest & Header
         Row(
@@ -138,7 +185,7 @@ fun SonicWaveAppScreen(initialUrl: String = "") {
                 Icon(
                     imageVector = Icons.Default.MusicNote,
                     contentDescription = null,
-                    tint = AccentLavender,
+                    tint = SpotifyGreen,
                     modifier = Modifier.size(20.dp)
                 )
             }
@@ -163,15 +210,15 @@ fun SonicWaveAppScreen(initialUrl: String = "") {
                 .padding(horizontal = 10.dp, vertical = 4.dp)
         ) {
             Text(
-                text = "ON-DEVICE ENGINE • 16-STREAM TURBO • AD-FREE",
+                text = "ON-DEVICE ENGINE • PHOTO & CAROUSEL READY • 16X TURBO",
                 color = SpotifyGreen,
-                fontSize = 10.sp,
+                fontSize = 9.5.sp,
                 fontWeight = FontWeight.Bold,
                 letterSpacing = 0.5.sp
             )
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(20.dp))
 
         // Input Card
         Card(
@@ -180,24 +227,27 @@ fun SonicWaveAppScreen(initialUrl: String = "") {
             shape = RoundedCornerShape(16.dp),
             border = androidx.compose.foundation.BorderStroke(1.dp, HairlineBorder)
         ) {
-            Column(modifier = Modifier.padding(16.dp)) {
+            Column(modifier = Modifier.padding(14.dp)) {
                 Text(
-                    text = "Media URL",
+                    text = "Social Media / Video URL",
                     color = TextSecondary,
-                    fontSize = 12.sp,
+                    fontSize = 11.5.sp,
                     fontWeight = FontWeight.SemiBold
                 )
                 Spacer(modifier = Modifier.height(8.dp))
 
                 OutlinedTextField(
                     value = urlInput,
-                    onValueChange = { urlInput = it },
+                    onValueChange = {
+                        urlInput = it
+                        if (it.isBlank()) resolvedMedia = null
+                    },
                     modifier = Modifier.fillMaxWidth(),
                     placeholder = {
                         Text(
-                            "Paste YouTube, Instagram, TikTok, SoundCloud URL...",
+                            "Paste Instagram, YouTube, TikTok, Reddit, X link...",
                             color = Color(0xFF666666),
-                            fontSize = 13.sp
+                            fontSize = 12.5.sp
                         )
                     },
                     leadingIcon = {
@@ -210,7 +260,10 @@ fun SonicWaveAppScreen(initialUrl: String = "") {
                     trailingIcon = {
                         Row {
                             if (urlInput.isNotBlank()) {
-                                IconButton(onClick = { urlInput = "" }) {
+                                IconButton(onClick = {
+                                    urlInput = ""
+                                    resolvedMedia = null
+                                }) {
                                     Icon(
                                         imageVector = Icons.Default.Clear,
                                         contentDescription = "Clear",
@@ -226,6 +279,7 @@ fun SonicWaveAppScreen(initialUrl: String = "") {
                                     val pasteData = item?.text?.toString() ?: ""
                                     if (pasteData.isNotBlank()) {
                                         urlInput = pasteData
+                                        triggerResolve(pasteData)
                                     }
                                 }
                             }) {
@@ -251,21 +305,445 @@ fun SonicWaveAppScreen(initialUrl: String = "") {
                         keyboardType = KeyboardType.Uri,
                         imeAction = ImeAction.Done
                     ),
-                    keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() })
+                    keyboardActions = KeyboardActions(onDone = {
+                        triggerResolve(urlInput)
+                    })
                 )
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // Analyze / Preview Action Button
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    Button(
+                        onClick = { triggerResolve(urlInput) },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = SurfaceLight,
+                            contentColor = TextPrimary
+                        ),
+                        shape = RoundedCornerShape(8.dp),
+                        enabled = !isResolving && urlInput.isNotBlank()
+                    ) {
+                        if (isResolving) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(14.dp),
+                                color = SpotifyGreen,
+                                strokeWidth = 1.5.dp
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Analyzing Post...", fontSize = 11.5.sp)
+                        } else {
+                            Icon(Icons.Default.Search, contentDescription = null, modifier = Modifier.size(14.dp), tint = SpotifyGreen)
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Inspect & Preview Media", fontSize = 11.5.sp)
+                        }
+                    }
+                }
+            }
+        }
+
+        // =========================================================================
+        // INTERACTIVE MEDIA PREVIEW & CAROUSEL VIEWER
+        // =========================================================================
+        if (resolvedMedia != null) {
+            val media = resolvedMedia!!
+            val photos = media.photos
+            val isCarousel = media.isCarousel && photos.size > 1
+            val safeIdx = if (activeSlideIndex in photos.indices) activeSlideIndex else 0
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = SurfaceDark),
+                shape = RoundedCornerShape(16.dp),
+                border = androidx.compose.foundation.BorderStroke(1.dp, HairlineBorder)
+            ) {
+                Column(modifier = Modifier.padding(14.dp)) {
+                    // Header Badges
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(4.dp))
+                                    .background(Color(0x331ED760))
+                                    .padding(horizontal = 6.dp, vertical = 2.dp)
+                            ) {
+                                Text(
+                                    text = media.platform.uppercase(),
+                                    color = SpotifyGreen,
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+
+                            if (media.isCarousel) {
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(4.dp))
+                                        .background(Color(0x26C084FC))
+                                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                                ) {
+                                    Text(
+                                        text = "CAROUSEL (${photos.size} PHOTOS)",
+                                        color = Color(0xFFC084FC),
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            } else if (media.isPhoto) {
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(4.dp))
+                                        .background(Color(0x2660A5FA))
+                                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                                ) {
+                                    Text(
+                                        text = "PHOTO",
+                                        color = Color(0xFF60A5FA),
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                        }
+
+                        if (!media.hasAudio) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.AutoMirrored.Filled.VolumeOff, contentDescription = null, tint = WarningYellow, modifier = Modifier.size(13.dp))
+                                Spacer(modifier = Modifier.width(3.dp))
+                                Text("Silent Post", color = WarningYellow, fontSize = 10.5.sp, fontWeight = FontWeight.SemiBold)
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Text(
+                        text = media.title,
+                        color = TextPrimary,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Text(
+                        text = "By ${media.uploader}",
+                        color = TextSecondary,
+                        fontSize = 12.sp
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // =========================================================================
+                    // CAROUSEL VIEWER (Multi-photo slider + filmstrip)
+                    // =========================================================================
+                    if (isCarousel) {
+                        val currentSlideUrl = photos.getOrNull(safeIdx)?.url ?: media.thumbnail
+
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(260.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(Color.Black),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            AsyncImage(
+                                model = currentSlideUrl,
+                                contentDescription = "Slide ${safeIdx + 1}",
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Fit
+                            )
+
+                            // Previous Arrow Button
+                            if (safeIdx > 0) {
+                                Box(
+                                    modifier = Modifier
+                                        .align(Alignment.CenterStart)
+                                        .padding(start = 8.dp)
+                                        .size(36.dp)
+                                        .clip(CircleShape)
+                                        .background(Color(0xCC000000))
+                                        .clickable { activeSlideIndex = safeIdx - 1 },
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.ChevronLeft,
+                                        contentDescription = "Previous",
+                                        tint = Color.White,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                }
+                            }
+
+                            // Next Arrow Button
+                            if (safeIdx < photos.size - 1) {
+                                Box(
+                                    modifier = Modifier
+                                        .align(Alignment.CenterEnd)
+                                        .padding(end = 8.dp)
+                                        .size(36.dp)
+                                        .clip(CircleShape)
+                                        .background(Color(0xCC000000))
+                                        .clickable { activeSlideIndex = safeIdx + 1 },
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.ChevronRight,
+                                        contentDescription = "Next",
+                                        tint = Color.White,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                }
+                            }
+
+                            // Top-Right Slide Counter Pill
+                            Box(
+                                modifier = Modifier
+                                    .align(Alignment.TopEnd)
+                                    .padding(8.dp)
+                                    .clip(CircleShape)
+                                    .background(Color(0xB3000000))
+                                    .border(1.dp, Color(0x33FFFFFF), CircleShape)
+                                    .padding(horizontal = 8.dp, vertical = 3.dp)
+                            ) {
+                                Text(
+                                    text = "📸 Slide ${safeIdx + 1} of ${photos.size}",
+                                    color = Color.White,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        // Horizontal Thumbnail Filmstrip
+                        Text(
+                            text = "Tap slide to view or download directly:",
+                            color = TextSecondary,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+
+                        LazyRow(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            itemsIndexed(photos) { idx, slide ->
+                                val isSelected = idx == safeIdx
+                                Box(
+                                    modifier = Modifier
+                                        .size(64.dp)
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(Color(0xFF111111))
+                                        .border(
+                                            width = if (isSelected) 2.dp else 1.dp,
+                                            color = if (isSelected) SpotifyGreen else HairlineBorder,
+                                            shape = RoundedCornerShape(8.dp)
+                                        )
+                                        .clickable {
+                                            activeSlideIndex = idx
+                                            if (selectedFormat != "zip") selectedFormat = "jpg"
+                                        }
+                                ) {
+                                    AsyncImage(
+                                        model = slide.url,
+                                        contentDescription = "Thumb ${idx + 1}",
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentScale = ContentScale.Crop
+                                    )
+
+                                    // Slide Number Badge
+                                    Box(
+                                        modifier = Modifier
+                                            .align(Alignment.TopStart)
+                                            .background(Color(0xB3000000))
+                                            .padding(horizontal = 4.dp, vertical = 1.dp)
+                                    ) {
+                                        Text("#${idx + 1}", color = Color.White, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                                    }
+
+                                    // 1-Tap Download Icon
+                                    Box(
+                                        modifier = Modifier
+                                            .align(Alignment.BottomEnd)
+                                            .size(22.dp)
+                                            .background(Color(0xB3000000))
+                                            .clickable {
+                                                activeSlideIndex = idx
+                                                selectedFormat = "jpg"
+                                                scope.launch {
+                                                    ConversionEngine.startConversion(
+                                                        context = context,
+                                                        url = media.url,
+                                                        format = "jpg",
+                                                        quality = "original",
+                                                        resolvedMedia = media,
+                                                        selectedSlideIndex = idx
+                                                    )
+                                                }
+                                            },
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(Icons.Default.Download, contentDescription = "Download Slide", tint = SpotifyGreen, modifier = Modifier.size(13.dp))
+                                    }
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        // Quick 1-Tap Action Pills for Carousel
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Button(
+                                onClick = {
+                                    selectedFormat = "jpg"
+                                    scope.launch {
+                                        ConversionEngine.startConversion(
+                                            context = context,
+                                            url = media.url,
+                                            format = "jpg",
+                                            quality = "original",
+                                            resolvedMedia = media,
+                                            selectedSlideIndex = safeIdx
+                                        )
+                                    }
+                                },
+                                modifier = Modifier.weight(1f),
+                                colors = ButtonDefaults.buttonColors(containerColor = SurfaceLight),
+                                shape = RoundedCornerShape(8.dp)
+                            ) {
+                                Icon(Icons.Default.Download, contentDescription = null, modifier = Modifier.size(13.dp), tint = SpotifyGreen)
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("Slide #${safeIdx + 1} (.JPG)", fontSize = 11.5.sp, maxLines = 1)
+                            }
+
+                            Button(
+                                onClick = {
+                                    selectedFormat = "zip"
+                                    scope.launch {
+                                        ConversionEngine.startConversion(
+                                            context = context,
+                                            url = media.url,
+                                            format = "zip",
+                                            quality = "original",
+                                            resolvedMedia = media
+                                        )
+                                    }
+                                },
+                                modifier = Modifier.weight(1f),
+                                colors = ButtonDefaults.buttonColors(containerColor = SurfaceLight),
+                                shape = RoundedCornerShape(8.dp)
+                            ) {
+                                Icon(Icons.Default.PhotoLibrary, contentDescription = null, modifier = Modifier.size(13.dp), tint = Color(0xFFC084FC))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("All (${photos.size} .ZIP)", fontSize = 11.5.sp, maxLines = 1)
+                            }
+                        }
+                    } else if (media.thumbnail.isNotBlank()) {
+                        // Single Photo / Video Preview Thumbnail
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(180.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(Color.Black),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            AsyncImage(
+                                model = media.thumbnail,
+                                contentDescription = media.title,
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Crop
+                            )
+
+                            if (media.durationFormatted.isNotBlank()) {
+                                Box(
+                                    modifier = Modifier
+                                        .align(Alignment.BottomEnd)
+                                        .padding(8.dp)
+                                        .clip(RoundedCornerShape(4.dp))
+                                        .background(Color(0xCC000000))
+                                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                                ) {
+                                    Text(
+                                        text = media.durationFormatted,
+                                        color = Color.White,
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
 
         Spacer(modifier = Modifier.height(18.dp))
 
-        // Format Selector
+        // =========================================================================
+        // FORMAT SELECTOR
+        // =========================================================================
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(containerColor = SurfaceDark),
             shape = RoundedCornerShape(16.dp),
             border = androidx.compose.foundation.BorderStroke(1.dp, HairlineBorder)
         ) {
-            Column(modifier = Modifier.padding(16.dp)) {
+            Column(modifier = Modifier.padding(14.dp)) {
+                // If it's a photo/carousel post, show Photo Options first!
+                if (resolvedMedia?.isPhoto == true) {
+                    val count = resolvedMedia?.photos?.size ?: 1
+                    Text(
+                        text = "Photo & Carousel Options",
+                        color = TextSecondary,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        if (count > 1) {
+                            FormatChip(
+                                label = "All ($count Photos .ZIP)",
+                                isSelected = selectedFormat == "zip",
+                                icon = Icons.Default.PhotoLibrary,
+                                onClick = { selectedFormat = "zip"; selectedQuality = "original" }
+                            )
+                        }
+                        FormatChip(
+                            label = if (count > 1) "Slide #${activeSlideIndex + 1} (.JPG)" else "Full Photo (.JPG)",
+                            isSelected = selectedFormat == "jpg",
+                            icon = Icons.Default.Image,
+                            onClick = { selectedFormat = "jpg"; selectedQuality = "original" }
+                        )
+                        FormatChip(
+                            label = if (count > 1) "Slide #${activeSlideIndex + 1} (.PNG)" else "Lossless (.PNG)",
+                            isSelected = selectedFormat == "png",
+                            icon = Icons.Default.Image,
+                            onClick = { selectedFormat = "png"; selectedQuality = "original" }
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(14.dp))
+                }
+
                 Text(
                     text = "Audio Formats (HQ Extraction)",
                     color = TextSecondary,
@@ -345,10 +823,24 @@ fun SonicWaveAppScreen(initialUrl: String = "") {
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        // Convert Button
+        // =========================================================================
+        // MAIN CONVERT & DOWNLOAD BUTTON
+        // =========================================================================
         val isConverting = currentJob?.status == JobStatus.DOWNLOADING ||
-                           currentJob?.status == JobStatus.RESOLVING ||
-                           currentJob?.status == JobStatus.PROCESSING
+                currentJob?.status == JobStatus.RESOLVING ||
+                currentJob?.status == JobStatus.PROCESSING
+
+        val buttonText = when {
+            isConverting -> if (currentJob?.status == JobStatus.PROCESSING) "Finalizing..." else "Downloading On-Device..."
+            selectedFormat == "zip" -> "DOWNLOAD ALL PHOTOS (.ZIP)"
+            selectedFormat == "jpg" || selectedFormat == "png" -> {
+                val count = resolvedMedia?.photos?.size ?: 1
+                if (count > 1) "DOWNLOAD SLIDE #${activeSlideIndex + 1} (${selectedFormat.uppercase()})"
+                else "DOWNLOAD PHOTO (${selectedFormat.uppercase()})"
+            }
+            selectedFormat == "mp4" -> "DOWNLOAD MP4 VIDEO (${selectedQuality}p)"
+            else -> "CONVERT TO ${selectedFormat.uppercase()} (${selectedQuality}k)"
+        }
 
         Button(
             onClick = {
@@ -362,7 +854,9 @@ fun SonicWaveAppScreen(initialUrl: String = "") {
                         context = context,
                         url = urlInput.trim(),
                         format = selectedFormat,
-                        quality = selectedQuality
+                        quality = selectedQuality,
+                        resolvedMedia = resolvedMedia,
+                        selectedSlideIndex = activeSlideIndex
                     )
                 }
             },
@@ -384,8 +878,8 @@ fun SonicWaveAppScreen(initialUrl: String = "") {
                 )
                 Spacer(modifier = Modifier.width(10.dp))
                 Text(
-                    text = if (currentJob?.status == JobStatus.PROCESSING) "Encoding Audio..." else "Downloading On-Device...",
-                    fontSize = 15.sp,
+                    text = buttonText,
+                    fontSize = 14.5.sp,
                     fontWeight = FontWeight.Bold
                 )
             } else {
@@ -396,14 +890,16 @@ fun SonicWaveAppScreen(initialUrl: String = "") {
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "Convert & Save to Phone",
-                    fontSize = 15.sp,
+                    text = buttonText,
+                    fontSize = 14.5.sp,
                     fontWeight = FontWeight.Bold
                 )
             }
         }
 
-        // Live Progress Card
+        // =========================================================================
+        // LIVE PROGRESS & SUCCESS CARD
+        // =========================================================================
         AnimatedVisibility(visible = currentJob != null && currentJob?.status != JobStatus.IDLE) {
             Card(
                 modifier = Modifier
@@ -421,11 +917,11 @@ fun SonicWaveAppScreen(initialUrl: String = "") {
                     ) {
                         Text(
                             text = when (currentJob?.status) {
-                                JobStatus.RESOLVING -> "Resolving stream definitions..."
-                                JobStatus.DOWNLOADING -> "Downloading (16-stream parallel)"
-                                JobStatus.PROCESSING -> "Muxing & applying ID3 artwork..."
+                                JobStatus.RESOLVING -> "Resolving streams & media..."
+                                JobStatus.DOWNLOADING -> "Downloading (16-stream acceleration)"
+                                JobStatus.PROCESSING -> "Encoding & writing metadata..."
                                 JobStatus.COMPLETED -> "Downloaded & Saved!"
-                                JobStatus.FAILED -> "Conversion Failed"
+                                JobStatus.FAILED -> "Download Failed"
                                 else -> "Processing..."
                             },
                             color = when (currentJob?.status) {
@@ -460,33 +956,110 @@ fun SonicWaveAppScreen(initialUrl: String = "") {
                     Spacer(modifier = Modifier.height(12.dp))
 
                     if (currentJob?.status == JobStatus.COMPLETED) {
-                        Row(
+                        Column(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(8.dp))
                                 .background(Color(0x1A1ED760))
-                                .padding(12.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                                .padding(12.dp)
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.Folder,
-                                contentDescription = null,
-                                tint = SpotifyGreen,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(modifier = Modifier.width(10.dp))
-                            Column {
-                                Text(
-                                    text = "Saved in Downloads/SonicWave",
-                                    color = TextPrimary,
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.SemiBold
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Default.Folder,
+                                    contentDescription = null,
+                                    tint = SpotifyGreen,
+                                    modifier = Modifier.size(20.dp)
                                 )
-                                Text(
-                                    text = "Ready to play in Spotify, Samsung Music & Files",
-                                    color = TextSecondary,
-                                    fontSize = 11.sp
-                                )
+                                Spacer(modifier = Modifier.width(10.dp))
+                                Column {
+                                    Text(
+                                        text = "Saved in Downloads/SonicWave",
+                                        color = TextPrimary,
+                                        fontSize = 13.sp,
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                    Text(
+                                        text = "Visible in Gallery, Files, and Music Players",
+                                        color = TextSecondary,
+                                        fontSize = 11.sp
+                                    )
+                                }
+                            }
+
+                            // Open & Share Action Buttons
+                            val outPath = currentJob?.outputPath ?: ""
+                            if (outPath.isNotBlank()) {
+                                val outFile = File(outPath)
+                                if (outFile.exists()) {
+                                    Spacer(modifier = Modifier.height(10.dp))
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        Button(
+                                            onClick = {
+                                                try {
+                                                    val uri = FileProvider.getUriForFile(
+                                                        context,
+                                                        "${context.packageName}.fileprovider",
+                                                        outFile
+                                                    )
+                                                    val mime = when {
+                                                        outFile.name.endsWith(".mp3") -> "audio/mpeg"
+                                                        outFile.name.endsWith(".m4a") -> "audio/mp4"
+                                                        outFile.name.endsWith(".wav") -> "audio/x-wav"
+                                                        outFile.name.endsWith(".flac") -> "audio/flac"
+                                                        outFile.name.endsWith(".mp4") -> "video/mp4"
+                                                        outFile.name.endsWith(".zip") -> "application/zip"
+                                                        outFile.name.endsWith(".png") -> "image/png"
+                                                        else -> "image/jpeg"
+                                                    }
+                                                    val intent = Intent(Intent.ACTION_VIEW).apply {
+                                                        setDataAndType(uri, mime)
+                                                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                                    }
+                                                    context.startActivity(Intent.createChooser(intent, "Open with"))
+                                                } catch (e: Exception) {
+                                                    Toast.makeText(context, "Could not open file: ${e.message}", Toast.LENGTH_SHORT).show()
+                                                }
+                                            },
+                                            modifier = Modifier.weight(1f),
+                                            colors = ButtonDefaults.buttonColors(containerColor = SurfaceLight),
+                                            shape = RoundedCornerShape(8.dp)
+                                        ) {
+                                            Icon(Icons.AutoMirrored.Filled.OpenInNew, contentDescription = null, modifier = Modifier.size(13.dp), tint = SpotifyGreen)
+                                            Spacer(modifier = Modifier.width(6.dp))
+                                            Text("Open", fontSize = 12.sp)
+                                        }
+
+                                        Button(
+                                            onClick = {
+                                                try {
+                                                    val uri = FileProvider.getUriForFile(
+                                                        context,
+                                                        "${context.packageName}.fileprovider",
+                                                        outFile
+                                                    )
+                                                    val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                                                        putExtra(Intent.EXTRA_STREAM, uri)
+                                                        type = "*/*"
+                                                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                                    }
+                                                    context.startActivity(Intent.createChooser(shareIntent, "Share file"))
+                                                } catch (e: Exception) {
+                                                    Toast.makeText(context, "Could not share: ${e.message}", Toast.LENGTH_SHORT).show()
+                                                }
+                                            },
+                                            modifier = Modifier.weight(1f),
+                                            colors = ButtonDefaults.buttonColors(containerColor = SurfaceLight),
+                                            shape = RoundedCornerShape(8.dp)
+                                        ) {
+                                            Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(13.dp), tint = AccentLavender)
+                                            Spacer(modifier = Modifier.width(6.dp))
+                                            Text("Share", fontSize = 12.sp)
+                                        }
+                                    }
+                                }
                             }
                         }
                     } else if (currentJob?.status == JobStatus.FAILED) {
@@ -505,7 +1078,7 @@ fun SonicWaveAppScreen(initialUrl: String = "") {
 
         // Feature Highlights
         Text(
-            text = "Supported: YouTube • Instagram Reels • TikTok • SoundCloud • Twitter/X",
+            text = "Supported: Instagram (Posts, Reels & Carousels) • YouTube • TikTok • SoundCloud • Reddit • Twitter/X",
             color = Color(0xFF777777),
             fontSize = 11.sp,
             textAlign = TextAlign.Center
@@ -537,7 +1110,7 @@ fun FormatChip(
                 shape = RoundedCornerShape(8.dp)
             )
             .clickable(onClick = onClick)
-            .padding(horizontal = 12.dp, vertical = 8.dp)
+            .padding(horizontal = 10.dp, vertical = 7.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             if (icon != null) {
@@ -545,14 +1118,14 @@ fun FormatChip(
                     imageVector = icon,
                     contentDescription = null,
                     tint = if (isSelected) Color.Black else TextSecondary,
-                    modifier = Modifier.size(13.dp)
+                    modifier = Modifier.size(12.dp)
                 )
                 Spacer(modifier = Modifier.width(4.dp))
             }
             Text(
                 text = label,
                 color = if (isSelected) Color.Black else TextPrimary,
-                fontSize = 12.sp,
+                fontSize = 11.5.sp,
                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
             )
         }

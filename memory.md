@@ -124,18 +124,21 @@
   - `scripts/package-desktop.mjs`: Added generation of `SonicWave-v1.0.0-macOS.zip` (bundling `start.sh`, `server/`, `client/dist/`, `package.json`, and clean desktop entry).
   - Website & UI: Client OS auto-detection (`userPlatform`), dynamic download buttons (`Download for macOS (.zip)` vs `Download for Windows (.exe)`), interactive 3-step setup OS tabs (Windows vs macOS), and installation docs covering macOS Gatekeeper bypass instructions.
 - **Standalone On-Device Android Application (Embedded Engine APK)**:
-  - `android-app/`: Native standalone Android application (`com.sonicwave.app`) built with Jetpack Compose, Material 3, and Kotlin 2.3.
+  - `android-app/`: Native standalone Android application (`com.sonicwave.app`) built with Jetpack Compose, Material 3, and Kotlin.
   - Embedded On-Device Engine: Bundles `youtubedl-android` (v0.18.1), embedded Python 3.11 runtime, FFmpeg, and aria2c native binaries (`arm64-v8a`) to execute 16-stream media extraction directly on phone hardware with zero PC or cloud server required.
-  - Output Storage: Automatically writes converted media to `/storage/emulated/0/Download/SonicWave/` with ID3 metadata tags and album art embedding.
-  - System Share Sheet Integration (`ACTION_SEND`): Listens for video URLs shared directly from YouTube, Instagram, and TikTok apps, auto-filling the input field and triggering conversion without copy-pasting.
-  - Responsive Dark Spotify UI: Features URL input, clipboard paste, format selector (`MP3 320k/256k`, `M4A`, `FLAC`, `WAV`, `MP4 1080p/720p`), animated linear progress, speed/ETA metrics, and completed folder notifier.
-  - Release Pipeline & Multi-Scheme Signing: Generated 2048-bit RSA release keystore (`android-app/app/release.keystore`), configured full v1 (JAR), v2, and v3 signature schemes (`apksigner verify --verbose` passes 100%), and 4-byte zip alignment (`zipalign -c -v 4`).
-  - Target SDK Compatibility: Stabilized to `targetSdk = 34` (Android 14 UpsideDownCake) and `compileSdk = 34`, eliminating the preview SDK 36 parsing rejection and `INSTALL_FAILED_INVALID_APK` on consumer phones.
-  - Manifest Schema Rectification: Relocated `android:windowSoftInputMode="adjustResize"` to `<activity>`, removed orphan service declaration.
-  - Web Server & Distribution: Hardened `server/index.js` route for `/SonicWave.apk` returning `application/vnd.android.package-archive` with attachment headers and explicit 404 protection against SPA HTML fallback.
-  - Distribution Packaging: Optimized release binary (`69.63 MB`, safely under the 100 MB GitHub & Vercel limits) placed at `client/public/SonicWave.apk` and `client/dist/SonicWave.apk`. Created `scripts/build-android-apk.mjs` and `npm run package:apk` for 1-command release packaging.
-  - Website Integration: Dynamic Android detection (`/Android/i.test(navigator.userAgent)`), "Download for Android (.apk)" primary CTA with custom `AndroidIcon` SVG, quick setup tabs for Android, footer link, and Method 4 guide in `InstallGuide.jsx` and `TroubleshootingGuide.jsx`.
-  - Automated Verification: All 75 Node integration tests (`tests/*.test.js`) and Android unit tests pass 100%. Tested and verified with Teamwork multi-agent team and Victory Auditor.
+  - **Full Photo & Carousel Engine (`PhotoResolver.kt`)**: On-device resolution and downloading for Instagram carousels & posts, Reddit galleries, Twitter/X photo tweets, and direct web images.
+  - **Interactive Mobile Carousel Viewer & Filmstrip (`SonicWaveAppScreen.kt`)**:
+    - High-fidelity visual slider powered by Coil `AsyncImage` with touch-friendly Prev/Next navigation arrows.
+    - Dynamic slide counter indicator (`📸 Slide {i} of {n}`).
+    - Horizontal scrollable thumbnail filmstrip (`LazyRow`) with active Spotify-green border and 1-tap direct download button on each slide card.
+    - Quick action buttons: "Download Slide #{i} (.JPG)" and "Download All ({n} Photos .ZIP)".
+  - **Format Options**: Complete support for Audio (`MP3 320k/256k`, `M4A`, `FLAC`, `WAV`), Video (`MP4 1080p/720p`), and Photos (`Photos .ZIP Archive`, `Slide #{i} .JPG`, `Lossless .PNG`).
+  - Output Storage: Automatically writes converted media to `/storage/emulated/0/Download/SonicWave/` with ID3 metadata tags, album art embedding, and immediate Android `MediaScannerConnection` scan.
+  - **Native File Sharing & Opening**: Configured `androidx.core.content.FileProvider` (`file_paths.xml`) with instant "Open File" and "Share" action buttons to launch in Gallery, Files, or WhatsApp.
+  - System Share Sheet Integration (`ACTION_SEND`): Listens for media URLs shared directly from YouTube, Instagram, and TikTok apps, auto-filling the input field and triggering instant resolution.
+  - Release Pipeline & Multi-Scheme Signing: 2048-bit RSA release keystore (`android-app/app/release.keystore`), configured full v1 (JAR), v2, and v3 signature schemes (`apksigner verify --verbose` passes 100%), and 4-byte zip alignment (`zipalign -c -v 4`).
+  - Target SDK Compatibility: `targetSdk = 34` (Android 14) and `compileSdk = 36`.
+  - Distribution Packaging: Optimized release binary (`69.66 MB`) placed at `client/public/SonicWave.apk` and `client/dist/SonicWave.apk`. Created `scripts/build-android-apk.mjs` for 1-command release packaging.
 - **Organic Visibility Growth Plan & Technical Documentation Architecture**:
   - Three dedicated, indexable technical documentation hubs: Installation Guide (`/install`), Supported Platforms & Codecs (`/supported-platforms`), and Troubleshooting & FAQ Hub (`/troubleshooting`).
   - Pre-rendered semantic footer navigation inside `<div id="root">` in `client/index.html` allowing crawlers to discover all 7 subpages on the very first byte without waiting for JavaScript execution.
