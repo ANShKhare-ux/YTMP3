@@ -51,6 +51,58 @@ test('photoResolver - extractInstagramPhotosFromHtml parses EmbeddedMediaImage a
   assert.ok(photos[1].url.includes('999_888_777_n.jpg'), 'Slide 2 should match second unique carousel image');
 });
 
+test('photoResolver - extractInstagramPhotosFromHtml strictly excludes author HoverCardPhotos previews', () => {
+  const sampleHtmlWithHoverCard = `
+    <!DOCTYPE html><html><body>
+      <div class="UsernameText">robiinluca</div>
+      <img class="EmbeddedMediaImage" src="https://instagram.fidr4-3.fna.fbcdn.net/v/t51.82787-15/current_post_slide1.jpg?stp=dst-jpg_e35_tt6" />
+      <!-- Owner profile hover card displaying older recent posts from their feed -->
+      <a class="HoverCardRoot" href="https://www.instagram.com/robiinluca/">
+        <div class="HoverCardPhotos">
+          <img src="https://instagram.fidr4-3.fna.fbcdn.net/v/t51.82787-15/older_recent_post_slide1.jpg?stp=dst-jpg_e35_tt6" />
+        </div>
+      </a>
+    </body></html>
+  `;
+
+  const photos = extractInstagramPhotosFromHtml(sampleHtmlWithHoverCard, 'current_post');
+  assert.strictEqual(photos.length, 1, 'Should extract only the post slide and strictly ignore HoverCardPhotos');
+  assert.ok(photos[0].url.includes('current_post_slide1.jpg'), 'Extracted photo must be from current post');
+  assert.strictEqual(photos.some(p => p.url.includes('older_recent_post')), false, 'Must not contain older posts from author hover card');
+});
+
+test('photoResolver - extractInstagramPhotosFromHtml parses Relay SSR carousel_media payload with all slides in 1080p', () => {
+  const mockRelayHtml = `
+    <!DOCTYPE html><html><body>
+      <script type="application/json" data-sjs>
+        {
+          "require": [
+            ["PolarisMedia", "get", [], [{
+              "code": "DgBNdFUjTk1",
+              "user": { "username": "robiinluca" },
+              "caption": { "text": "7 Pro photography tips" },
+              "carousel_media": [
+                { "code": "slide1", "image_versions2": { "candidates": [{ "url": "https://cdn.example.com/s1_1080.jpg", "width": 1080, "height": 1350 }, { "url": "https://cdn.example.com/s1_720.jpg", "width": 720, "height": 900 }] } },
+                { "code": "slide2", "image_versions2": { "candidates": [{ "url": "https://cdn.example.com/s2_1080.jpg", "width": 1080, "height": 1350 }] } },
+                { "code": "slide3", "image_versions2": { "candidates": [{ "url": "https://cdn.example.com/s3_1080.jpg", "width": 1080, "height": 1350 }] } }
+              ]
+            }]]
+          ]
+        }
+      </script>
+    </body></html>
+  `;
+
+  const photos = extractInstagramPhotosFromHtml(mockRelayHtml, 'slide2');
+  assert.strictEqual(photos.length, 3, 'Must extract all 3 carousel slides');
+  assert.strictEqual(photos[0].index, 1);
+  assert.strictEqual(photos[0].url, 'https://cdn.example.com/s1_1080.jpg', 'Must pick highest resolution 1080p candidate');
+  assert.strictEqual(photos[1].index, 2);
+  assert.strictEqual(photos[1].url, 'https://cdn.example.com/s2_1080.jpg');
+  assert.strictEqual(photos[2].index, 3);
+  assert.strictEqual(photos[2].url, 'https://cdn.example.com/s3_1080.jpg');
+});
+
 test('photoResolver - createZipBuffer generates standard valid PKZip archive', () => {
   const entries = [
     { filename: 'photo_01.jpg', data: Buffer.from('JPEG_DATA_1_SIMULATION') },

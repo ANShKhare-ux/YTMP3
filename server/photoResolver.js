@@ -22,17 +22,140 @@ function isPhotoSupportedUrl(url) {
 }
 
 /**
- * Extracts and unescapes all unique high-resolution image candidates from Instagram embed HTML
+ * Extracts and unescapes all unique high-resolution image candidates from Instagram page HTML or embed HTML.
+ * Handles both Relay SSR/GraphQL JSON payloads (extracting all slides in full 1080p resolution)
+ * and sanitized fallback HTML (strictly excluding owner profile hover card previews).
+ *
  * @param {string} html
+ * @param {string} [shortcode] - Optional shortcode to accurately target carousel parent
  * @returns {Array<{ index: number, url: string, label: string }>}
  */
-function extractInstagramPhotosFromHtml(html) {
+function extractInstagramPhotosFromHtml(html, shortcode = '') {
+  // 1. Try parsing JSON structures (Relay SSR / GraphQL / Polaris payload)
+  const scriptRegex = /<script\b[^>]*\btype="application\/json"[^>]*>([\s\S]*?)<\/script>/gi;
+  let scriptMatch;
+  let parentCarousel = null;
+  let targetMedia = null;
+
+  while ((scriptMatch = scriptRegex.exec(html)) !== null) {
+    const content = scriptMatch[1];
+    if (
+      !content.includes('carousel_media') &&
+      !content.includes('XIGPolaris') &&
+      !content.includes('edge_sidecar_to_children') &&
+      (!shortcode || !content.includes(shortcode))
+    ) {
+      continue;
+    }
+
+    try {
+      const data = JSON.parse(content);
+
+      function searchMedia(obj) {
+        if (!obj || typeof obj !== 'object' || parentCarousel) return;
+
+        // Polaris/Relay carousel_media container
+        if (Array.isArray(obj.carousel_media) && obj.carousel_media.length > 0) {
+          const matches = !shortcode ||
+            obj.code === shortcode ||
+            obj.shortcode === shortcode ||
+            obj.carousel_media.some(item => item.code === shortcode || item.shortcode === shortcode);
+          if (matches) {
+            parentCarousel = obj;
+            return;
+          }
+        }
+
+        // Web GraphQL edge_sidecar_to_children
+        if (obj.edge_sidecar_to_children && Array.isArray(obj.edge_sidecar_to_children.edges) && obj.edge_sidecar_to_children.edges.length > 0) {
+          const matches = !shortcode ||
+            obj.shortcode === shortcode ||
+            obj.code === shortcode ||
+            obj.edge_sidecar_to_children.edges.some(e => e.node?.shortcode === shortcode);
+          if (matches) {
+            parentCarousel = {
+              code: obj.shortcode || obj.code,
+              user: obj.owner,
+              caption: { text: obj.edge_media_to_caption?.edges?.[0]?.node?.text || '' },
+              carousel_media: obj.edge_sidecar_to_children.edges.map(e => ({
+                code: e.node?.shortcode,
+                display_uri: e.node?.display_url,
+                image_versions2: {
+                  candidates: e.node?.display_resources || (e.node?.display_url ? [{ url: e.node.display_url }] : [])
+                }
+              }))
+            };
+            return;
+          }
+        }
+
+        // Single media matching shortcode
+        if ((!shortcode || obj.code === shortcode || obj.shortcode === shortcode) && (obj.image_versions2 || obj.display_uri || obj.display_url)) {
+          if (!targetMedia) targetMedia = obj;
+        }
+
+        if (Array.isArray(obj)) {
+          for (const item of obj) searchMedia(item);
+        } else {
+          for (const val of Object.values(obj)) searchMedia(val);
+        }
+      }
+
+      searchMedia(data);
+      if (parentCarousel) break;
+    } catch {}
+  }
+
+  // If a carousel container was found in JSON
+  if (parentCarousel && Array.isArray(parentCarousel.carousel_media)) {
+    const photos = [];
+    parentCarousel.carousel_media.forEach((item, idx) => {
+      const candidates = item.image_versions2?.candidates || [];
+      let bestUrl = item.display_uri || item.display_url;
+      if (candidates.length > 0) {
+        const sorted = [...candidates].sort((a, b) => ((b.width || 0) * (b.height || 0)) - ((a.width || 0) * (a.height || 0)));
+        bestUrl = sorted[0].url || bestUrl;
+      }
+      if (bestUrl) {
+        photos.push({
+          index: idx + 1,
+          url: bestUrl.replace(/&amp;/g, '&'),
+          label: `Slide ${idx + 1}`
+        });
+      }
+    });
+    if (photos.length > 0) return photos;
+  }
+
+  // If single media was found in JSON
+  if (targetMedia) {
+    const candidates = targetMedia.image_versions2?.candidates || [];
+    let bestUrl = targetMedia.display_uri || targetMedia.display_url;
+    if (candidates.length > 0) {
+      const sorted = [...candidates].sort((a, b) => ((b.width || 0) * (b.height || 0)) - ((a.width || 0) * (a.height || 0)));
+      bestUrl = sorted[0].url || bestUrl;
+    }
+    if (bestUrl) {
+      return [{
+        index: 1,
+        url: bestUrl.replace(/&amp;/g, '&'),
+        label: 'Slide 1'
+      }];
+    }
+  }
+
+  // 2. DOM / HTML Regex fallback
+  // CRITICAL: Strip out HoverCardPhotos and profile hover preview sections so owner's other recent posts are NEVER captured!
+  const sanitizedHtml = html
+    .replace(/<div[^>]*class="[^"]*HoverCardPhotos[^"]*"[\s\S]*?<\/div>/gi, '')
+    .replace(/<a[^>]*class="[^"]*HoverCardRoot[^"]*"[\s\S]*?<\/a>/gi, '');
+
   const photos = [];
   const seenUrls = new Set();
 
-  // 1. Primary embedded high-resolution image
-  const primaryMatch = html.match(/class="EmbeddedMediaImage"[^>]*src="([^"]+)"/i) ||
-                       html.match(/<img[^>]+class="EmbeddedMediaImage"[^>]*src="([^"]+)"/i);
+  // Primary embedded image
+  const primaryMatch = sanitizedHtml.match(/class="EmbeddedMediaImage"[^>]*src="([^"]+)"/i) ||
+                       sanitizedHtml.match(/<img[^>]+class="EmbeddedMediaImage"[^>]*src="([^"]+)"/i);
   if (primaryMatch && primaryMatch[1]) {
     const rawUrl = primaryMatch[1].replace(/&amp;/g, '&');
     photos.push({ index: 1, url: rawUrl, label: 'Slide 1' });
@@ -40,8 +163,8 @@ function extractInstagramPhotosFromHtml(html) {
     seenUrls.add(fileIdMatch ? fileIdMatch[1] : rawUrl.split('?')[0]);
   }
 
-  // 2. Additional carousel slide images
-  const allMediaImages = [...html.matchAll(/https:\/\/[^"'<>\s]+\.(?:jpg|png|webp)[^"'<>\s]*/g)]
+  // Additional images in sanitized HTML (e.g. from tests or simple mock HTML)
+  const allMediaImages = [...sanitizedHtml.matchAll(/https:\/\/[^"'<>\s]+\.(?:jpg|png|webp)[^"'<>\s]*/g)]
     .map(m => m[0].replace(/&amp;/g, '&'))
     .filter(u => u.includes('fbcdn.net') && (u.includes('82787') || u.includes('2885')));
 
@@ -64,57 +187,104 @@ function extractInstagramPhotosFromHtml(html) {
 }
 
 /**
- * Resolves Instagram photos & carousels via public server-rendered embed endpoint
+ * Resolves Instagram photos & carousels via crawler emulation and public embed fallbacks
  * @param {string} url
  * @returns {Promise<Object>}
  */
 async function resolveInstagramPhotos(url) {
-  const match = url.match(/instagram\.com\/(?:p|reel)\/([A-Za-z0-9_-]+)/i);
+  const match = url.match(/instagram\.com\/(?:p|reel|reels)\/([A-Za-z0-9_-]+)/i);
   if (!match) {
     throw new Error('Invalid Instagram post URL format');
   }
   const shortcode = match[1];
-  const embedUrl = `https://www.instagram.com/p/${shortcode}/embed/captioned/`;
 
-  const res = await fetch(embedUrl, {
-    headers: {
-      'User-Agent': 'facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)',
-      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-      'Accept-Language': 'en-US,en;q=0.5'
-    }
-  });
-
-  if (!res.ok) {
-    throw new Error(`Instagram server returned status HTTP ${res.status}`);
-  }
-
-  const html = await res.text();
-
-  // Author username
   let author = 'Instagram Creator';
-  const authorMatch = html.match(/class="UsernameText"[^>]*>([^<]+)<\/span>/i) ||
-                      html.match(/alt="Instagram post shared by &#064;([^"]+)"/i) ||
-                      html.match(/instagram\.com\/([a-zA-Z0-9._]+)\/\?utm_source=ig_embed/i);
-  if (authorMatch && authorMatch[1]) {
-    author = authorMatch[1].trim();
-  }
-
-  // Caption text
   let caption = '';
-  const captionMatch = html.match(/<div class="Caption"[^>]*>(.*?)<\/div>/is);
-  if (captionMatch && captionMatch[1]) {
-    caption = captionMatch[1].replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
-  }
-  if (!caption) {
-    caption = `Instagram photo by @${author}`;
+  let photos = [];
+
+  // Strategy 1: Direct Instagram post page with Googlebot user agent
+  // Instagram serves full SSR Relay JSON containing complete carousel_media array (all slides in 1080p)
+  try {
+    const postUrl = `https://www.instagram.com/p/${shortcode}/`;
+    const res = await fetch(postUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.5'
+      }
+    });
+
+    if (res.ok) {
+      const html = await res.text();
+      photos = extractInstagramPhotosFromHtml(html, shortcode);
+
+      // Extract author from meta or SSR
+      const userMatch = html.match(/"username":"([^"]+)"/);
+      if (userMatch && userMatch[1]) {
+        author = userMatch[1];
+      }
+
+      // Extract caption
+      const captionMatch = html.match(/"caption":\{"text":"([^"]+)"\}/);
+      if (captionMatch && captionMatch[1]) {
+        try {
+          caption = JSON.parse(`"${captionMatch[1]}"`);
+        } catch {
+          caption = captionMatch[1];
+        }
+      }
+      if (!caption) {
+        const metaDesc = html.match(/<meta\s+(?:property="og:description"|name="description")\s+content="([^"]*)"/i);
+        if (metaDesc && metaDesc[1]) {
+          caption = metaDesc[1].replace(/&quot;/g, '"').replace(/&#064;/g, '@').trim();
+        }
+      }
+    }
+  } catch (err) {
+    console.warn(`[photoResolver] Direct Instagram page fetch failed: ${err.message}`);
   }
 
-  const photos = extractInstagramPhotosFromHtml(html);
+  // Strategy 2: Embed endpoint fallback (if Strategy 1 didn't yield photos)
+  if (photos.length === 0) {
+    const embedUrl = `https://www.instagram.com/p/${shortcode}/embed/captioned/`;
+    const res = await fetch(embedUrl, {
+      headers: {
+        'User-Agent': 'facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.5'
+      }
+    });
+
+    if (res.ok) {
+      const html = await res.text();
+
+      const authorMatch = html.match(/class="UsernameText"[^>]*>([^<]+)<\/span>/i) ||
+                          html.match(/alt="Instagram post shared by &#064;([^"]+)"/i) ||
+                          html.match(/instagram\.com\/([a-zA-Z0-9._]+)\/\?utm_source=ig_embed/i);
+      if (authorMatch && authorMatch[1]) {
+        author = authorMatch[1].trim();
+      }
+
+      const captionMatch = html.match(/<div class="Caption"[^>]*>(.*?)<\/div>/is);
+      if (captionMatch && captionMatch[1]) {
+        caption = captionMatch[1].replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+      }
+
+      photos = extractInstagramPhotosFromHtml(html, shortcode);
+    }
+  }
+
   if (photos.length === 0) {
     throw new Error('No photos could be found in this Instagram post. The post may be restricted or private.');
   }
 
+  if (!caption) {
+    caption = `Instagram photo by @${author.replace(/^@/, '')}`;
+  }
+
+  const cleanAuthor = author.startsWith('@') ? author : `@${author}`;
   const isCarousel = photos.length > 1;
+
   const presets = isCarousel
     ? [
         {
@@ -155,7 +325,7 @@ async function resolveInstagramPhotos(url) {
     id: shortcode,
     url,
     title: caption,
-    author: author.startsWith('@') ? author : `@${author}`,
+    author: cleanAuthor,
     thumbnail: photos[0].url,
     duration: 0,
     platform: 'Instagram',
