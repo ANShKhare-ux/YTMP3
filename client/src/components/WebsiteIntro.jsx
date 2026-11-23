@@ -11,7 +11,6 @@ export default function WebsiteIntro({ onFinish }) {
   const videoRef = useRef(null);
   const [isMuted, setIsMuted] = useState(true);
   const [isFading, setIsFading] = useState(false);
-  const [progress, setProgress] = useState(0);
   const [hasInteracted, setHasInteracted] = useState(false);
 
   // Instant zero-latency autoplay trigger
@@ -44,12 +43,6 @@ export default function WebsiteIntro({ onFinish }) {
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, []);
-
-  const handleTimeUpdate = () => {
-    const video = videoRef.current;
-    if (!video || !video.duration) return;
-    setProgress((video.currentTime / video.duration) * 100);
-  };
 
   const handleClose = () => {
     if (isFading) return;
@@ -93,7 +86,7 @@ export default function WebsiteIntro({ onFinish }) {
         position: 'fixed',
         inset: 0,
         zIndex: 999999,
-        backgroundColor: '#08090c',
+        backgroundColor: '#000000',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -112,13 +105,12 @@ export default function WebsiteIntro({ onFinish }) {
         muted={isMuted}
         playsInline
         preload="auto"
-        onTimeUpdate={handleTimeUpdate}
         onEnded={handleClose}
         onError={handleClose}
         style={{
           width: '100%',
           height: '100%',
-          objectFit: 'cover'
+          objectFit: 'contain'
         }}
       />
 
@@ -241,28 +233,6 @@ export default function WebsiteIntro({ onFinish }) {
           Tap anywhere for sound &bull; Press <kbd style={{ padding: '2px 5px', borderRadius: '4px', background: 'rgba(255,255,255,0.1)', color: '#fff' }}>Esc</kbd> to skip
         </div>
       )}
-
-      {/* Progress Bar */}
-      <div
-        style={{
-          position: 'absolute',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          height: '3px',
-          backgroundColor: 'rgba(255, 255, 255, 0.08)'
-        }}
-      >
-        <div
-          style={{
-            height: '100%',
-            width: `${progress}%`,
-            backgroundColor: '#828fff',
-            boxShadow: '0 0 10px #828fff',
-            transition: 'width 0.1s linear'
-          }}
-        />
-      </div>
     </div>
   );
 }
