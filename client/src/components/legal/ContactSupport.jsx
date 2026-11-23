@@ -98,7 +98,7 @@ export default function ContactSupport({ onNavigate }) {
     // Open default mailto prefilled as convenience
     const subject = encodeURIComponent(`[SonicWave ${formState.category}] from ${formState.name || 'User'}`);
     const body = encodeURIComponent(`Sender Name: ${formState.name}\nSender Email: ${formState.email}\nCategory: ${formState.category}\n\nMessage:\n${formState.message}`);
-    window.location.href = `mailto:anshkhare.ux@gmail.com?subject=${subject}&body=${body}`;
+    window.location.href = `mailto:preetiansh16@gmail.com?subject=${subject}&body=${body}`;
   };
 
   return (
@@ -143,7 +143,7 @@ export default function ContactSupport({ onNavigate }) {
               For general inquiries, editorial questions, partnership or AdSense queries, and formal notices. Contact the project lead directly.
             </p>
             <div style={{ background: '#141517', padding: '10px 14px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-              <code style={{ color: '#fff', fontSize: '0.88rem' }}>anshkhare.ux@gmail.com</code>
+              <code style={{ color: '#fff', fontSize: '0.88rem' }}>preetiansh16@gmail.com</code>
               <button
                 type="button"
                 onClick={handleCopyEmail}
@@ -154,7 +154,7 @@ export default function ContactSupport({ onNavigate }) {
               </button>
             </div>
             <a
-              href="mailto:anshkhare.ux@gmail.com?subject=[SonicWave%20Inquiry]"
+              href="mailto:preetiansh16@gmail.com?subject=[SonicWave%20Inquiry]"
               className="cursor-button-primary legal-channel-btn"
               style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
             >
@@ -254,7 +254,7 @@ export default function ContactSupport({ onNavigate }) {
               <CheckCircle2 size={18} /> Thank You for Your Message
             </h4>
             <p className="legal-callout-text" style={{ marginTop: '0.5rem' }}>
-              Your inquiry has been formulated and dispatched. If your email client didn't open automatically, you can always reach us directly at <strong>anshkhare.ux@gmail.com</strong>.
+              Your inquiry has been formulated and dispatched. If your email client didn't open automatically, you can always reach us directly at <strong>preetiansh16@gmail.com</strong>.
             </p>
           </div>
         ) : (
@@ -381,7 +381,7 @@ export default function ContactSupport({ onNavigate }) {
         </p>
         <div className="legal-contact-box">
           <p>
-            <strong>Official Project &amp; Legal Email:</strong> <a href="mailto:anshkhare.ux@gmail.com">anshkhare.ux@gmail.com</a>
+            <strong>Official Project &amp; Legal Email:</strong> <a href="mailto:preetiansh16@gmail.com">preetiansh16@gmail.com</a>
           </p>
           <p>
             <strong>Security &amp; Legal Notices:</strong> Inquiries may also be submitted through our GitHub repository issue tracker at <a href="https://github.com/ANShKhare-ux/YTMP3/issues" target="_blank" rel="noopener noreferrer">https://github.com/ANShKhare-ux/YTMP3/issues</a> with the label <code>[Security]</code> or <code>[Legal]</code>.
