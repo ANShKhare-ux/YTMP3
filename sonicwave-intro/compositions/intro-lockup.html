@@ -1,0 +1,219 @@
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+      background: #08090c;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Inter', sans-serif;
+      overflow: hidden;
+    }
+    .lockup-bg-glow {
+      position: absolute;
+      width: 1000px;
+      height: 1000px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(0, 245, 160, 0.18) 0%, rgba(30, 215, 96, 0.07) 50%, rgba(8, 9, 12, 0) 70%);
+      pointer-events: none;
+    }
+    .lockup-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      max-width: 1550px;
+      width: 100%;
+      z-index: 2;
+    }
+    .lockup-brand-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 32px;
+      margin-bottom: 24px;
+    }
+    .lockup-badge-wrap {
+      width: 140px;
+      height: 140px;
+      flex-shrink: 0;
+      filter: drop-shadow(0 0 24px rgba(0, 245, 160, 0.35));
+    }
+    .lockup-badge-svg {
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+    }
+    .lockup-title {
+      font-size: 100px;
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      color: #ffffff;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+    .lockup-title-accent {
+      color: #00f5a0;
+    }
+    .lockup-live-dot {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #00f5a0;
+      box-shadow: 0 0 18px #00f5a0;
+      display: inline-block;
+    }
+    .lockup-subtitle {
+      font-size: 36px;
+      font-weight: 600;
+      color: #c0c7d4;
+      letter-spacing: 0.02em;
+      margin-bottom: 44px;
+    }
+    .lockup-pills-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+    .lockup-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 28px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 100px;
+    }
+    .lockup-pill-icon {
+      width: 28px;
+      height: 28px;
+      fill: #00f5a0;
+    }
+    .lockup-pill-text {
+      font-size: 32px;
+      font-weight: 600;
+      color: #ffffff;
+      letter-spacing: 0.02em;
+    }
+  </style>
+
+  <div id="root" data-composition-id="intro-lockup" data-width="1920" data-height="1080">
+    <div id="lockup-glow-clip" class="clip" data-start="0" data-duration="3" data-track-index="0">
+      <div class="lockup-bg-glow"></div>
+    </div>
+
+    <div id="lockup-content-clip" class="clip" data-start="0" data-duration="3" data-track-index="1">
+      <div class="lockup-container">
+        <!-- Brand row -->
+        <div class="lockup-brand-row">
+          <div class="lockup-badge-wrap">
+            <svg viewBox="0 0 100 100" class="lockup-badge-svg" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="8" y="8" width="84" height="84" rx="24" fill="#121714" stroke="#1ed760" stroke-width="2.5" />
+              <path d="M19 33 A 38 38 0 0 0 19 67" stroke="#00f5a0" stroke-width="3" stroke-linecap="round" />
+              <path d="M81 33 A 38 38 0 0 1 81 67" stroke="#00f5a0" stroke-width="3" stroke-linecap="round" />
+              <rect x="28" y="38" width="5" height="24" rx="2.5" fill="#1ed760" />
+              <rect x="36" y="28" width="5" height="44" rx="2.5" fill="#00f5a0" />
+              <rect x="44" y="20" width="5.5" height="60" rx="2.75" fill="#6ee7b7" />
+              <rect x="53" y="30" width="5" height="40" rx="2.5" fill="#00f5a0" />
+              <rect x="61" y="38" width="5" height="24" rx="2.5" fill="#1ed760" />
+              <path d="M47 41 L63 50 L47 59 Z" fill="#ffffff" />
+            </svg>
+          </div>
+
+          <div class="lockup-title">
+            <span>Sonic<span class="lockup-title-accent">Wave</span></span>
+            <span class="lockup-live-dot"></span>
+          </div>
+        </div>
+
+        <!-- Subtitle -->
+        <p class="lockup-subtitle">High-Speed Media Downloader &amp; Offline Player</p>
+
+        <!-- Feature Pills -->
+        <div class="lockup-pills-row">
+          <div class="lockup-pill pill-0">
+            <svg class="lockup-pill-icon" viewBox="0 0 24 24">
+              <path d="M7 2v11h3v9l7-12h-4l4-8z"/>
+            </svg>
+            <span class="lockup-pill-text">320kbps Audio</span>
+          </div>
+
+          <div class="lockup-pill pill-1">
+            <svg class="lockup-pill-icon" viewBox="0 0 24 24">
+              <path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/>
+            </svg>
+            <span class="lockup-pill-text">4K HDR Video</span>
+          </div>
+
+          <div class="lockup-pill pill-2">
+            <svg class="lockup-pill-icon" viewBox="0 0 24 24">
+              <path d="M4 6h16v10H4V6z M20 18c1.1 0 1.99-.9 1.99-2L22 6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2H0v2h24v-2h-4z"/>
+            </svg>
+            <span class="lockup-pill-text">Android &amp; Desktop</span>
+          </div>
+
+          <div class="lockup-pill pill-3">
+            <svg class="lockup-pill-icon" viewBox="0 0 24 24">
+              <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/>
+            </svg>
+            <span class="lockup-pill-text">100% Free &amp; Open</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const tl = gsap.timeline({ paused: true });
+
+    // Background glow
+    tl.fromTo(
+      ".lockup-bg-glow",
+      { scale: 0.8, opacity: 0.6 },
+      { scale: 1.25, opacity: 1, duration: 2.0, ease: "power2.out" },
+      0
+    );
+
+    // Brand row entrance
+    tl.fromTo(
+      ".lockup-brand-row",
+      { opacity: 0.85, scale: 0.94, y: 15 },
+      { opacity: 1, scale: 1.0, y: 0, duration: 0.7, ease: "power3.out" },
+      0
+    );
+
+    // Live dot pulsing
+    tl.fromTo(
+      ".lockup-live-dot",
+      { scale: 0.8, opacity: 0.7 },
+      { scale: 1.3, opacity: 1, duration: 0.6, ease: "sine.inOut", yoyo: true, repeat: 4 },
+      0.1
+    );
+
+    // Subtitle reveal
+    tl.fromTo(
+      ".lockup-subtitle",
+      { opacity: 0.8, y: 12 },
+      { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" },
+      0.15
+    );
+
+    // Staggered pills entrance
+    for (let i = 0; i < 4; i++) {
+      tl.fromTo(
+        `.pill-${i}`,
+        { opacity: 0.7, y: 20, scale: 0.95 },
+        { opacity: 1, y: 0, scale: 1.0, duration: 0.5, ease: "back.out(1.4)" },
+        0.2 + i * 0.08
+      );
+    }
+
+    window.__timelines["intro-lockup"] = tl;
+  </script>
+</template>

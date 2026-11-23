@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import LandingPage from './components/LandingPage';
+import WebsiteIntro from './components/WebsiteIntro';
 import AboutUs from './components/legal/AboutUs';
 import PrivacyPolicy from './components/legal/PrivacyPolicy';
 import TermsOfUse from './components/legal/TermsOfUse';
@@ -42,6 +43,19 @@ function getInitialRoute() {
 
 export default function App() {
   const [currentView, setCurrentView] = useState(getInitialRoute);
+  const [showIntro, setShowIntro] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('intro') === '1') return true;
+    if (urlParams.get('intro') === '0') return false;
+    try {
+      if (sessionStorage.getItem('sonicwave_intro_seen')) return false;
+    } catch {
+      // ignore storage restriction
+    }
+    const pathname = window.location.pathname.replace(/\/$/, '') || '/';
+    return pathname === '/' || pathname === '/landing';
+  });
 
   const navigateTo = (view, path) => {
     setCurrentView(view);
@@ -122,7 +136,8 @@ export default function App() {
   // Marketing Landing Page (Default)
   return (
     <div className="cursor-landing-wrapper">
-      <LandingPage onNavigate={navigateTo} />
+      {showIntro && <WebsiteIntro onFinish={() => setShowIntro(false)} />}
+      <LandingPage onNavigate={navigateTo} onReplayIntro={() => setShowIntro(true)} />
     </div>
   );
 }

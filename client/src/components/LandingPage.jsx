@@ -265,7 +265,8 @@ const FOOTER_COLUMNS = [
 ];
 
 export default function LandingPage({
-  onNavigate
+  onNavigate,
+  onReplayIntro
 }) {
   const [isDownloadSuccessOpen, setIsDownloadSuccessOpen] = useState(false);
   const [downloadType, setDownloadType] = useState('exe');
@@ -1316,6 +1317,19 @@ export default function LandingPage({
               <Terminal size={14} aria-hidden="true" />
               <span>Installation guide</span>
             </a>
+
+            {onReplayIntro && (
+              <button
+                type="button"
+                className="cursor-button-secondary cursor-btn-lg cursor-btn-replay-intro"
+                onClick={onReplayIntro}
+                aria-label="Watch SonicWave intro animation"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}
+              >
+                <Play size={14} aria-hidden="true" style={{ fill: 'currentColor' }} />
+                <span>Watch Intro</span>
+              </button>
+            )}
           </div>
 
           <div className="cursor-hero-sub-formats">

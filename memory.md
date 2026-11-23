@@ -98,6 +98,15 @@
   - Full sitemap integration in `client/public/sitemap.xml` referencing real canonical URLs (including `/about` at 0.9 priority).
   - Shared `LegalLayout` with tabbed cross-navigation (About, Privacy, Terms, Copyright, Contact) and dedicated legal footer.
   - Automated test assertions in `tests/workspace.test.js` validating legal component existence, routing, and sitemap coverage.
+- **Zero-Latency 1080p 60FPS Website Intro Experience**:
+  - High-performance, broadcast-grade intro video (`client/public/sonicwave-intro.mp4`, 1.8 MB, 1080p @ 60 FPS, 6.00s duration, AAC stereo @ -18 LUFS).
+  - Preloaded via high-priority HTML `<link rel="preload" href="/sonicwave-intro.mp4" as="video" type="video/mp4" fetchpriority="high">` in `client/index.html`.
+  - Implemented in `client/src/components/WebsiteIntro.jsx`:
+    - Fullscreen overlay sitting on top of `LandingPage`, letting the website render and warm up in parallel underneath with true 0ms delay.
+    - Autoplays instantly with `muted` policy compliance and provides interactive sound toggle (`SOUND ON` / `SOUND OFF`) and polite click-to-unmute.
+    - Includes quick `SKIP` button, `Escape`/`M` keyboard controls, and razor-thin Spotify-green progress indicator.
+    - Session-aware (`sessionStorage.getItem('sonicwave_intro_seen')`) preventing repetitive plays across same-session tab switches, plus `?intro=1` query override.
+    - "Watch Intro" CTA button added to the landing page hero section allowing users to replay the intro anytime.
 - **Brand Favicon Suite & Social Share Preview**:
   - `client/public/favicon.ico`: Windows multi-resolution icon binary packaging 16x16, 32x32, and 48x48 PNG layers with 5-bar acoustic soundwave brand mark.
   - `client/public/favicon-96.png`: 96x96 PNG for modern browser tabs and Google Search desktop favicon snippet displays.

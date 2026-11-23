@@ -15,7 +15,9 @@ server/bin/
 server/downloads/
 server/data/
 *.mp3
+!sonicwave-intro/assets/**
 *.mp4
+!client/public/sonicwave-intro.mp4
 *.webm
 *.m4a
 
@@ -29,6 +31,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .system_generated/
+.hyperframes/
 .DS_Store
 Thumbs.db
 .vercel/
