@@ -63,6 +63,7 @@ test('workspace - LICENSE file exists', () => {
 
 test('workspace - legal & support pages and sitemap integrity', () => {
   const legalFiles = [
+    'AboutUs.jsx',
     'PrivacyPolicy.jsx',
     'TermsOfUse.jsx',
     'CopyrightPolicy.jsx',
@@ -78,6 +79,7 @@ test('workspace - legal & support pages and sitemap integrity', () => {
   const sitemapPath = path.join(rootDir, 'client', 'public', 'sitemap.xml');
   assert.ok(fs.existsSync(sitemapPath), 'sitemap.xml must exist');
   const sitemapContent = fs.readFileSync(sitemapPath, 'utf8');
+  assert.ok(sitemapContent.includes('/about'), 'sitemap.xml must include /about');
   assert.ok(sitemapContent.includes('/privacy'), 'sitemap.xml must include /privacy');
   assert.ok(sitemapContent.includes('/terms'), 'sitemap.xml must include /terms');
   assert.ok(sitemapContent.includes('/copyright-acceptable-use'), 'sitemap.xml must include /copyright-acceptable-use');
@@ -101,12 +103,14 @@ test('workspace - documentation pages and routing integrity', () => {
 
   // Verify App.jsx router includes docs routes
   const appJsx = fs.readFileSync(path.join(rootDir, 'client', 'src', 'App.jsx'), 'utf8');
+  assert.ok(appJsx.includes("pathname === '/about'"), 'App.jsx must route /about');
   assert.ok(appJsx.includes("pathname === '/install'"), 'App.jsx must route /install');
   assert.ok(appJsx.includes("pathname === '/supported-platforms'"), 'App.jsx must route /supported-platforms');
   assert.ok(appJsx.includes("pathname === '/troubleshooting'"), 'App.jsx must route /troubleshooting');
 
   // Verify pre-rendered index.html includes links to docs in header and footer
   const indexHtml = fs.readFileSync(path.join(rootDir, 'client', 'index.html'), 'utf8');
+  assert.ok(indexHtml.includes('href="/about"'), 'index.html must link to /about');
   assert.ok(indexHtml.includes('href="/install"'), 'index.html must link to /install');
   assert.ok(indexHtml.includes('href="/supported-platforms"'), 'index.html must link to /supported-platforms');
   assert.ok(indexHtml.includes('href="/troubleshooting"'), 'index.html must link to /troubleshooting');

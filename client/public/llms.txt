@@ -55,6 +55,7 @@ Yes. SonicWave is 100% free under the MIT License with zero advertisements, zero
 - Installation Guide: https://ytmp-3-five.vercel.app/install
 - Supported Platforms & Codecs: https://ytmp-3-five.vercel.app/supported-platforms
 - Troubleshooting & FAQ: https://ytmp-3-five.vercel.app/troubleshooting
+- About Us & Mission: https://ytmp-3-five.vercel.app/about
 - Privacy Policy: https://ytmp-3-five.vercel.app/privacy
 - Terms of Use: https://ytmp-3-five.vercel.app/terms
 - Copyright & Acceptable Use Policy: https://ytmp-3-five.vercel.app/copyright-acceptable-use

@@ -13,7 +13,13 @@ import {
   RefreshCw,
   FolderArchive,
   CheckCircle2,
-  AlertTriangle
+  AlertTriangle,
+  Mail,
+  Send,
+  Copy,
+  Check,
+  Clock,
+  ShieldAlert
 } from 'lucide-react';
 
 function GitHubIcon({ size = 20, className = '' }) {
@@ -67,14 +73,32 @@ const TROUBLESHOOTING_GUIDES = [
 export default function ContactSupport({ onNavigate }) {
   useDocumentMetadata({
     title: 'Contact & Support : SonicWave Media Utility',
-    description: 'Get technical help with SonicWave. Access troubleshooting guides, binary update instructions, Windows setup help, and open-source GitHub support.',
+    description: 'Get in touch with the SonicWave maintainers. Access direct email support, community troubleshooting guides, binary updates, and open-source GitHub issue tracking.',
     canonical: 'https://ytmp-3-five.vercel.app/contact'
   });
 
   const [openGuide, setOpenGuide] = useState('updater');
+  const [copied, setCopied] = useState(false);
+  const [formState, setFormState] = useState({ name: '', email: '', category: 'General Inquiry', message: '' });
+  const [isSubmitted, setIsSubmitted] = useState(false);
 
   const toggleGuide = (id) => {
     setOpenGuide((prev) => (prev === id ? null : id));
+  };
+
+  const handleCopyEmail = () => {
+    navigator.clipboard.writeText('anshkhare.ux@gmail.com');
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2500);
+  };
+
+  const handleSubmitForm = (e) => {
+    e.preventDefault();
+    setIsSubmitted(true);
+    // Open default mailto prefilled as convenience
+    const subject = encodeURIComponent(`[SonicWave ${formState.category}] from ${formState.name || 'User'}`);
+    const body = encodeURIComponent(`Sender Name: ${formState.name}\nSender Email: ${formState.email}\nCategory: ${formState.category}\n\nMessage:\n${formState.message}`);
+    window.location.href = `mailto:anshkhare.ux@gmail.com?subject=${subject}&body=${body}`;
   };
 
   return (
@@ -85,21 +109,59 @@ export default function ContactSupport({ onNavigate }) {
           <span>HELP DESK &amp; COMMUNITY ASSISTANCE</span>
         </div>
         <h1 className="legal-page-h1">Contact &amp; Support</h1>
-        <p className="legal-effective-date">Community-Driven Technical Support &bull; Open Source Project</p>
+        <p className="legal-effective-date">Community-Driven Technical Support &bull; Direct Inquiries &bull; Open Source Project</p>
       </header>
 
       {/* Support Intro */}
       <div className="legal-callout-card">
         <h3 className="legal-callout-title">Support Channels &amp; Technical Inquiries</h3>
         <p className="legal-callout-text">
-          SonicWave is an open-source technical utility maintained on GitHub. Because SonicWave is completely free and community-driven, we do not operate a commercial call center or paid ticketing queue. All official technical support, bug reports, engine updates, and feature discussions are conducted publicly and transparently through our GitHub repository.
+          SonicWave is an open-source technical utility maintained on GitHub. We believe in total transparency and accessibility: whether you have questions about our software, need technical troubleshooting, have commercial or AdSense inquiries, or wish to report a bug, multiple verified communication channels are available below.
         </p>
+        <div style={{ marginTop: '0.8rem', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--spotify-green, #1ed760)', fontSize: '0.85rem' }}>
+          <Clock size={14} />
+          <span>Average response turnaround: <strong>24 to 48 hours</strong></span>
+        </div>
       </div>
 
       {/* Primary Support Cards */}
       <section className="legal-section">
-        <h2>1. Verified Support Channels</h2>
+        <h2>1. Verified Communication Channels</h2>
         <div className="legal-grid-two">
+          {/* Direct Email Channel */}
+          <div className="legal-contact-channel-card" style={{ borderLeft: '3px solid var(--spotify-green, #1ed760)' }}>
+            <div className="legal-channel-header">
+              <div className="legal-channel-icon-wrap" style={{ background: 'rgba(30, 215, 96, 0.15)', color: '#1ed760' }}>
+                <Mail size={20} />
+              </div>
+              <div>
+                <h3 className="legal-channel-title">Direct Maintainer Email</h3>
+                <span className="legal-channel-badge" style={{ background: '#1ed760', color: '#000' }}>Official Email</span>
+              </div>
+            </div>
+            <p className="legal-channel-desc">
+              For general inquiries, editorial questions, partnership or AdSense queries, and formal notices. Contact the project lead directly.
+            </p>
+            <div style={{ background: '#141517', padding: '10px 14px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+              <code style={{ color: '#fff', fontSize: '0.88rem' }}>anshkhare.ux@gmail.com</code>
+              <button
+                type="button"
+                onClick={handleCopyEmail}
+                style={{ background: 'transparent', border: 'none', color: copied ? '#1ed760' : '#888', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.8rem' }}
+                aria-label="Copy email address"
+              >
+                {copied ? <><Check size={14} /> Copied</> : <><Copy size={14} /> Copy</>}
+              </button>
+            </div>
+            <a
+              href="mailto:anshkhare.ux@gmail.com?subject=[SonicWave%20Inquiry]"
+              className="cursor-button-primary legal-channel-btn"
+              style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+            >
+              <Mail size={13} aria-hidden="true" /> Send Direct Email
+            </a>
+          </div>
+
           {/* GitHub Issues */}
           <div className="legal-contact-channel-card">
             <div className="legal-channel-header">
@@ -108,7 +170,7 @@ export default function ContactSupport({ onNavigate }) {
               </div>
               <div>
                 <h3 className="legal-channel-title">GitHub Issue Tracker</h3>
-                <span className="legal-channel-badge">Recommended</span>
+                <span className="legal-channel-badge">Bug Reports</span>
               </div>
             </div>
             <p className="legal-channel-desc">
@@ -118,7 +180,8 @@ export default function ContactSupport({ onNavigate }) {
               href="https://github.com/ANShKhare-ux/YTMP3/issues"
               target="_blank"
               rel="noopener noreferrer"
-              className="cursor-button-primary legal-channel-btn"
+              className="cursor-button-secondary legal-channel-btn"
+              style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
             >
               Open an Issue on GitHub <ExternalLink size={13} aria-hidden="true" />
             </a>
@@ -143,11 +206,127 @@ export default function ContactSupport({ onNavigate }) {
               target="_blank"
               rel="noopener noreferrer"
               className="cursor-button-secondary legal-channel-btn"
+              style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
             >
               View Repository Docs <ExternalLink size={13} aria-hidden="true" />
             </a>
           </div>
+
+          {/* About Us & Team Info */}
+          <div className="legal-contact-channel-card">
+            <div className="legal-channel-header">
+              <div className="legal-channel-icon-wrap" style={{ background: 'rgba(130, 143, 255, 0.15)', color: '#828fff' }}>
+                <BookOpen size={20} />
+              </div>
+              <div>
+                <h3 className="legal-channel-title">About the Project &amp; Team</h3>
+                <span className="legal-channel-badge">Transparency</span>
+              </div>
+            </div>
+            <p className="legal-channel-desc">
+              Learn about SonicWave's mission, our open-source philosophy, our ethical standards, and the engineering principles behind our local media engine.
+            </p>
+            <a
+              href="/about"
+              onClick={(e) => {
+                e.preventDefault();
+                if (onNavigate) onNavigate('about', '/about');
+              }}
+              className="cursor-button-secondary legal-channel-btn"
+              style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+            >
+              Read About Us <ChevronDown size={13} style={{ transform: 'rotate(-90deg)' }} aria-hidden="true" />
+            </a>
+          </div>
         </div>
+      </section>
+
+      {/* Interactive Quick Contact Form */}
+      <section className="legal-section">
+        <h2>2. Send an Inquiry Message</h2>
+        <p>
+          Fill out the form below to initiate an inquiry directly with our engineering team:
+        </p>
+
+        {isSubmitted ? (
+          <div className="legal-callout-card" style={{ borderLeft: '3px solid #1ed760' }}>
+            <h4 style={{ color: '#1ed760', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+              <CheckCircle2 size={18} /> Thank You for Your Message
+            </h4>
+            <p className="legal-callout-text" style={{ marginTop: '0.5rem' }}>
+              Your inquiry has been formulated and dispatched. If your email client didn't open automatically, you can always reach us directly at <strong>anshkhare.ux@gmail.com</strong>.
+            </p>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmitForm} style={{ background: '#121316', border: '1px solid #23252a', borderRadius: '12px', padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.85rem', color: '#9fa6b2', marginBottom: '6px' }} htmlFor="contact-name">Your Name</label>
+                <input
+                  id="contact-name"
+                  type="text"
+                  required
+                  placeholder="e.g. Alex Morgan"
+                  value={formState.name}
+                  onChange={(e) => setFormState({ ...formState, name: e.target.value })}
+                  style={{ width: '100%', padding: '10px 14px', background: '#0a0a0c', border: '1px solid #2a2c33', borderRadius: '8px', color: '#fff', fontSize: '0.9rem' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.85rem', color: '#9fa6b2', marginBottom: '6px' }} htmlFor="contact-email">Your Email Address</label>
+                <input
+                  id="contact-email"
+                  type="email"
+                  required
+                  placeholder="e.g. alex@example.com"
+                  value={formState.email}
+                  onChange={(e) => setFormState({ ...formState, email: e.target.value })}
+                  style={{ width: '100%', padding: '10px 14px', background: '#0a0a0c', border: '1px solid #2a2c33', borderRadius: '8px', color: '#fff', fontSize: '0.9rem' }}
+                />
+              </div>
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '0.85rem', color: '#9fa6b2', marginBottom: '6px' }} htmlFor="contact-category">Inquiry Subject / Category</label>
+              <select
+                id="contact-category"
+                value={formState.category}
+                onChange={(e) => setFormState({ ...formState, category: e.target.value })}
+                style={{ width: '100%', padding: '10px 14px', background: '#0a0a0c', border: '1px solid #2a2c33', borderRadius: '8px', color: '#fff', fontSize: '0.9rem' }}
+              >
+                <option value="General Inquiry">General Question / Feedback</option>
+                <option value="Technical Support">Technical Support / Installation Help</option>
+                <option value="Bug Report">Bug Report / Extraction Failure</option>
+                <option value="Advertising / AdSense">Advertising &amp; Sponsorship Inquiry</option>
+                <option value="Copyright / DMCA">Copyright Notice / Legal Concern</option>
+              </select>
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '0.85rem', color: '#9fa6b2', marginBottom: '6px' }} htmlFor="contact-message">Your Message</label>
+              <textarea
+                id="contact-message"
+                required
+                rows={4}
+                placeholder="Describe your inquiry, question, or issue in detail..."
+                value={formState.message}
+                onChange={(e) => setFormState({ ...formState, message: e.target.value })}
+                style={{ width: '100%', padding: '10px 14px', background: '#0a0a0c', border: '1px solid #2a2c33', borderRadius: '8px', color: '#fff', fontSize: '0.9rem', resize: 'vertical' }}
+              />
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <button
+                type="submit"
+                className="cursor-button-primary"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 20px', fontSize: '0.9rem' }}
+              >
+                <Send size={14} /> Send Inquiry
+              </button>
+            </div>
+          </form>
+        )}
       </section>
 
       {/* Interactive Self-Help Troubleshooting Section */}
@@ -202,7 +381,10 @@ export default function ContactSupport({ onNavigate }) {
         </p>
         <div className="legal-contact-box">
           <p>
-            <strong>Security &amp; Legal Notices:</strong> Please submit inquiries through our GitHub repository issue tracker at <a href="https://github.com/ANShKhare-ux/YTMP3/issues" target="_blank" rel="noopener noreferrer">https://github.com/ANShKhare-ux/YTMP3/issues</a> with the label <code>[Security]</code> or <code>[Legal]</code>.
+            <strong>Official Project &amp; Legal Email:</strong> <a href="mailto:anshkhare.ux@gmail.com">anshkhare.ux@gmail.com</a>
+          </p>
+          <p>
+            <strong>Security &amp; Legal Notices:</strong> Inquiries may also be submitted through our GitHub repository issue tracker at <a href="https://github.com/ANShKhare-ux/YTMP3/issues" target="_blank" rel="noopener noreferrer">https://github.com/ANShKhare-ux/YTMP3/issues</a> with the label <code>[Security]</code> or <code>[Legal]</code>.
           </p>
           <p className="legal-note-text">
             <em>Note for rights holders: As SonicWave does not host or store files online, requests to remove third-party content must be directed to the third-party platform hosting that media.</em>

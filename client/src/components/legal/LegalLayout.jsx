@@ -5,6 +5,7 @@ import {
   FileText,
   Scale,
   HelpCircle,
+  Info,
   ArrowLeft,
   ExternalLink,
   ChevronRight,
@@ -43,6 +44,7 @@ function CursorBrandLogo({ size = 26 }) {
 }
 
 const LEGAL_TABS = [
+  { id: 'about', label: 'About Us', path: '/about', icon: Info },
   { id: 'privacy', label: 'Privacy Policy', path: '/privacy', icon: ShieldCheck },
   { id: 'terms', label: 'Terms of Use', path: '/terms', icon: FileText },
   { id: 'copyright', label: 'Copyright & Abuse', path: '/copyright-acceptable-use', icon: Scale },

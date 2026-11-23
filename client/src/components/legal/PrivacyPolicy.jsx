@@ -28,7 +28,7 @@ export default function PrivacyPolicy({ onNavigate }) {
           SonicWave is an open-source media conversion and playback utility. To provide complete transparency, this policy distinguishes the data practices of our public marketing website (hosted on Vercel) from those of the downloadable Windows desktop software (which executes locally on your hardware).
         </p>
         <ul className="legal-summary-points">
-          <li><strong>No User Profiling:</strong> We do not run commercial advertising pixels, tracking cookies, or third-party behavioral analytics on the SonicWave website.</li>
+          <li><strong>Transparent Advertising &amp; Google AdSense:</strong> To support open-source hosting, continuous integration, and technical documentation maintenance, the public website displays non-intrusive advertisements served through Google AdSense. Third-party vendors, including Google, use cookies to serve ads based on prior visits. Users can opt out of personalized advertising at any time (see Section 4). The downloadable desktop software remains 100% ad-free and tracker-free.</li>
           <li><strong>Local Media Processing:</strong> Media downloading, extraction, and format transcoding in the desktop application are performed locally via <code>yt-dlp</code> and <code>FFmpeg</code> on your personal computer. Media files are not uploaded to a centralized SonicWave server.</li>
           <li><strong>Direct Upstream Requests:</strong> When you request media extraction, your local computer communicates directly with the target content platform (e.g., YouTube, SoundCloud). Those platforms receive your IP address and request headers directly.</li>
           <li><strong>Local Storage Control:</strong> Browser local storage is used strictly for functional state (UI theme and conversion history cache) and can be cleared by the user at any time.</li>
@@ -82,14 +82,14 @@ export default function PrivacyPolicy({ onNavigate }) {
           These server-level access logs are processed by Vercel for infrastructure stability, security analysis, DDoS detection, and edge routing compliance, subject to Vercel&rsquo;s Privacy Policy. The SonicWave maintainers do not operate a separate database of website visitor records.
         </p>
 
-        <h3>2.2 Web Analytics &amp; Cookies</h3>
+        <h3>2.2 Web Analytics &amp; Infrastructure</h3>
         <p>
-          The Website uses Vercel Web Analytics (<code>@vercel/analytics</code>) to monitor overall aggregate visitor volume and page performance. Vercel Web Analytics is designed with privacy as a priority: it does not use tracking cookies, does not store personal data, does not record raw IP addresses, and does not track users across independent websites. We do not use commercial advertising pixels or third-party marketing cookies.
+          The Website uses Vercel Web Analytics (<code>@vercel/analytics</code>) to monitor aggregate visitor volume and page performance. Vercel Web Analytics does not record raw IP addresses, does not store personal data, and does not track users across independent websites. We do not sell visitor data or run clandestine tracking pixels.
         </p>
 
         <h3>2.3 Website Local Storage Usage</h3>
         <p>
-          The Website operates exclusively in dark theme and does not use tracking cookies, advertising beacons, or persistent tracking tokens in your browser.
+          The Website operates in dark theme and uses browser local storage exclusively for functional UI state (such as audio player preferences or recent documentation bookmarks).
         </p>
       </section>
 
@@ -139,8 +139,48 @@ export default function PrivacyPolicy({ onNavigate }) {
         </p>
       </section>
 
+      {/* Mandatory Google AdSense & Third-Party Advertising Disclosures */}
       <section className="legal-section">
-        <h2>4. Data Retention &amp; Security</h2>
+        <h2>4. Third-Party Advertising, Cookies &amp; Google AdSense Compliance</h2>
+        <p>
+          To maintain free web hosting, automated build testing, and continuous open-source documentation updates, our public website (<code>https://ytmp-3-five.vercel.app/</code>) delivers non-intrusive standard web advertising served through Google AdSense.
+        </p>
+
+        <h3>4.1 Google AdSense &amp; Third-Party Cookies</h3>
+        <ul>
+          <li>
+            <strong>Third-Party Vendors:</strong> Third-party vendors, including Google LLC, use cookies and web beacons to serve advertisements based on a user&rsquo;s prior visits to this website or other websites on the Internet.
+          </li>
+          <li>
+            <strong>Advertising Cookies:</strong> Google&rsquo;s use of advertising cookies (such as DoubleClick and Google advertising cookies) enables it and its partners to serve targeted, relevant ads to our users based on their navigation history across our site and other destinations across the web.
+          </li>
+          <li>
+            <strong>Desktop &amp; Mobile App Exemption:</strong> Advertisements appear exclusively on our public informational website. The downloadable desktop software (<code>SonicWave.exe</code>, portable zip) and Android APK are completely ad-free, contain no tracking beacons, and make no ad network connections.
+          </li>
+        </ul>
+
+        <h3>4.2 User Opt-Out Choices &amp; Ad Personalization Controls</h3>
+        <p>
+          Users have complete control over personalized advertising preferences:
+        </p>
+        <ul>
+          <li>
+            <strong>Google Ad Settings:</strong> You can opt out of personalized advertising by visiting Google&rsquo;s Ads Settings page: <a href="https://www.google.com/settings/ads" target="_blank" rel="noopener noreferrer">https://www.google.com/settings/ads</a>.
+          </li>
+          <li>
+            <strong>Third-Party Advertising Opt-Out:</strong> Alternatively, you can opt out of a third-party vendor&rsquo;s use of cookies for personalized advertising by visiting the Network Advertising Initiative (NAI) opt-out page at <a href="https://www.aboutads.info/choices/" target="_blank" rel="noopener noreferrer">https://www.aboutads.info/choices/</a> or the Digital Advertising Alliance of Canada at <a href="https://youradchoices.ca/" target="_blank" rel="noopener noreferrer">https://youradchoices.ca/</a>.
+          </li>
+          <li>
+            <strong>European EDAA Opt-Out:</strong> Users residing in the European Economic Area (EEA) and the United Kingdom can manage their cookie consent and behavioral advertising preferences at <a href="https://www.youronlinechoices.eu/" target="_blank" rel="noopener noreferrer">https://www.youronlinechoices.eu/</a>.
+          </li>
+        </ul>
+        <p>
+          For more information on how Google collects and processes data when you interact with sites using Google AdSense, please review Google&rsquo;s partner policy at <a href="https://policies.google.com/technologies/partner-sites" target="_blank" rel="noopener noreferrer">How Google uses information from sites or apps that use our services</a>.
+        </p>
+      </section>
+
+      <section className="legal-section">
+        <h2>5. Data Retention &amp; Security</h2>
         <p>
           Because SonicWave does not operate a user account system, cloud database, or centralized file store:
         </p>
@@ -155,7 +195,7 @@ export default function PrivacyPolicy({ onNavigate }) {
       </section>
 
       <section className="legal-section">
-        <h2>5. Your Privacy Rights &amp; Choices</h2>
+        <h2>6. Your Privacy Rights &amp; Choices</h2>
         <p>Depending on your jurisdiction, you have the following rights and capabilities regarding SonicWave:</p>
         <ul>
           <li><strong>Erasing Local Data:</strong> You can wipe all history and stored preferences at any time by clearing your browser&rsquo;s local storage or deleting the <code>server/data/history.json</code> file.</li>
@@ -165,18 +205,19 @@ export default function PrivacyPolicy({ onNavigate }) {
       </section>
 
       <section className="legal-section">
-        <h2>6. Changes to this Policy</h2>
+        <h2>7. Changes to this Policy</h2>
         <p>
           We may update this Privacy Policy periodically to reflect architectural updates or regulatory changes. Any modifications will be posted to this page with an updated &ldquo;Last Updated&rdquo; timestamp. We encourage users to review this page periodically.
         </p>
       </section>
 
       <section className="legal-section">
-        <h2>7. Privacy Inquiries &amp; Contact</h2>
+        <h2>8. Privacy Inquiries &amp; Contact</h2>
         <p>
           If you have questions, feedback, or concerns regarding this Privacy Policy or SonicWave&rsquo;s technical data practices, please open an issue or inquiry on our official project repository:
         </p>
         <div className="legal-contact-box">
+          <p><strong>Official Maintainer Email:</strong> <a href="mailto:anshkhare.ux@gmail.com">anshkhare.ux@gmail.com</a></p>
           <p><strong>Project Repository:</strong> <a href="https://github.com/ANShKhare-ux/YTMP3" target="_blank" rel="noopener noreferrer">https://github.com/ANShKhare-ux/YTMP3</a></p>
           <p><strong>Maintainer Communication:</strong> GitHub Issues &amp; Discussions (<a href="/contact" onClick={(e) => { e.preventDefault(); onNavigate('contact', '/contact'); }}>Contact &amp; Support Page</a>)</p>
         </div>

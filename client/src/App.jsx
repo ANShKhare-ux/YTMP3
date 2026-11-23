@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import LandingPage from './components/LandingPage';
+import AboutUs from './components/legal/AboutUs';
 import PrivacyPolicy from './components/legal/PrivacyPolicy';
 import TermsOfUse from './components/legal/TermsOfUse';
 import CopyrightPolicy from './components/legal/CopyrightPolicy';
@@ -12,6 +13,7 @@ import DownloadPage from './components/DownloadPage';
 import NotFound from './components/NotFound';
 
 function resolveRoute(pathname, hash) {
+  if (pathname === '/about' || pathname === '/about-us' || hash === '#about' || hash === '#/about' || hash === '#about-us' || hash === '#/about-us') return 'about';
   if (pathname === '/download' || pathname === '/downloads' || hash === '#download' || hash === '#/download' || hash === '#downloads' || hash === '#/downloads') return 'download';
   if (pathname === '/install' || hash === '#install' || hash === '#/install') return 'install';
   if (pathname === '/supported-platforms' || hash === '#supported-platforms' || hash === '#/supported-platforms') return 'platforms-guide';
@@ -95,7 +97,10 @@ export default function App() {
     return <ConverterGuide slug="instagram-reels-to-mp4" onNavigate={navigateTo} />;
   }
 
-  // Legal & Compliance Pages
+  // Legal, About & Compliance Pages
+  if (currentView === 'about') {
+    return <AboutUs onNavigate={navigateTo} />;
+  }
   if (currentView === 'privacy') {
     return <PrivacyPolicy onNavigate={navigateTo} />;
   }

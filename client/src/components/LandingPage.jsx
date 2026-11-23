@@ -240,8 +240,9 @@ const FOOTER_COLUMNS = [
     ],
   },
   {
-    title: 'Legal & Help',
+    title: 'Company & Legal',
     links: [
+      { label: 'About Us & Mission', href: '/about' },
       { label: 'Privacy Policy', href: '/privacy' },
       { label: 'Terms of Use', href: '/terms' },
       { label: 'Copyright & Abuse', href: '/copyright-acceptable-use' },
@@ -1062,6 +1063,30 @@ export default function LandingPage({
             >
               Docs
             </a>
+            <a
+              href="/about"
+              className="cursor-nav-link"
+              onClick={(e) => {
+                if (onNavigate) {
+                  e.preventDefault();
+                  onNavigate('about', '/about');
+                }
+              }}
+            >
+              About
+            </a>
+            <a
+              href="/contact"
+              className="cursor-nav-link"
+              onClick={(e) => {
+                if (onNavigate) {
+                  e.preventDefault();
+                  onNavigate('contact', '/contact');
+                }
+              }}
+            >
+              Contact
+            </a>
           </nav>
 
           <div className="cursor-nav-actions">
@@ -1170,6 +1195,32 @@ export default function LandingPage({
                 }}
               >
                 Docs &amp; Guide
+              </a>
+              <a
+                href="/about"
+                className="cursor-mobile-nav-link"
+                onClick={(e) => {
+                  setIsMobileMenuOpen(false);
+                  if (onNavigate) {
+                    e.preventDefault();
+                    onNavigate('about', '/about');
+                  }
+                }}
+              >
+                About Us
+              </a>
+              <a
+                href="/contact"
+                className="cursor-mobile-nav-link"
+                onClick={(e) => {
+                  setIsMobileMenuOpen(false);
+                  if (onNavigate) {
+                    e.preventDefault();
+                    onNavigate('contact', '/contact');
+                  }
+                }}
+              >
+                Contact &amp; Support
               </a>
             </nav>
             <div className="cursor-mobile-menu-actions">
@@ -2085,6 +2136,7 @@ export default function LandingPage({
             handleDownloadApk();
           } else if (onNavigate) {
             if (href === '/download') onNavigate('download', '/download');
+            else if (href === '/about' || href === '/about-us') onNavigate('about', '/about');
             else if (href === '/install') onNavigate('install', '/install');
             else if (href === '/supported-platforms') onNavigate('platforms-guide', '/supported-platforms');
             else if (href === '/troubleshooting') onNavigate('troubleshooting', '/troubleshooting');
