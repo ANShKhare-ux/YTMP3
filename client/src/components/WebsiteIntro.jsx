@@ -149,7 +149,7 @@ export default function WebsiteIntro({ onFinish }) {
             WebkitBackdropFilter: 'blur(12px)',
             border: '1px solid rgba(255, 255, 255, 0.15)',
             borderRadius: '100px',
-            color: isMuted ? '#b8bec9' : '#00f5a0',
+            color: isMuted ? '#b8bec9' : '#96a1ff',
             fontSize: '13px',
             fontWeight: 600,
             cursor: 'pointer',
@@ -157,8 +157,8 @@ export default function WebsiteIntro({ onFinish }) {
             boxShadow: '0 4px 16px rgba(0, 0, 0, 0.4)'
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = '#1ed760';
-            e.currentTarget.style.backgroundColor = 'rgba(20, 25, 22, 0.85)';
+            e.currentTarget.style.borderColor = '#828fff';
+            e.currentTarget.style.backgroundColor = 'rgba(20, 24, 38, 0.85)';
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)';
@@ -191,10 +191,10 @@ export default function WebsiteIntro({ onFinish }) {
             alignItems: 'center',
             gap: '6px',
             padding: '10px 20px',
-            backgroundColor: 'rgba(30, 215, 96, 0.15)',
+            backgroundColor: 'rgba(94, 106, 210, 0.18)',
             backdropFilter: 'blur(12px)',
             WebkitBackdropFilter: 'blur(12px)',
-            border: '1px solid rgba(30, 215, 96, 0.4)',
+            border: '1px solid rgba(130, 143, 255, 0.45)',
             borderRadius: '100px',
             color: '#ffffff',
             fontSize: '13px',
@@ -202,16 +202,16 @@ export default function WebsiteIntro({ onFinish }) {
             letterSpacing: '0.04em',
             cursor: 'pointer',
             transition: 'all 0.2s ease',
-            boxShadow: '0 4px 20px rgba(30, 215, 96, 0.2)'
+            boxShadow: '0 4px 20px rgba(94, 106, 210, 0.25)'
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = 'rgba(30, 215, 96, 0.3)';
-            e.currentTarget.style.borderColor = '#1ed760';
+            e.currentTarget.style.backgroundColor = 'rgba(94, 106, 210, 0.35)';
+            e.currentTarget.style.borderColor = '#828fff';
             e.currentTarget.style.transform = 'translateY(-1px)';
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'rgba(30, 215, 96, 0.15)';
-            e.currentTarget.style.borderColor = 'rgba(30, 215, 96, 0.4)';
+            e.currentTarget.style.backgroundColor = 'rgba(94, 106, 210, 0.18)';
+            e.currentTarget.style.borderColor = 'rgba(130, 143, 255, 0.45)';
             e.currentTarget.style.transform = 'translateY(0)';
           }}
         >
@@ -257,8 +257,8 @@ export default function WebsiteIntro({ onFinish }) {
           style={{
             height: '100%',
             width: `${progress}%`,
-            backgroundColor: '#1ed760',
-            boxShadow: '0 0 10px #1ed760',
+            backgroundColor: '#828fff',
+            boxShadow: '0 0 10px #828fff',
             transition: 'width 0.1s linear'
           }}
         />
