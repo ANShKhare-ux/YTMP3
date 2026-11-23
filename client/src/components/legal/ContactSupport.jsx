@@ -87,7 +87,7 @@ export default function ContactSupport({ onNavigate }) {
   };
 
   const handleCopyEmail = () => {
-    navigator.clipboard.writeText('anshkhare.ux@gmail.com');
+    navigator.clipboard.writeText('preetiansh16@gmail.com');
     setCopied(true);
     setTimeout(() => setCopied(false), 2500);
   };
