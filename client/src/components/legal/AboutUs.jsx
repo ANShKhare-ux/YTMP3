@@ -229,7 +229,7 @@ export default function AboutUs({ onNavigate }) {
         </p>
         <div className="legal-contact-box">
           <p>
-            <strong>Official Project Email:</strong> <a href="mailto:preetiansh16@gmail.com">preetiansh16@gmail.com</a>
+            <strong>Official Project Email:</strong> <a href="https://mail.google.com/mail/?view=cm&fs=1&to=preetiansh16@gmail.com&su=[SonicWave%20Inquiry]" target="_blank" rel="noopener noreferrer">preetiansh16@gmail.com</a>
           </p>
           <p>
             <strong>GitHub Issue Tracker:</strong> <a href="https://github.com/ANShKhare-ux/YTMP3/issues" target="_blank" rel="noopener noreferrer">https://github.com/ANShKhare-ux/YTMP3/issues</a>

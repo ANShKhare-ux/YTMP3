@@ -95,10 +95,10 @@ export default function ContactSupport({ onNavigate }) {
   const handleSubmitForm = (e) => {
     e.preventDefault();
     setIsSubmitted(true);
-    // Open default mailto prefilled as convenience
     const subject = encodeURIComponent(`[SonicWave ${formState.category}] from ${formState.name || 'User'}`);
     const body = encodeURIComponent(`Sender Name: ${formState.name}\nSender Email: ${formState.email}\nCategory: ${formState.category}\n\nMessage:\n${formState.message}`);
-    window.location.href = `mailto:preetiansh16@gmail.com?subject=${subject}&body=${body}`;
+    const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=preetiansh16@gmail.com&su=${subject}&body=${body}`;
+    window.open(gmailUrl, '_blank', 'noopener,noreferrer');
   };
 
   return (
@@ -153,13 +153,24 @@ export default function ContactSupport({ onNavigate }) {
                 {copied ? <><Check size={14} /> Copied</> : <><Copy size={14} /> Copy</>}
               </button>
             </div>
-            <a
-              href="mailto:preetiansh16@gmail.com?subject=[SonicWave%20Inquiry]"
-              className="cursor-button-primary legal-channel-btn"
-              style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
-            >
-              <Mail size={13} aria-hidden="true" /> Send Direct Email
-            </a>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <a
+                href="https://mail.google.com/mail/?view=cm&fs=1&to=preetiansh16@gmail.com&su=[SonicWave%20Inquiry]"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="cursor-button-primary legal-channel-btn"
+                style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+              >
+                <Mail size={13} aria-hidden="true" /> Compose in Gmail (Web) <ExternalLink size={12} aria-hidden="true" />
+              </a>
+              <a
+                href="mailto:preetiansh16@gmail.com?subject=[SonicWave%20Inquiry]"
+                className="cursor-button-secondary legal-channel-btn"
+                style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '0.82rem' }}
+              >
+                Open in Default Mail App (mailto)
+              </a>
+            </div>
           </div>
 
           {/* GitHub Issues */}
@@ -254,8 +265,34 @@ export default function ContactSupport({ onNavigate }) {
               <CheckCircle2 size={18} /> Thank You for Your Message
             </h4>
             <p className="legal-callout-text" style={{ marginTop: '0.5rem' }}>
-              Your inquiry has been formulated and dispatched. If your email client didn't open automatically, you can always reach us directly at <strong>preetiansh16@gmail.com</strong>.
+              Your inquiry has been formulated. If your email composer did not open automatically, choose an option below:
             </p>
+            <div style={{ marginTop: '1rem', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+              <a
+                href={`https://mail.google.com/mail/?view=cm&fs=1&to=preetiansh16@gmail.com&su=${encodeURIComponent(`[SonicWave ${formState.category}] from ${formState.name || 'User'}`)}&body=${encodeURIComponent(`Sender Name: ${formState.name}\nSender Email: ${formState.email}\nCategory: ${formState.category}\n\nMessage:\n${formState.message}`)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="cursor-button-primary legal-channel-btn"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+              >
+                <Mail size={13} /> Open in Gmail (Web) <ExternalLink size={12} />
+              </a>
+              <a
+                href={`mailto:preetiansh16@gmail.com?subject=${encodeURIComponent(`[SonicWave ${formState.category}] from ${formState.name || 'User'}`)}&body=${encodeURIComponent(`Sender Name: ${formState.name}\nSender Email: ${formState.email}\nCategory: ${formState.category}\n\nMessage:\n${formState.message}`)}`}
+                className="cursor-button-secondary legal-channel-btn"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+              >
+                Open Default Mail App
+              </a>
+              <button
+                type="button"
+                onClick={() => setIsSubmitted(false)}
+                className="cursor-button-secondary legal-channel-btn"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}
+              >
+                Edit / Send Another
+              </button>
+            </div>
           </div>
         ) : (
           <form onSubmit={handleSubmitForm} style={{ background: '#121316', border: '1px solid #23252a', borderRadius: '12px', padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -381,7 +418,7 @@ export default function ContactSupport({ onNavigate }) {
         </p>
         <div className="legal-contact-box">
           <p>
-            <strong>Official Project &amp; Legal Email:</strong> <a href="mailto:preetiansh16@gmail.com">preetiansh16@gmail.com</a>
+            <strong>Official Project &amp; Legal Email:</strong> <a href="https://mail.google.com/mail/?view=cm&fs=1&to=preetiansh16@gmail.com&su=[SonicWave%20Legal/Security]" target="_blank" rel="noopener noreferrer">preetiansh16@gmail.com</a>
           </p>
           <p>
             <strong>Security &amp; Legal Notices:</strong> Inquiries may also be submitted through our GitHub repository issue tracker at <a href="https://github.com/ANShKhare-ux/YTMP3/issues" target="_blank" rel="noopener noreferrer">https://github.com/ANShKhare-ux/YTMP3/issues</a> with the label <code>[Security]</code> or <code>[Legal]</code>.
