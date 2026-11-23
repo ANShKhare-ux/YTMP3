@@ -92,7 +92,7 @@
   - Five dedicated, accessible pages: About Us (`/about`), Privacy Policy (`/privacy`), Terms of Use (`/terms`), Copyright & Acceptable Use (`/copyright-acceptable-use`), and Contact & Support (`/contact`).
   - **About Us & Editorial Transparency (`AboutUs.jsx`)**: Full overview of project origins, open-source mission (countering ad-injected cloud converters with local sandboxed processing), engineering architecture, 16-thread acceleration, lead developer Ansh Khare & community contributors, and copyright/fair-use standards.
   - **AdSense Program Policy Compliance (`PrivacyPolicy.jsx`)**: Section 4 details third-party advertising, Google AdSense, DoubleClick/advertising cookie usage, user opt-out controls (Google Ads Settings, NAI, EDAA), and Google Partner Policies link (`policies.google.com/technologies/partner-sites`).
-  - **Enhanced Contact Support (`ContactSupport.jsx`)**: Added direct project maintainer email (`anshkhare.ux@gmail.com`), stated 24-48h response commitment, interactive inquiry message form with category selector, and dedicated channel routes.
+  - **Enhanced Contact Support (`ContactSupport.jsx`)**: Added direct project maintainer email (`preetiansh16@gmail.com`), stated 24-48h response commitment, interactive inquiry message form with category selector, and dedicated channel routes.
   - SPA routing integrated with browser History API (`pushState`, `popstate`), hash fallbacks, and Vercel wildcard rewrite compatibility (`vercel.json`).
   - Dynamic document metadata via `useDocumentMetadata`: descriptive page titles, unique meta descriptions, and self-referencing canonical URLs for all routes.
   - Full sitemap integration in `client/public/sitemap.xml` referencing real canonical URLs (including `/about` at 0.9 priority).

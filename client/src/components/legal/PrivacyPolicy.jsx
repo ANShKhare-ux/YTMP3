@@ -217,7 +217,7 @@ export default function PrivacyPolicy({ onNavigate }) {
           If you have questions, feedback, or concerns regarding this Privacy Policy or SonicWave&rsquo;s technical data practices, please open an issue or inquiry on our official project repository:
         </p>
         <div className="legal-contact-box">
-          <p><strong>Official Maintainer Email:</strong> <a href="mailto:anshkhare.ux@gmail.com">anshkhare.ux@gmail.com</a></p>
+          <p><strong>Official Maintainer Email:</strong> <a href="mailto:preetiansh16@gmail.com">preetiansh16@gmail.com</a></p>
           <p><strong>Project Repository:</strong> <a href="https://github.com/ANShKhare-ux/YTMP3" target="_blank" rel="noopener noreferrer">https://github.com/ANShKhare-ux/YTMP3</a></p>
           <p><strong>Maintainer Communication:</strong> GitHub Issues &amp; Discussions (<a href="/contact" onClick={(e) => { e.preventDefault(); onNavigate('contact', '/contact'); }}>Contact &amp; Support Page</a>)</p>
         </div>
