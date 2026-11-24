@@ -137,7 +137,7 @@ export default function App() {
   return (
     <div className="cursor-landing-wrapper">
       {showIntro && <WebsiteIntro onFinish={() => setShowIntro(false)} />}
-      <LandingPage onNavigate={navigateTo} onReplayIntro={() => setShowIntro(true)} />
+      <LandingPage onNavigate={navigateTo} />
     </div>
   );
 }
