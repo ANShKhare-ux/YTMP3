@@ -1064,30 +1064,6 @@ export default function LandingPage({
             >
               Docs
             </a>
-            <a
-              href="/about"
-              className="cursor-nav-link"
-              onClick={(e) => {
-                if (onNavigate) {
-                  e.preventDefault();
-                  onNavigate('about', '/about');
-                }
-              }}
-            >
-              About
-            </a>
-            <a
-              href="/contact"
-              className="cursor-nav-link"
-              onClick={(e) => {
-                if (onNavigate) {
-                  e.preventDefault();
-                  onNavigate('contact', '/contact');
-                }
-              }}
-            >
-              Contact
-            </a>
           </nav>
 
           <div className="cursor-nav-actions">
@@ -1196,32 +1172,6 @@ export default function LandingPage({
                 }}
               >
                 Docs &amp; Guide
-              </a>
-              <a
-                href="/about"
-                className="cursor-mobile-nav-link"
-                onClick={(e) => {
-                  setIsMobileMenuOpen(false);
-                  if (onNavigate) {
-                    e.preventDefault();
-                    onNavigate('about', '/about');
-                  }
-                }}
-              >
-                About Us
-              </a>
-              <a
-                href="/contact"
-                className="cursor-mobile-nav-link"
-                onClick={(e) => {
-                  setIsMobileMenuOpen(false);
-                  if (onNavigate) {
-                    e.preventDefault();
-                    onNavigate('contact', '/contact');
-                  }
-                }}
-              >
-                Contact &amp; Support
               </a>
             </nav>
             <div className="cursor-mobile-menu-actions">
