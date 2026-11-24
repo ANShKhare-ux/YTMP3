@@ -18,15 +18,23 @@ export default function WebsiteIntro({ onFinish }) {
     const video = videoRef.current;
     if (!video) return;
 
-    // Force high priority preloading & instant start
-    video.muted = true;
+    // Attempt unmuted play if permitted by browser, fallback to muted instant playback
+    video.muted = false;
     const playPromise = video.play();
     if (playPromise !== undefined) {
-      playPromise.catch((err) => {
-        console.warn('[SonicWave Intro] Autoplay fallback:', err);
-        // If autoplay fails entirely, exit smoothly
-        handleClose();
-      });
+      playPromise
+        .then(() => {
+          setIsMuted(false);
+        })
+        .catch(() => {
+          // Browser autoplay policy restricted audio; fallback to muted
+          video.muted = true;
+          setIsMuted(true);
+          video.play().catch((err) => {
+            console.warn('[SonicWave Intro] Autoplay fallback:', err);
+            handleClose();
+          });
+        });
     }
 
     // Keyboard navigation (Esc to skip, M to mute/unmute, Space to pause/play)
