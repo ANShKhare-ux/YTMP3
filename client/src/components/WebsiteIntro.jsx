@@ -9,31 +9,53 @@ import { Volume2, VolumeX, X, ArrowRight } from 'lucide-react';
  */
 export default function WebsiteIntro({ onFinish }) {
   const videoRef = useRef(null);
-  const [isMuted, setIsMuted] = useState(true);
+  const [isMuted, setIsMuted] = useState(false);
   const [isFading, setIsFading] = useState(false);
-  const [hasInteracted, setHasInteracted] = useState(false);
+  const [needsGestureForAudio, setNeedsGestureForAudio] = useState(false);
 
-  // Instant zero-latency autoplay trigger
+  // Instant zero-latency autoplay trigger with Sound ALWAYS ON by default
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
 
-    // Attempt unmuted play if permitted by browser, fallback to muted instant playback
+    // Ensure audio starts ON by default at full volume
     video.muted = false;
+    video.volume = 1;
+
     const playPromise = video.play();
     if (playPromise !== undefined) {
       playPromise
         .then(() => {
           setIsMuted(false);
+          setNeedsGestureForAudio(false);
         })
         .catch(() => {
-          // Browser autoplay policy restricted audio; fallback to muted
+          // If browser policy restricts initial sound on cold load without gesture,
+          // play video immediately and unmute on the very first user interaction
           video.muted = true;
-          setIsMuted(true);
+          setNeedsGestureForAudio(true);
           video.play().catch((err) => {
             console.warn('[SonicWave Intro] Autoplay fallback:', err);
             handleClose();
           });
+
+          const enableAudioOnGesture = () => {
+            if (video) {
+              video.muted = false;
+              video.volume = 1;
+              setIsMuted(false);
+              setNeedsGestureForAudio(false);
+            }
+            window.removeEventListener('pointerdown', enableAudioOnGesture, true);
+            window.removeEventListener('touchstart', enableAudioOnGesture, true);
+            window.removeEventListener('click', enableAudioOnGesture, true);
+            window.removeEventListener('keydown', enableAudioOnGesture, true);
+          };
+
+          window.addEventListener('pointerdown', enableAudioOnGesture, true);
+          window.addEventListener('touchstart', enableAudioOnGesture, true);
+          window.addEventListener('click', enableAudioOnGesture, true);
+          window.addEventListener('keydown', enableAudioOnGesture, true);
         });
     }
 
@@ -75,13 +97,14 @@ export default function WebsiteIntro({ onFinish }) {
     setHasInteracted(true);
   };
 
-  // If user clicks anywhere on the video area, politely attempt unmuting
+  // If user clicks anywhere on the video area, ensure sound is active
   const handleContainerClick = () => {
     const video = videoRef.current;
-    if (video && video.muted && !hasInteracted) {
+    if (video) {
       video.muted = false;
+      video.volume = 1;
       setIsMuted(false);
-      setHasInteracted(true);
+      setNeedsGestureForAudio(false);
     }
   };
 
@@ -220,8 +243,8 @@ export default function WebsiteIntro({ onFinish }) {
         </button>
       </div>
 
-      {/* Unmute Hint Banner (shows briefly when muted) */}
-      {isMuted && !hasInteracted && (
+      {/* Audio Hint Banner (shows only if browser policy gated initial sound on zero-interaction load) */}
+      {needsGestureForAudio && (
         <div
           style={{
             position: 'absolute',
@@ -230,15 +253,15 @@ export default function WebsiteIntro({ onFinish }) {
             backgroundColor: 'rgba(8, 9, 12, 0.65)',
             backdropFilter: 'blur(8px)',
             borderRadius: '100px',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            color: '#b8bec9',
+            border: '1px solid rgba(130, 143, 255, 0.25)',
+            color: '#96a1ff',
             fontSize: '12px',
             fontWeight: 500,
             letterSpacing: '0.03em',
             pointerEvents: 'none'
           }}
         >
-          Tap anywhere for sound &bull; Press <kbd style={{ padding: '2px 5px', borderRadius: '4px', background: 'rgba(255,255,255,0.1)', color: '#fff' }}>Esc</kbd> to skip
+          Click anywhere to enable sound &bull; Press <kbd style={{ padding: '2px 5px', borderRadius: '4px', background: 'rgba(255,255,255,0.1)', color: '#fff' }}>Esc</kbd> to skip
         </div>
       )}
     </div>
