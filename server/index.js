@@ -383,13 +383,21 @@ app.get('/api/progress/:jobId', (req, res) => {
 });
 
 // Polling fallback endpoint for progress
-app.get('/api/job/:jobId', (req, res) => {
+app.get('/api/job/:jobId', async (req, res) => {
   const { jobId } = req.params;
   const job = getJob(jobId);
   if (!job) {
     return res.status(404).json({ success: false, error: 'Job not found' });
   }
-  res.json({ success: true, job });
+  if (job.filePath) {
+    try {
+      const stat = await fs.promises.stat(job.filePath);
+      return res.json({ success: true, job: { ...job, isAvailable: true, fileSize: stat.size } });
+    } catch {
+      return res.json({ success: true, job: { ...job, isAvailable: false } });
+    }
+  }
+  res.json({ success: true, job: { ...job, isAvailable: false } });
 });
 
 function isAuthorizedMediaPath(resolvedPath) {
@@ -450,11 +458,11 @@ app.delete('/api/settings/cookies', requireLocalRequest, (req, res) => {
 });
 
 // Stream audio for in-browser playback
-app.get('/api/stream/:jobId', (req, res) => {
+app.get('/api/stream/:jobId', async (req, res) => {
   const { jobId } = req.params;
   const job = getJob(jobId);
 
-  if (!job || !job.filePath || !fs.existsSync(job.filePath)) {
+  if (!job || !job.filePath) {
     return res.status(404).send('Audio file not found or still processing.');
   }
 
@@ -464,8 +472,15 @@ app.get('/api/stream/:jobId', (req, res) => {
     return res.status(403).send('Access denied: file path is outside authorized downloads directory.');
   }
 
+  let stat;
+  try {
+    await fs.promises.access(resolvedPath, fs.constants.F_OK);
+    stat = await fs.promises.stat(resolvedPath);
+  } catch {
+    return res.status(404).send('Audio file not found or still processing.');
+  }
+
   const filePath = resolvedPath;
-  const stat = fs.statSync(filePath);
   const fileSize = stat.size;
   const range = req.headers.range;
 
@@ -555,11 +570,11 @@ app.get('/api/stream/:jobId', (req, res) => {
 });
 
 // Download Audio/Video File with RFC 5987 Unicode Support
-app.get('/api/download/:jobId', (req, res) => {
+app.get('/api/download/:jobId', async (req, res) => {
   const { jobId } = req.params;
   const job = getJob(jobId);
 
-  if (!job || !job.filePath || !fs.existsSync(job.filePath)) {
+  if (!job || !job.filePath) {
     return res.status(404).send('File not found or still processing.');
   }
 
@@ -567,6 +582,12 @@ app.get('/api/download/:jobId', (req, res) => {
   const resolvedPath = path.resolve(job.filePath);
   if (!isAuthorizedMediaPath(resolvedPath)) {
     return res.status(403).send('Access denied: file path is outside authorized downloads directory.');
+  }
+
+  try {
+    await fs.promises.access(resolvedPath, fs.constants.F_OK);
+  } catch {
+    return res.status(404).send('File not found or still processing.');
   }
 
   const rawFilename = job.fileName || `${job.title || 'audio'}.${job.format}`;

@@ -198,34 +198,42 @@ function savePersistentHistory(job) {
 }
 
 // Clean up temporary downloads older than 2 hours every 30 minutes (preserves Permanent Library files)
-function cleanOldDownloads(maxAge = 2 * 60 * 60 * 1000) {
+async function cleanOldDownloads(maxAge = 2 * 60 * 60 * 1000) {
   try {
     const now = Date.now();
-    if (fs.existsSync(DOWNLOADS_DIR)) {
-      const files = fs.readdirSync(DOWNLOADS_DIR);
+    try {
+      await fs.promises.access(DOWNLOADS_DIR, fs.constants.F_OK);
+      const files = await fs.promises.readdir(DOWNLOADS_DIR);
       for (const file of files) {
         const fullPath = path.join(DOWNLOADS_DIR, file);
         try {
-          const stats = fs.statSync(fullPath);
+          const stats = await fs.promises.stat(fullPath);
           if (stats.isFile() && (now - stats.mtimeMs > maxAge)) {
             try {
-              fs.unlinkSync(fullPath);
+              await fs.promises.unlink(fullPath);
             } catch (unlinkErr) {
               console.warn(`[converter] Could not unlink ${file}:`, unlinkErr.message);
             }
           }
         } catch {}
       }
-    }
+    } catch {}
 
     // Evict old temporary jobs from memory when their files expire; preserve permanent library entries
     for (const [id, job] of jobs.entries()) {
-      if (job.isPermanent && job.filePath && fs.existsSync(job.filePath)) {
+      let existsOnDisk = false;
+      if (job.filePath) {
+        try {
+          await fs.promises.access(job.filePath, fs.constants.F_OK);
+          existsOnDisk = true;
+        } catch {}
+      }
+      if (job.isPermanent && existsOnDisk) {
         continue;
       }
       if ((job.status === 'completed' || job.status === 'failed' || job.status === 'cancelled') &&
           now - (job.createdAt || 0) > maxAge) {
-        if (!job.filePath || !fs.existsSync(job.filePath)) {
+        if (!existsOnDisk) {
           jobs.delete(id);
         }
       }
@@ -234,7 +242,9 @@ function cleanOldDownloads(maxAge = 2 * 60 * 60 * 1000) {
     console.warn('[converter] cleanOldDownloads caught outer error:', err.message);
   }
 }
-setInterval(cleanOldDownloads, 30 * 60 * 1000).unref();
+setInterval(() => {
+  cleanOldDownloads().catch(() => {});
+}, 30 * 60 * 1000).unref();
 
 /**
  * Format seconds into HH:MM:SS or MM:SS
@@ -1407,7 +1417,6 @@ function getPlaylistInfo(rawUrl) {
       '--flat-playlist',
       '--dump-single-json',
       '--no-warnings',
-      '--no-check-certificates',
       ...cookieFlags,
       '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
       '--js-runtimes', 'node',
@@ -1544,7 +1553,6 @@ function getVideoInfo(rawUrl, options = {}) {
       '--dump-single-json',
       '--no-warnings',
       '--no-playlist',
-      '--no-check-certificates',
       ...(isYouTube && !cookiePath ? ['--extractor-args', 'youtube:player_client=ios,android'] : []),
       ...cookieFlags,
       '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
@@ -1828,7 +1836,6 @@ function buildConversionArgs({
       ...sponsorFlags,
       '--embed-metadata',
       '--embed-thumbnail',
-      '--no-check-certificates',
       ...ffmpegFlags,
       ...speedFlags,
       '--',
@@ -1861,7 +1868,6 @@ function buildConversionArgs({
       '--embed-metadata',
       '--embed-thumbnail',
       '--convert-thumbnails', 'jpg',
-      '--no-check-certificates',
       ...ffmpegFlags,
       ...speedFlags,
       '--',
@@ -1969,6 +1975,49 @@ function findOutputFile(jobId, targetFormat) {
 }
 
 /**
+ * Non-blocking variant of findOutputFile for active child process completion.
+ */
+async function findOutputFileAsync(jobId, targetFormat) {
+  const expectedFile = path.join(DOWNLOADS_DIR, `${jobId}.${targetFormat}`);
+  try {
+    await fs.promises.access(expectedFile, fs.constants.F_OK);
+    return expectedFile;
+  } catch {}
+  try {
+    const files = await fs.promises.readdir(DOWNLOADS_DIR);
+    const found = files.find(f => {
+      if (!f.startsWith(jobId)) return false;
+      const ext = path.extname(f).toLowerCase();
+      return isValidMediaExtension(ext);
+    });
+    return found ? path.join(DOWNLOADS_DIR, found) : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Removes incomplete partial files for a given job ID without blocking the event loop.
+ * @param {string} jobId
+ */
+async function cleanupJobPartialsAsync(jobId) {
+  try {
+    await fs.promises.access(DOWNLOADS_DIR, fs.constants.F_OK);
+    const files = await fs.promises.readdir(DOWNLOADS_DIR);
+    const partials = files.filter(f => f.startsWith(jobId));
+    for (const part of partials) {
+      try {
+        const partPath = path.join(DOWNLOADS_DIR, part);
+        const stat = await fs.promises.stat(partPath);
+        if (stat.isFile()) {
+          await fs.promises.unlink(partPath).catch(() => {});
+        }
+      } catch {}
+    }
+  } catch {}
+}
+
+/**
  * Attaches stdout, stderr, close, and error listeners to the conversion child process
  * @param {Object} jobState
  * @param {import('child_process').ChildProcess} child
@@ -1999,14 +2048,14 @@ function attachProcessListeners(jobState, child, targetFormat) {
     });
   }
 
-  child.on('close', (code) => {
+  child.on('close', async (code) => {
     // Preserve user cancellation - do not overwrite with 'failed' on exit code
     if (jobState.status === 'cancelled') {
       return;
     }
 
     if (code === 0) {
-      const outputFile = findOutputFile(jobState.id, targetFormat);
+      const outputFile = await findOutputFileAsync(jobState.id, targetFormat);
       if (outputFile) {
         const friendlyName = jobState.title
           ? `${jobState.title.replace(/[/\\?%*:|"<>]/g, '_')}.${targetFormat}`
@@ -2033,19 +2082,7 @@ function attachProcessListeners(jobState, child, targetFormat) {
       console.error(`[converter] Job ${jobState.id} failed: ${errorMsg}`);
 
       // Clean up any incomplete partial files on error
-      try {
-        if (fs.existsSync(DOWNLOADS_DIR)) {
-          const partials = fs.readdirSync(DOWNLOADS_DIR).filter(f => f.startsWith(jobState.id));
-          for (const part of partials) {
-            try {
-              const partPath = path.join(DOWNLOADS_DIR, part);
-              if (fs.statSync(partPath).isFile()) {
-                fs.unlinkSync(partPath);
-              }
-            } catch {}
-          }
-        }
-      } catch {}
+      await cleanupJobPartialsAsync(jobState.id);
     }
 
     delete jobState.process;
@@ -2329,20 +2366,8 @@ function cancelConversion(jobId) {
 
     // Clean up partial downloads on cancellation
     setTimeout(() => {
-      try {
-        if (fs.existsSync(DOWNLOADS_DIR)) {
-          const partials = fs.readdirSync(DOWNLOADS_DIR).filter(f => f.startsWith(jobId));
-          for (const part of partials) {
-            try {
-              const partPath = path.join(DOWNLOADS_DIR, part);
-              if (fs.statSync(partPath).isFile()) {
-                fs.unlinkSync(partPath);
-              }
-            } catch {}
-          }
-        }
-      } catch {}
-    }, 400);
+      cleanupJobPartialsAsync(jobId);
+    }, 400).unref();
     return true;
   }
   return false;
