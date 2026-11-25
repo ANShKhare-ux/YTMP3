@@ -1,17 +1,35 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import LandingPage from './components/LandingPage';
 import WebsiteIntro from './components/WebsiteIntro';
-import AboutUs from './components/legal/AboutUs';
-import PrivacyPolicy from './components/legal/PrivacyPolicy';
-import TermsOfUse from './components/legal/TermsOfUse';
-import CopyrightPolicy from './components/legal/CopyrightPolicy';
-import ContactSupport from './components/legal/ContactSupport';
-import InstallGuide from './components/docs/InstallGuide';
-import SupportedPlatforms from './components/docs/SupportedPlatforms';
-import TroubleshootingGuide from './components/docs/TroubleshootingGuide';
-import ConverterGuide from './components/convert/ConverterGuide';
 import DownloadPage from './components/DownloadPage';
 import NotFound from './components/NotFound';
+
+const AboutUs = lazy(() => import('./components/legal/AboutUs'));
+const PrivacyPolicy = lazy(() => import('./components/legal/PrivacyPolicy'));
+const TermsOfUse = lazy(() => import('./components/legal/TermsOfUse'));
+const CopyrightPolicy = lazy(() => import('./components/legal/CopyrightPolicy'));
+const ContactSupport = lazy(() => import('./components/legal/ContactSupport'));
+const InstallGuide = lazy(() => import('./components/docs/InstallGuide'));
+const SupportedPlatforms = lazy(() => import('./components/docs/SupportedPlatforms'));
+const TroubleshootingGuide = lazy(() => import('./components/docs/TroubleshootingGuide'));
+const ConverterGuide = lazy(() => import('./components/convert/ConverterGuide'));
+
+const RouteSuspenseFallback = () => (
+  <div
+    style={{
+      minHeight: '100vh',
+      backgroundColor: '#000000',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      color: '#96a1ff',
+      fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif',
+      fontSize: '14px'
+    }}
+  >
+    Loading SonicWave...
+  </div>
+);
 
 function resolveRoute(pathname, hash) {
   if (pathname === '/about' || pathname === '/about-us' || hash === '#about' || hash === '#/about' || hash === '#about-us' || hash === '#/about-us') return 'about';
@@ -88,44 +106,92 @@ export default function App() {
 
   // Technical Documentation Hubs
   if (currentView === 'install') {
-    return <InstallGuide onNavigate={navigateTo} />;
+    return (
+      <Suspense fallback={<RouteSuspenseFallback />}>
+        <InstallGuide onNavigate={navigateTo} />
+      </Suspense>
+    );
   }
   if (currentView === 'platforms-guide') {
-    return <SupportedPlatforms onNavigate={navigateTo} />;
+    return (
+      <Suspense fallback={<RouteSuspenseFallback />}>
+        <SupportedPlatforms onNavigate={navigateTo} />
+      </Suspense>
+    );
   }
   if (currentView === 'troubleshooting') {
-    return <TroubleshootingGuide onNavigate={navigateTo} />;
+    return (
+      <Suspense fallback={<RouteSuspenseFallback />}>
+        <TroubleshootingGuide onNavigate={navigateTo} />
+      </Suspense>
+    );
   }
 
   // Programmatic Conversion Guides
   if (currentView === 'convert-youtube-to-mp3') {
-    return <ConverterGuide slug="youtube-to-mp3" onNavigate={navigateTo} />;
+    return (
+      <Suspense fallback={<RouteSuspenseFallback />}>
+        <ConverterGuide slug="youtube-to-mp3" onNavigate={navigateTo} />
+      </Suspense>
+    );
   }
   if (currentView === 'convert-youtube-to-wav') {
-    return <ConverterGuide slug="youtube-to-wav" onNavigate={navigateTo} />;
+    return (
+      <Suspense fallback={<RouteSuspenseFallback />}>
+        <ConverterGuide slug="youtube-to-wav" onNavigate={navigateTo} />
+      </Suspense>
+    );
   }
   if (currentView === 'convert-soundcloud-to-mp3') {
-    return <ConverterGuide slug="soundcloud-to-mp3" onNavigate={navigateTo} />;
+    return (
+      <Suspense fallback={<RouteSuspenseFallback />}>
+        <ConverterGuide slug="soundcloud-to-mp3" onNavigate={navigateTo} />
+      </Suspense>
+    );
   }
   if (currentView === 'convert-instagram-reels-to-mp4') {
-    return <ConverterGuide slug="instagram-reels-to-mp4" onNavigate={navigateTo} />;
+    return (
+      <Suspense fallback={<RouteSuspenseFallback />}>
+        <ConverterGuide slug="instagram-reels-to-mp4" onNavigate={navigateTo} />
+      </Suspense>
+    );
   }
 
   // Legal, About & Compliance Pages
   if (currentView === 'about') {
-    return <AboutUs onNavigate={navigateTo} />;
+    return (
+      <Suspense fallback={<RouteSuspenseFallback />}>
+        <AboutUs onNavigate={navigateTo} />
+      </Suspense>
+    );
   }
   if (currentView === 'privacy') {
-    return <PrivacyPolicy onNavigate={navigateTo} />;
+    return (
+      <Suspense fallback={<RouteSuspenseFallback />}>
+        <PrivacyPolicy onNavigate={navigateTo} />
+      </Suspense>
+    );
   }
   if (currentView === 'terms') {
-    return <TermsOfUse onNavigate={navigateTo} />;
+    return (
+      <Suspense fallback={<RouteSuspenseFallback />}>
+        <TermsOfUse onNavigate={navigateTo} />
+      </Suspense>
+    );
   }
   if (currentView === 'copyright') {
-    return <CopyrightPolicy onNavigate={navigateTo} />;
+    return (
+      <Suspense fallback={<RouteSuspenseFallback />}>
+        <CopyrightPolicy onNavigate={navigateTo} />
+      </Suspense>
+    );
   }
   if (currentView === 'contact') {
-    return <ContactSupport onNavigate={navigateTo} />;
+    return (
+      <Suspense fallback={<RouteSuspenseFallback />}>
+        <ContactSupport onNavigate={navigateTo} />
+      </Suspense>
+    );
   }
 
   // Custom 404 Error Page

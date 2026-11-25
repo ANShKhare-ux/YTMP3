@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { execSync } from 'child_process';
 import { fileURLToPath } from 'url';
+import { createZipFromDirectory, inspectZipEntries } from './lib/zipBuilder.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -80,12 +81,21 @@ const iconPath = path.join(rootDir, 'electron', 'icon.ico');
 if (process.platform === 'win32' && fs.existsSync(cscPath) && fs.existsSync(launcherSrc)) {
   console.log('[NATIVE] Compiling native standalone SonicWave.exe...');
   fs.mkdirSync(path.join(rootDir, 'launcher'), { recursive: true });
-  execSync(`"${cscPath}" /target:winexe /optimize+ /win32icon:"${iconPath}" /r:System.Windows.Forms.dll /r:System.Drawing.dll /out:"${launcherExe}" "${launcherSrc}"`, { stdio: 'inherit' });
+  execSync(`"${cscPath}" /target:winexe /optimize+ /win32icon:"${iconPath}" /r:System.Windows.Forms.dll /r:System.Drawing.dll /r:System.IO.Compression.dll /r:System.IO.Compression.FileSystem.dll /out:"${launcherExe}" "${launcherSrc}"`, { stdio: 'inherit' });
 }
 
 if (fs.existsSync(launcherExe)) {
   fs.copyFileSync(launcherExe, path.join(stagingDir, 'SonicWave.exe'));
   console.log('[STAGING] Bundled native SonicWave.exe inside package.');
+}
+
+// Optional offline mode: `node scripts/package-desktop.mjs --bundle-node` embeds local node.exe + server deps
+const bundleNode = process.argv.includes('--bundle-node');
+if (bundleNode && process.platform === 'win32' && fs.existsSync(process.execPath)) {
+  const runtimeDir = path.join(stagingDir, 'runtime');
+  fs.mkdirSync(runtimeDir, { recursive: true });
+  fs.copyFileSync(process.execPath, path.join(runtimeDir, 'node.exe'));
+  console.log('[RUNTIME] Embedded local portable node.exe into runtime/ for zero-network offline launches.');
 }
 
 fs.copyFileSync(path.join(rootDir, 'start.bat'), path.join(stagingDir, 'start.bat'));
@@ -157,57 +167,67 @@ for (const entry of componentEntries) {
 // Copy prebuilt desktop dist files into staging
 copyDirSync(path.join(rootDir, 'client', 'dist'), path.join(stagingDir, 'client', 'dist'));
 
-// Helper to run PowerShell with fallback from pwsh to powershell
-function runPowerShell(cmd) {
-  try {
-    execSync(`pwsh -Command "${cmd}"`, { stdio: 'inherit' });
-  } catch {
-    execSync(`powershell -Command "${cmd}"`, { stdio: 'inherit' });
-  }
-}
-
-// 6. Compress staging folder into zip using Compress-Archive
+// 6. Compress separate platform-specific archives (Windows vs macOS POSIX)
 console.log('[ZIP] Packaging into Windows ZIP archive...');
 if (fs.existsSync(zipOutputFilePublic)) {
   fs.unlinkSync(zipOutputFilePublic);
 }
+if (fs.existsSync(macZipOutputFilePublic)) {
+  fs.unlinkSync(macZipOutputFilePublic);
+}
 
-const psScript = `Compress-Archive -Path '${stagingDir}\\*' -DestinationPath '${zipOutputFilePublic}' -CompressionLevel Optimal`;
-runPowerShell(psScript);
+createZipFromDirectory(stagingDir, zipOutputFilePublic, {
+  posixPermissions: false,
+  filter: (relPath) => !/^start\.sh$/i.test(relPath)
+});
 
-// Mirror to client/public/SonicWave-v1.0.0-macOS.zip
-fs.copyFileSync(zipOutputFilePublic, macZipOutputFilePublic);
+console.log('[ZIP] Packaging clean macOS ZIP archive (excluding .exe/.bat, enforcing POSIX +x on start.sh)...');
+createZipFromDirectory(stagingDir, macZipOutputFilePublic, {
+  posixPermissions: true,
+  filter: (relPath) =>
+    !/\.(exe|bat|dll)$/i.test(relPath) &&
+    !/^runtime\//i.test(relPath)
+});
 
-// Also mirror to client/dist if dist exists
+// Mirror both platform archives to client/dist if dist exists
 if (fs.existsSync(path.dirname(zipOutputFileDist))) {
   fs.copyFileSync(zipOutputFilePublic, zipOutputFileDist);
-  fs.copyFileSync(zipOutputFilePublic, macZipOutputFileDist);
+  fs.copyFileSync(macZipOutputFilePublic, macZipOutputFileDist);
 }
 
-// 7. Verification: Verify LandingPage is NOT inside the zip
-console.log('[VERIFY] Verifying archive contents...');
-const testExtractDir = path.join(process.env.TEMP || 'C:\\Windows\\Temp', 'SonicWave-Verify-Extract');
-if (fs.existsSync(testExtractDir)) {
-  fs.rmSync(testExtractDir, { recursive: true, force: true });
-}
-runPowerShell(`Expand-Archive -Path '${zipOutputFilePublic}' -DestinationPath '${testExtractDir}'`);
+// 7. Verification: Validate Windows & macOS archive contents and permissions
+console.log('[VERIFY] Verifying Windows and macOS archive contents...');
+const winEntries = inspectZipEntries(zipOutputFilePublic);
+const macEntries = inspectZipEntries(macZipOutputFilePublic);
 
-const extractedLandingPage = path.join(testExtractDir, 'client', 'src', 'components', 'LandingPage.jsx');
-const hasLandingPage = fs.existsSync(extractedLandingPage);
+const winHasLandingPage = winEntries.some((e) => /LandingPage\.jsx$/i.test(e.name));
+const macHasLandingPage = macEntries.some((e) => /LandingPage\.jsx$/i.test(e.name));
+const macHasWindowsFiles = macEntries.some((e) => /\.(exe|bat)$/i.test(e.name));
+const macStartSh = macEntries.find((e) => e.name === 'start.sh');
 
-const stat = fs.statSync(zipOutputFilePublic);
+const statWin = fs.statSync(zipOutputFilePublic);
+const statMac = fs.statSync(macZipOutputFilePublic);
 console.log('==================================================');
-console.log(`Package created: ${zipOutputFilePublic}`);
-console.log(`Size: ${(stat.size / 1024).toFixed(1)} KB`);
-console.log(`LandingPage.jsx present in zip: ${hasLandingPage ? 'YES (ERROR)' : 'NO (VERIFIED CLEAN)'}`);
+console.log(`Windows Package: ${zipOutputFilePublic} (${(statWin.size / 1024).toFixed(1)} KB)`);
+console.log(`macOS Package:   ${macZipOutputFilePublic} (${(statMac.size / 1024).toFixed(1)} KB)`);
+console.log(`LandingPage.jsx excluded: ${!winHasLandingPage && !macHasLandingPage ? 'YES (VERIFIED CLEAN)' : 'NO (ERROR)'}`);
+console.log(`macOS .exe/.bat excluded: ${!macHasWindowsFiles ? 'YES (VERIFIED CLEAN)' : 'NO (ERROR)'}`);
+console.log(`macOS start.sh mode:      ${macStartSh ? '0o' + (macStartSh.unixMode & 0o777).toString(8) : 'MISSING'}`);
 console.log('==================================================');
 
-if (hasLandingPage) {
-  console.error('[ERROR] LandingPage.jsx is still present in the zip!');
+if (winHasLandingPage || macHasLandingPage) {
+  console.error('[ERROR] LandingPage.jsx is still present in a package zip!');
   process.exit(1);
-} else {
-  console.log('[SUCCESS] Downloadable ZIP package is 100% free of LandingPage.jsx!');
 }
+if (macHasWindowsFiles) {
+  console.error('[ERROR] Windows executables/scripts found inside SonicWave-v1.0.0-macOS.zip!');
+  process.exit(1);
+}
+if (!macStartSh || !macStartSh.isExecutable) {
+  console.error('[ERROR] start.sh inside SonicWave-v1.0.0-macOS.zip does not preserve POSIX executable permissions!');
+  process.exit(1);
+}
+console.log('[SUCCESS] Both Windows and macOS ZIP packages passed structural verification!');
 
 // 8. Compile standalone SonicWave-Custom-Installer.exe with embedded native package
 const installerCs = path.join(rootDir, 'installer', 'native', 'InstallerForm.cs');

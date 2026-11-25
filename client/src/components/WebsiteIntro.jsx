@@ -18,6 +18,26 @@ export default function WebsiteIntro({ onFinish }) {
     const video = videoRef.current;
     if (!video) return;
 
+    let gestureListenersAttached = false;
+    const enableAudioOnGesture = () => {
+      if (video) {
+        video.muted = false;
+        video.volume = 1;
+        setIsMuted(false);
+        setNeedsGestureForAudio(false);
+      }
+      removeGestureListeners();
+    };
+
+    const removeGestureListeners = () => {
+      if (!gestureListenersAttached) return;
+      gestureListenersAttached = false;
+      window.removeEventListener('pointerdown', enableAudioOnGesture, true);
+      window.removeEventListener('touchstart', enableAudioOnGesture, true);
+      window.removeEventListener('click', enableAudioOnGesture, true);
+      window.removeEventListener('keydown', enableAudioOnGesture, true);
+    };
+
     // Ensure audio starts ON by default at full volume
     video.muted = false;
     video.volume = 1;
@@ -39,19 +59,7 @@ export default function WebsiteIntro({ onFinish }) {
             handleClose();
           });
 
-          const enableAudioOnGesture = () => {
-            if (video) {
-              video.muted = false;
-              video.volume = 1;
-              setIsMuted(false);
-              setNeedsGestureForAudio(false);
-            }
-            window.removeEventListener('pointerdown', enableAudioOnGesture, true);
-            window.removeEventListener('touchstart', enableAudioOnGesture, true);
-            window.removeEventListener('click', enableAudioOnGesture, true);
-            window.removeEventListener('keydown', enableAudioOnGesture, true);
-          };
-
+          gestureListenersAttached = true;
           window.addEventListener('pointerdown', enableAudioOnGesture, true);
           window.addEventListener('touchstart', enableAudioOnGesture, true);
           window.addEventListener('click', enableAudioOnGesture, true);
@@ -71,6 +79,7 @@ export default function WebsiteIntro({ onFinish }) {
     window.addEventListener('keydown', handleKeyDown);
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
+      removeGestureListeners();
     };
   }, []);
 
@@ -93,8 +102,11 @@ export default function WebsiteIntro({ onFinish }) {
     if (!video) return;
     const nextMuted = !video.muted;
     video.muted = nextMuted;
+    if (!nextMuted) {
+      video.volume = 1;
+    }
     setIsMuted(nextMuted);
-    setHasInteracted(true);
+    setNeedsGestureForAudio(false);
   };
 
   // If user clicks anywhere on the video area, ensure sound is active

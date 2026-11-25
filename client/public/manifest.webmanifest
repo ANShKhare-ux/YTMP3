@@ -1,0 +1,29 @@
+{
+  "name": "SonicWave — Media Downloader & Offline Player",
+  "short_name": "SonicWave",
+  "description": "Free, ad-free desktop and Android media downloader, photo carousel extractor, and offline audio player.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#010102",
+  "theme_color": "#010102",
+  "orientation": "portrait-primary",
+  "categories": ["multimedia", "music", "utilities"],
+  "icons": [
+    {
+      "src": "/favicon-96.png",
+      "sizes": "96x96",
+      "type": "image/png"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
+      "src": "/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

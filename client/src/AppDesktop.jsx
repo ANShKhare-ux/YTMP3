@@ -24,26 +24,72 @@ import AudioPlayer from './components/AudioPlayer';
 import HistorySection from './components/HistorySection';
 import Logo from './components/Logo';
 import CommandPalette from './components/CommandPalette';
-import PricingModal from './components/PricingModal';
-import { Crown, Command as CommandIcon } from 'lucide-react';
+import StudioSettingsModal, { DEFAULT_STUDIO_SETTINGS } from './components/StudioSettingsModal';
+import { SlidersHorizontal, Command as CommandIcon, FolderOpen, X } from 'lucide-react';
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
 export default function App({ onNavigate }) {
+  const [studioSettings, setStudioSettings] = useState(() => {
+    try {
+      const saved = localStorage.getItem('sonicwave_studio_settings');
+      return saved ? { ...DEFAULT_STUDIO_SETTINGS, ...JSON.parse(saved) } : DEFAULT_STUDIO_SETTINGS;
+    } catch {
+      return DEFAULT_STUDIO_SETTINGS;
+    }
+  });
+
   const [url, setUrl] = useState('');
   const [videoInfo, setVideoInfo] = useState(null);
-  const [bitrate, setBitrate] = useState('320k');
-  const [format, setFormat] = useState('mp3');
+  const [bitrate, setBitrate] = useState(() => studioSettings.defaultBitrate || '320k');
+  const [format, setFormat] = useState(() => studioSettings.defaultFormat || 'mp3');
   const [activeSlideIndex, setActiveSlideIndex] = useState(0);
+  const [trimStart, setTrimStart] = useState('');
+  const [trimEnd, setTrimEnd] = useState('');
+  const [normalizeAudio, setNormalizeAudio] = useState(false);
+  const [sponsorBlock, setSponsorBlock] = useState(false);
 
   const [isLoadingInfo, setIsLoadingInfo] = useState(false);
   const [isConverting, setIsConverting] = useState(false);
   const [currentJob, setCurrentJob] = useState(null);
+  const [selectedPlaylistIndices, setSelectedPlaylistIndices] = useState([]);
+  const [batchJobs, setBatchJobs] = useState([]);
   const [activeTrack, setActiveTrack] = useState(null);
   const [error, setError] = useState(null);
   const [isCmdOpen, setIsCmdOpen] = useState(false);
-  const [isPricingOpen, setIsPricingOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isUpdatingEngine, setIsUpdatingEngine] = useState(false);
+  const [engineUpdateStatus, setEngineUpdateStatus] = useState(null);
+  const [studioToast, setStudioToast] = useState(null);
+  const [savedFilePaths, setSavedFilePaths] = useState({});
   const eventSourceRef = useRef(null);
+  const recordedBatchIdsRef = useRef(new Set());
+  const toastTimerRef = useRef(null);
+  const isDesktop = Boolean(typeof window !== 'undefined' && window.sonicWaveDesktop?.isDesktop);
+
+  const showToast = useCallback((toastPayload, durationMs = 5000) => {
+    setStudioToast(toastPayload);
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    if (durationMs > 0) {
+      toastTimerRef.current = setTimeout(() => {
+        setStudioToast(null);
+      }, durationMs);
+    }
+  }, []);
+
+  useEffect(() => () => {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+  }, []);
+
+  const updateStudioSettings = useCallback((patch) => {
+    setStudioSettings((prev) => {
+      const next = { ...prev, ...patch };
+      try {
+        localStorage.setItem('sonicwave_studio_settings', JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+  }, []);
 
   // Global Command Palette shortcut (⌘K / Ctrl+K)
   useEffect(() => {
@@ -124,7 +170,7 @@ export default function App({ onNavigate }) {
             prev.forEach((item) => {
               if (!map.has(item.id)) map.set(item.id, item);
             });
-            return Array.from(map.values()).slice(0, 30);
+            return Array.from(map.values()).slice(0, 50);
           });
         }
       })
@@ -139,6 +185,110 @@ export default function App({ onNavigate }) {
       console.warn('Could not save history to localStorage:', e);
     }
   }, [history]);
+
+  const saveJobToDesktopFolder = useCallback(async (jobLike, trackMeta) => {
+    if (typeof window === 'undefined' || !window.sonicWaveDesktop?.saveJobFile) {
+      return null;
+    }
+    const targetId = jobLike?.id || jobLike?.jobId || trackMeta?.jobId;
+    if (!targetId) return null;
+
+    const rawTitle = (trackMeta?.title || jobLike?.title || 'SonicWave-media').slice(0, 80);
+    const ext = (trackMeta?.format || jobLike?.format || 'mp3').toLowerCase();
+    const result = await window.sonicWaveDesktop.saveJobFile({
+      jobId: targetId,
+      filename: `${rawTitle}.${ext}`,
+      targetDir: studioSettings.outputFolder || ''
+    });
+
+    if (result?.success && result.savedPath) {
+      setSavedFilePaths((prev) => ({ ...prev, [targetId]: result.savedPath }));
+      return result.savedPath;
+    }
+    return null;
+  }, [studioSettings.outputFolder]);
+
+  const handleRevealInFolder = useCallback(async (itemOrJob) => {
+    if (typeof window === 'undefined' || !window.sonicWaveDesktop?.showItemInFolder) return;
+    const targetId = itemOrJob?.jobId || itemOrJob?.id;
+    let filePath = (targetId && savedFilePaths[targetId]) || itemOrJob?.savedPath || '';
+
+    if (!filePath && targetId) {
+      filePath = await saveJobToDesktopFolder({ id: targetId }, itemOrJob);
+      if (filePath) {
+        showToast({
+          type: 'success',
+          message: `Saved to folder: ${filePath}`
+        }, 4500);
+      }
+    }
+
+    await window.sonicWaveDesktop.showItemInFolder({
+      filePath,
+      folderPath: studioSettings.outputFolder || ''
+    });
+  }, [savedFilePaths, saveJobToDesktopFolder, showToast, studioSettings.outputFolder]);
+
+  // Append a completed job into active player state and 50-item client history
+  const recordCompletedJob = useCallback((job) => {
+    try {
+      confetti({
+        particleCount: 50,
+        spread: 60,
+        origin: { y: 0.7 }
+      });
+    } catch {}
+
+    const completedTrack = {
+      jobId: job.id,
+      title: job.title || videoInfo?.title || 'Converted Audio',
+      artist: job.artist || videoInfo?.uploader || 'YouTube Artist',
+      thumbnail: job.thumbnail || videoInfo?.thumbnail || '',
+      format: job.format,
+      quality: job.quality,
+      url: job.url || videoInfo?.url || url.trim(),
+      isPhoto: Boolean(job.isPhoto || videoInfo?.isPhoto),
+      isCarousel: Boolean(videoInfo?.isCarousel)
+    };
+
+    setActiveTrack(completedTrack);
+
+    setHistory((prev) => {
+      const filtered = prev.filter((item) => item.id !== job.id);
+      return [
+        {
+          id: job.id,
+          url: completedTrack.url,
+          title: completedTrack.title,
+          artist: completedTrack.artist,
+          thumbnail: completedTrack.thumbnail,
+          format: completedTrack.format,
+          quality: completedTrack.quality,
+          isPhoto: completedTrack.isPhoto,
+          isCarousel: completedTrack.isCarousel,
+          isAvailable: true,
+          timestamp: job.createdAt || Date.now()
+        },
+        ...filtered
+      ].slice(0, 50);
+    });
+
+    if (studioSettings.autoSaveDesktop && isDesktop) {
+      saveJobToDesktopFolder(job, completedTrack).then((savedPath) => {
+        if (savedPath) {
+          setActiveTrack((prev) => (prev && prev.jobId === job.id ? { ...prev, savedPath } : prev));
+          showToast({
+            type: 'success',
+            message: `Auto-saved to folder`,
+            actionLabel: 'Open Folder',
+            onAction: () => {
+              window.sonicWaveDesktop?.showItemInFolder?.({ filePath: savedPath });
+            }
+          }, 6000);
+        }
+      });
+    }
+  }, [videoInfo, url, studioSettings.autoSaveDesktop, isDesktop, saveJobToDesktopFolder, showToast]);
 
   // Synchronize activeTrack whenever a job completes
   useEffect(() => {
@@ -155,21 +305,23 @@ export default function App({ onNavigate }) {
     }
   }, [currentJob, activeTrack, videoInfo]);
 
-  // Fetch YouTube video metadata
-  const handleFetchInfo = async () => {
-    if (!url.trim()) return;
+  // Fetch media metadata (supports single tracks and full playlists)
+  const handleFetchInfo = async (fetchOpts = {}) => {
+    const targetUrl = (fetchOpts.overrideUrl || url).trim();
+    if (!targetUrl) return;
 
     setError(null);
     setIsLoadingInfo(true);
     setVideoInfo(null);
     setCurrentJob(null);
+    setSelectedPlaylistIndices([]);
     setActiveSlideIndex(0);
 
     try {
       const res = await fetch(`${API_BASE}/api/info`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: url.trim() })
+        body: JSON.stringify({ url: targetUrl, playlist: Boolean(fetchOpts.playlist) })
       });
 
       const contentType = res.headers.get('content-type') || '';
@@ -183,6 +335,9 @@ export default function App({ onNavigate }) {
       }
 
       setVideoInfo(json.data);
+      if (json.data?.isPlaylist && Array.isArray(json.data.playlistEntries)) {
+        setSelectedPlaylistIndices(json.data.playlistEntries.map((_, idx) => idx));
+      }
       if (json.data && Array.isArray(json.data.presets) && json.data.presets.length > 0) {
         const recommended = json.data.presets.find((p) => p.recommended) || json.data.presets[0];
         if (recommended) {
@@ -191,9 +346,106 @@ export default function App({ onNavigate }) {
         }
       }
     } catch (err) {
-      setError(err.message || 'Unable to load YouTube video. Please check the URL.');
+      setError(err.message || 'Unable to load media URL. Please check the URL.');
     } finally {
       setIsLoadingInfo(false);
+    }
+  };
+
+  // Poll active batch playlist jobs until all settle
+  useEffect(() => {
+    const pendingJobs = batchJobs.filter((j) =>
+      ['queued', 'starting', 'downloading', 'converting', 'tagging'].includes(j.status)
+    );
+    if (pendingJobs.length === 0) return;
+
+    const timer = setInterval(async () => {
+      try {
+        const updates = await Promise.all(
+          pendingJobs.map((item) =>
+            fetch(`${API_BASE}/api/job/${item.jobId || item.id}`)
+              .then((r) => (r.ok ? r.json() : null))
+              .catch(() => null)
+          )
+        );
+        const byId = new Map();
+        updates.forEach((res) => {
+          if (res?.job?.id) {
+            byId.set(res.job.id, res.job);
+            if (res.job.status === 'completed' && !recordedBatchIdsRef.current.has(res.job.id)) {
+              recordedBatchIdsRef.current.add(res.job.id);
+              recordCompletedJob(res.job);
+            }
+          }
+        });
+        if (byId.size > 0) {
+          setBatchJobs((prev) =>
+            prev.map((existing) => {
+              const id = existing.jobId || existing.id;
+              const updated = byId.get(id);
+              return updated ? { ...existing, ...updated, jobId: id } : existing;
+            })
+          );
+        }
+      } catch {}
+    }, 1200);
+
+    return () => clearInterval(timer);
+  }, [batchJobs, recordCompletedJob]);
+
+  const handleTogglePlaylistItem = (idx) => {
+    setSelectedPlaylistIndices((prev) =>
+      prev.includes(idx) ? prev.filter((i) => i !== idx) : [...prev, idx].sort((a, b) => a - b)
+    );
+  };
+
+  const handleToggleAllPlaylistItems = () => {
+    const entries = videoInfo?.playlistEntries || [];
+    if (selectedPlaylistIndices.length === entries.length) {
+      setSelectedPlaylistIndices([]);
+    } else {
+      setSelectedPlaylistIndices(entries.map((_, i) => i));
+    }
+  };
+
+  const handleStartBatchConversion = async () => {
+    const entries = videoInfo?.playlistEntries || [];
+    const selectedItems = selectedPlaylistIndices.map((idx) => entries[idx]).filter(Boolean);
+    if (selectedItems.length === 0) {
+      setError('Please select at least one track from the playlist to convert.');
+      return;
+    }
+
+    setError(null);
+    setIsConverting(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/convert-batch`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          items: selectedItems,
+          format,
+          quality: bitrate,
+          turbo: true,
+          trimStart: trimStart.trim(),
+          trimEnd: trimEnd.trim(),
+          normalizeAudio: Boolean(normalizeAudio),
+          sponsorBlock: Boolean(sponsorBlock)
+        })
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.error || 'Batch queue submission failed.');
+      }
+      setBatchJobs(json.jobs || []);
+      showToast({
+        type: 'success',
+        message: `Queued ${json.count || selectedItems.length} playlist tracks (3 parallel workers + FIFO queue).`
+      }, 5000);
+    } catch (err) {
+      setError(err.message || 'Batch conversion failed.');
+    } finally {
+      setIsConverting(false);
     }
   };
 
@@ -267,7 +519,11 @@ export default function App({ onNavigate }) {
             : (videoInfo ? videoInfo.thumbnail : ''),
           isPhoto: Boolean(videoInfo?.isPhoto),
           photos: targetPhotos,
-          slideIndex: isSelectiveSlide ? activeSlideIndex + 1 : undefined
+          slideIndex: isSelectiveSlide ? activeSlideIndex + 1 : undefined,
+          trimStart: trimStart.trim(),
+          trimEnd: trimEnd.trim(),
+          normalizeAudio: Boolean(normalizeAudio),
+          sponsorBlock: Boolean(sponsorBlock)
         })
       });
 
@@ -307,43 +563,7 @@ export default function App({ onNavigate }) {
           eventSource.close();
           eventSourceRef.current = null;
           setIsConverting(false);
-
-          // Confetti celebratory burst
-          try {
-            confetti({
-              particleCount: 50,
-              spread: 60,
-              origin: { y: 0.7 }
-            });
-          } catch {}
-
-          const completedTrack = {
-            jobId: job.id,
-            title: job.title || videoInfo?.title || 'Converted Audio',
-            artist: job.artist || videoInfo?.uploader || 'YouTube Artist',
-            thumbnail: job.thumbnail || videoInfo?.thumbnail || '',
-            format: job.format,
-            quality: job.quality
-          };
-
-          setActiveTrack(completedTrack);
-
-          // Append to history without duplicates
-          setHistory((prev) => {
-            const filtered = prev.filter((item) => item.id !== job.id);
-            return [
-              {
-                id: job.id,
-                title: completedTrack.title,
-                artist: completedTrack.artist,
-                thumbnail: completedTrack.thumbnail,
-                format: completedTrack.format,
-                quality: completedTrack.quality,
-                timestamp: Date.now()
-              },
-              ...filtered
-            ].slice(0, 15);
-          });
+          recordCompletedJob(job);
         } else if (job.status === 'failed' || job.status === 'cancelled') {
           eventSource.close();
           eventSourceRef.current = null;
@@ -378,40 +598,7 @@ export default function App({ onNavigate }) {
             setIsConverting(false);
 
             if (data.job.status === 'completed') {
-              try {
-                confetti({
-                  particleCount: 50,
-                  spread: 60,
-                  origin: { y: 0.7 }
-                });
-              } catch {}
-
-              const completedTrack = {
-                jobId: data.job.id,
-                title: data.job.title || videoInfo?.title || 'Converted Audio',
-                artist: data.job.artist || videoInfo?.uploader || 'YouTube Artist',
-                thumbnail: data.job.thumbnail || videoInfo?.thumbnail || '',
-                format: data.job.format,
-                quality: data.job.quality
-              };
-
-              setActiveTrack(completedTrack);
-
-              setHistory((prev) => {
-                const filtered = prev.filter((item) => item.id !== data.job.id);
-                return [
-                  {
-                    id: data.job.id,
-                    title: completedTrack.title,
-                    artist: completedTrack.artist,
-                    thumbnail: completedTrack.thumbnail,
-                    format: completedTrack.format,
-                    quality: completedTrack.quality,
-                    timestamp: Date.now()
-                  },
-                  ...filtered
-                ].slice(0, 15);
-              });
+              recordCompletedJob(data.job);
             } else if (data.job.status === 'failed') {
               setError(data.job.error || 'Conversion failed. Please try again.');
             }
@@ -507,6 +694,8 @@ export default function App({ onNavigate }) {
     setCurrentJob(null);
     setError(null);
     setActiveSlideIndex(0);
+    setTrimStart('');
+    setTrimEnd('');
   };
 
   const handleSelectHistoryTrack = (item) => {
@@ -526,6 +715,39 @@ export default function App({ onNavigate }) {
       localStorage.removeItem('sonicwave_history');
     } catch {}
   };
+
+  const handleDeleteHistoryItem = (itemId) => {
+    setHistory((prev) => prev.filter((item) => item.id !== itemId));
+  };
+
+  const handleUpdateEngine = useCallback(async () => {
+    if (isUpdatingEngine) return;
+    setIsUpdatingEngine(true);
+    const loadingMsg = 'Checking & updating yt-dlp core engine...';
+    setEngineUpdateStatus({ type: 'info', message: loadingMsg });
+    showToast({ type: 'info', message: loadingMsg }, 0);
+
+    try {
+      const res = await fetch(`${API_BASE}/api/binaries/update`, { method: 'POST' });
+      const data = await res.json();
+      if (data.success) {
+        const msg = `yt-dlp binary updated to ${data.version || 'latest'}.`;
+        setEngineUpdateStatus({ type: 'success', message: msg });
+        showToast({ type: 'success', message: msg }, 5500);
+        checkStatus();
+      } else {
+        const msg = data.output || data.message || data.error || 'Engine update did not complete.';
+        setEngineUpdateStatus({ type: 'error', message: msg });
+        showToast({ type: 'error', message: `Engine update: ${msg}` }, 6500);
+      }
+    } catch (err) {
+      const msg = `Update request error: ${err.message}`;
+      setEngineUpdateStatus({ type: 'error', message: msg });
+      showToast({ type: 'error', message: msg }, 6500);
+    } finally {
+      setIsUpdatingEngine(false);
+    }
+  }, [isUpdatingEngine, checkStatus, showToast]);
 
   return (
     <div className={`spotify-app-layout ${activeTrack ? 'has-bottom-player' : ''}`}>
@@ -618,10 +840,10 @@ export default function App({ onNavigate }) {
           <div className="sidebar-turbo-badge">
             <div className="sidebar-turbo-top">
               <Zap size={12} fill="var(--spotify-green)" />
-              <span>100H+ Turbo Engine</span>
+              <span>16x Parallel Engine</span>
             </div>
             <p className="sidebar-turbo-desc">
-              16-stream parallel acceleration. Works on YouTube, Instagram, TikTok, X, SoundCloud & 1000+ sites.
+              16-stream parallel acceleration. Works on YouTube, Instagram, TikTok, X, SoundCloud &amp; 1000+ sites.
             </p>
           </div>
         </div>
@@ -672,12 +894,12 @@ export default function App({ onNavigate }) {
             <button
               type="button"
               className="top-bar-action-pill"
-              onClick={() => setIsPricingOpen(true)}
-              title="View Studio Capabilities & Plans"
-              style={{ background: 'rgba(255, 215, 0, 0.1)', borderColor: 'rgba(255, 215, 0, 0.3)', color: '#ffd700' }}
+              onClick={() => setIsSettingsOpen(true)}
+              title="Open Studio Preferences & Engine Controls"
+              style={{ background: 'rgba(30, 215, 96, 0.1)', borderColor: 'rgba(30, 215, 96, 0.35)', color: 'var(--spotify-green)' }}
             >
-              <Crown size={12} />
-              <span>Studio Pro</span>
+              <SlidersHorizontal size={12} />
+              <span>Studio Settings</span>
             </button>
 
             {onNavigate && (
@@ -813,6 +1035,10 @@ export default function App({ onNavigate }) {
                     handleStartConversion('zip');
                   }}
                   isConverting={isConverting}
+                  selectedPlaylistIndices={selectedPlaylistIndices}
+                  onTogglePlaylistItem={handleTogglePlaylistItem}
+                  onToggleAllPlaylistItems={handleToggleAllPlaylistItems}
+                  onLoadPlaylist={() => handleFetchInfo({ playlist: true })}
                 />
 
                 <OptionsSelector
@@ -824,6 +1050,14 @@ export default function App({ onNavigate }) {
                   videoInfo={videoInfo}
                   activeSlideIndex={activeSlideIndex}
                   setActiveSlideIndex={setActiveSlideIndex}
+                  trimStart={trimStart}
+                  setTrimStart={setTrimStart}
+                  trimEnd={trimEnd}
+                  setTrimEnd={setTrimEnd}
+                  normalizeAudio={normalizeAudio}
+                  setNormalizeAudio={setNormalizeAudio}
+                  sponsorBlock={sponsorBlock}
+                  setSponsorBlock={setSponsorBlock}
                 />
 
                 <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'flex-end' }}>
@@ -831,11 +1065,16 @@ export default function App({ onNavigate }) {
                     id="start-convert-btn"
                     type="button"
                     className="btn-spotify-green"
-                    onClick={() => handleStartConversion()}
-                    disabled={isConverting || systemStatus?.disconnected || !systemStatus?.ready}
+                    onClick={() => (videoInfo?.isPlaylist ? handleStartBatchConversion() : handleStartConversion())}
+                    disabled={
+                      isConverting ||
+                      systemStatus?.disconnected ||
+                      !systemStatus?.ready ||
+                      (videoInfo?.isPlaylist && selectedPlaylistIndices.length === 0)
+                    }
                     style={{
-                      opacity: (systemStatus?.disconnected || !systemStatus?.ready) ? 0.6 : 1,
-                      cursor: (systemStatus?.disconnected || !systemStatus?.ready) ? 'not-allowed' : 'pointer'
+                      opacity: (systemStatus?.disconnected || !systemStatus?.ready || (videoInfo?.isPlaylist && selectedPlaylistIndices.length === 0)) ? 0.6 : 1,
+                      cursor: (systemStatus?.disconnected || !systemStatus?.ready || (videoInfo?.isPlaylist && selectedPlaylistIndices.length === 0)) ? 'not-allowed' : 'pointer'
                     }}
                   >
                     {videoInfo?.isPhoto ? <ImageIcon size={16} /> : (format === 'mp4' ? <Video size={16} /> : <Music2 size={16} />)}
@@ -846,15 +1085,17 @@ export default function App({ onNavigate }) {
                           ? 'BACKEND OFFLINE'
                           : !systemStatus?.ready
                             ? 'BOOTSTRAPPING ENGINE...'
-                            : videoInfo?.isPhoto
-                              ? (format === 'zip'
-                                  ? `DOWNLOAD ALL ${videoInfo.photos?.length || videoInfo.itemCount || ''} PHOTOS (.ZIP)`
-                                  : (videoInfo.isCarousel
-                                      ? `DOWNLOAD SLIDE #${activeSlideIndex + 1} (${format.toUpperCase()})`
-                                      : `DOWNLOAD ORIGINAL PHOTO (${format.toUpperCase()})`))
-                              : format === 'mp4'
-                                ? `DOWNLOAD MP4 VIDEO (${bitrate})`
-                                : `CONVERT TO ${format.toUpperCase()} (${bitrate})`}
+                            : videoInfo?.isPlaylist
+                              ? `QUEUE ${selectedPlaylistIndices.length} TRACK${selectedPlaylistIndices.length === 1 ? '' : 'S'} (${format.toUpperCase()} • ${bitrate})`
+                              : videoInfo?.isPhoto
+                                ? (format === 'zip'
+                                    ? `DOWNLOAD ALL ${videoInfo.photos?.length || videoInfo.itemCount || ''} PHOTOS (.ZIP)`
+                                    : (videoInfo.isCarousel
+                                        ? `DOWNLOAD SLIDE #${activeSlideIndex + 1} (${format.toUpperCase()})`
+                                        : `DOWNLOAD ORIGINAL PHOTO (${format.toUpperCase()})`))
+                                : format === 'mp4'
+                                  ? `DOWNLOAD MP4 VIDEO (${bitrate})`
+                                  : `CONVERT TO ${format.toUpperCase()} (${bitrate})`}
                     </span>
                   </button>
                 </div>
@@ -862,7 +1103,75 @@ export default function App({ onNavigate }) {
             )}
 
             {/* Conversion Progress Bar */}
-            {currentJob && <ProgressBar job={currentJob} onCancel={handleCancelConversion} />}
+            {currentJob && (
+              <ProgressBar
+                job={currentJob}
+                onCancel={handleCancelConversion}
+                isDesktop={isDesktop}
+                savedFilePath={savedFilePaths[currentJob.id] || ''}
+                onOpenFolder={() => handleRevealInFolder(currentJob)}
+              />
+            )}
+
+            {/* Batch Playlist Conversion Queue Tracker */}
+            {batchJobs.length > 0 && (
+              <div className="batch-jobs-panel">
+                <div className="batch-jobs-header">
+                  <span>Playlist Batch Queue ({batchJobs.filter((j) => j.status === 'completed').length}/{batchJobs.length} completed)</span>
+                  <button
+                    type="button"
+                    className="btn-dark-pill"
+                    onClick={() => setBatchJobs([])}
+                    style={{ fontSize: '11px', padding: '4px 10px' }}
+                  >
+                    Clear Queue View
+                  </button>
+                </div>
+                <div className="batch-jobs-list">
+                  {batchJobs.map((bj) => {
+                    const id = bj.jobId || bj.id;
+                    return (
+                      <div key={id} className="batch-job-row">
+                        <div className="batch-job-meta">
+                          <span className="batch-job-title">{bj.title || 'Queued Track'}</span>
+                          <span className="batch-job-status">
+                            {bj.status === 'queued'
+                              ? `Queued (#${bj.queuePosition || '?'})`
+                              : bj.status === 'completed'
+                                ? 'Completed • Ready'
+                                : bj.status === 'failed'
+                                  ? (bj.error || 'Failed')
+                                  : `${bj.status} (${bj.progress || 0}%)`}
+                          </span>
+                        </div>
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                          {bj.status === 'completed' && (
+                            <>
+                              <button
+                                type="button"
+                                className="btn-dark-pill"
+                                onClick={() => handleSelectHistoryTrack({ ...bj, id })}
+                                style={{ fontSize: '11px', padding: '4px 10px' }}
+                              >
+                                Play
+                              </button>
+                              <a
+                                href={`${API_BASE}/api/download/${id}`}
+                                download
+                                className="btn-spotify-green"
+                                style={{ fontSize: '11px', padding: '4px 12px', textDecoration: 'none' }}
+                              >
+                                Save
+                              </a>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </section>
 
           {/* Recent Conversions Tracklist Table */}
@@ -872,6 +1181,7 @@ export default function App({ onNavigate }) {
                 history={history}
                 onSelectTrack={handleSelectHistoryTrack}
                 onClearHistory={handleClearHistory}
+                onDeleteItem={handleDeleteHistoryItem}
                 onReconvert={handleReconvert}
               />
             </section>
@@ -904,6 +1214,13 @@ export default function App({ onNavigate }) {
           onPrevTrack={handlePrevTrack}
           hasNext={currentTrackIndex !== -1 && currentTrackIndex < history.length - 1}
           hasPrev={currentTrackIndex > 0}
+          autoPlay={studioSettings.autoPlay}
+          onToggleAutoPlay={() => updateStudioSettings({ autoPlay: !studioSettings.autoPlay })}
+          audioNormalization={studioSettings.audioNormalization}
+          showVisualizer={studioSettings.showVisualizer}
+          isDesktop={isDesktop}
+          savedFilePath={savedFilePaths[activeTrack.jobId] || activeTrack.savedPath || ''}
+          onOpenFolder={() => handleRevealInFolder(activeTrack)}
         />
       )}
 
@@ -925,24 +1242,58 @@ export default function App({ onNavigate }) {
         }}
         isPlaying={!!activeTrack}
         onClearHistory={handleClearHistory}
-        onUpdateEngine={() => {
-          fetch(`${API_BASE}/api/binaries/update`, { method: 'POST' })
-            .then((res) => res.json())
-            .then((data) => {
-              alert(data.success ? `yt-dlp binary updated successfully to ${data.version}!` : `Binary update: ${data.output || data.message || data.error}`);
-            })
-            .catch((err) => alert(`Update request error: ${err.message}`));
-        }}
-        onOpenPricing={() => setIsPricingOpen(true)}
+        onUpdateEngine={handleUpdateEngine}
+        onOpenSettings={() => setIsSettingsOpen(true)}
+        onOpenPricing={() => setIsSettingsOpen(true)}
         onNavigateStudio={() => { if (onNavigate) onNavigate('app', '/#app'); }}
         onNavigateLanding={() => { if (onNavigate) onNavigate('landing', '/'); }}
         currentView="app"
       />
 
-      {/* SaaS Studio Capabilities & Tier Comparison Modal */}
-      <PricingModal
-        isOpen={isPricingOpen}
-        onClose={() => setIsPricingOpen(false)}
+      {/* Non-blocking In-App Status Toast */}
+      {studioToast && (
+        <div
+          role="status"
+          aria-live="polite"
+          className={`studio-toast studio-toast-${studioToast.type || 'info'}`}
+        >
+          <span className="studio-toast-msg">{studioToast.message}</span>
+          {studioToast.actionLabel && studioToast.onAction && (
+            <button
+              type="button"
+              className="btn-dark-pill"
+              onClick={studioToast.onAction}
+              style={{ padding: '4px 10px', fontSize: '11px' }}
+            >
+              <FolderOpen size={12} />
+              <span>{studioToast.actionLabel}</span>
+            </button>
+          )}
+          <button
+            type="button"
+            className="btn-icon"
+            onClick={() => setStudioToast(null)}
+            aria-label="Dismiss notification"
+            style={{ padding: 2 }}
+          >
+            <X size={14} />
+          </button>
+        </div>
+      )}
+
+      {/* Engine & Preferences Studio Settings Modal */}
+      <StudioSettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        settings={studioSettings}
+        onUpdateSettings={updateStudioSettings}
+        systemStatus={systemStatus}
+        onCheckStatus={checkStatus}
+        onUpdateEngine={handleUpdateEngine}
+        isUpdatingEngine={isUpdatingEngine}
+        engineUpdateStatus={engineUpdateStatus}
+        onClearHistory={handleClearHistory}
+        historyCount={history.length}
       />
     </div>
   );

@@ -15,7 +15,8 @@ import {
   Maximize2,
   X,
   FolderArchive,
-  Sparkles
+  Sparkles,
+  ListMusic
 } from 'lucide-react';
 
 export default function VideoPreview({
@@ -24,7 +25,11 @@ export default function VideoPreview({
   setActiveSlideIndex,
   onDownloadSlide,
   onDownloadAll,
-  isConverting = false
+  isConverting = false,
+  selectedPlaylistIndices = [],
+  onTogglePlaylistItem,
+  onToggleAllPlaylistItems,
+  onLoadPlaylist
 }) {
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
 
@@ -188,6 +193,27 @@ export default function VideoPreview({
               100H+ Engine Ready
             </span>
           )}
+
+          {video.isPlaylist && (
+            <span className="spotify-tag-badge" style={{ borderColor: 'rgba(30, 215, 96, 0.45)', background: 'rgba(30, 215, 96, 0.12)', color: 'var(--spotify-green)' }}>
+              <ListMusic size={11} />
+              Playlist ({video.playlistEntries?.length || video.itemCount} tracks)
+            </span>
+          )}
+
+          {!video.isPlaylist && video.hasPlaylistHint && onLoadPlaylist && (
+            <button
+              type="button"
+              onClick={onLoadPlaylist}
+              disabled={isConverting}
+              className="btn-dark-pill"
+              style={{ fontSize: '11px', padding: '4px 10px', borderColor: 'rgba(30, 215, 96, 0.45)', color: 'var(--spotify-green)' }}
+              title="Detected a playlist URL — load all tracks to select & batch queue"
+            >
+              <ListMusic size={12} />
+              <span>Load Full Playlist</span>
+            </button>
+          )}
         </div>
 
         <h2 className="spotify-track-title" title={video.title}>
@@ -207,6 +233,50 @@ export default function VideoPreview({
             </div>
           ) : null}
         </div>
+
+        {/* Playlist Track Checklist */}
+        {video.isPlaylist && Array.isArray(video.playlistEntries) && video.playlistEntries.length > 0 && (
+          <div className="playlist-checklist-box">
+            <div className="playlist-checklist-header">
+              <span>
+                Selected <strong>{selectedPlaylistIndices.length}</strong> of {video.playlistEntries.length} tracks
+              </span>
+              {onToggleAllPlaylistItems && (
+                <button
+                  type="button"
+                  className="btn-dark-pill"
+                  onClick={onToggleAllPlaylistItems}
+                  disabled={isConverting}
+                  style={{ fontSize: '11px', padding: '4px 10px' }}
+                >
+                  {selectedPlaylistIndices.length === video.playlistEntries.length ? 'Deselect All' : 'Select All'}
+                </button>
+              )}
+            </div>
+            <div className="playlist-checklist-scroll">
+              {video.playlistEntries.map((entry, idx) => {
+                const isChecked = selectedPlaylistIndices.includes(idx);
+                return (
+                  <label
+                    key={`${entry.id}-${idx}`}
+                    className={`playlist-checklist-item ${isChecked ? 'checked' : ''}`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isChecked}
+                      disabled={isConverting}
+                      onChange={() => onTogglePlaylistItem && onTogglePlaylistItem(idx)}
+                      style={{ accentColor: 'var(--spotify-green)', cursor: 'pointer', flexShrink: 0 }}
+                    />
+                    <span className="playlist-item-idx">#{idx + 1}</span>
+                    <span className="playlist-item-title" title={entry.title}>{entry.title}</span>
+                    <span className="playlist-item-meta">{entry.durationFormatted || '--:--'}</span>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Carousel 1-Click Quick Download Action Buttons */}
         {isMultiPhoto && (

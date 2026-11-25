@@ -72,19 +72,33 @@ trap cleanup SIGINT SIGTERM EXIT
 # Standalone Packaged Release Mode
 if [ -f "client/dist/index.html" ] && [ ! -d "client/node_modules" ]; then
     echo "[Mode] Standalone Desktop Package detected."
-    echo "Starting SonicWave Engine on Port 3001..."
-    (cd "$DIR/server" && npm start) &
+    FREE_PORT=$(node -e "
+      const net = require('net');
+      const start = Number(process.env.PORT) || 3001;
+      function probe(p) {
+        const s = net.createServer();
+        s.once('error', () => probe(p + 1));
+        s.listen(p, '127.0.0.1', () => {
+          const picked = s.address().port;
+          s.close(() => { process.stdout.write(String(picked)); });
+        });
+      }
+      probe(start);
+    " 2>/dev/null || echo "3001")
+    export PORT="${FREE_PORT:-3001}"
+    echo "Starting SonicWave Engine on Port $PORT..."
+    (cd "$DIR/server" && PORT="$PORT" npm start) &
     SERVER_PID=$!
 
     echo ""
     echo "==================================================="
     echo "  SonicWave Converter Studio is launching!"
-    echo "  Opening Converter Studio: http://localhost:3001/#app"
+    echo "  Opening Converter Studio: http://localhost:$PORT/#app"
     echo "==================================================="
     echo ""
 
     sleep 2
-    open_browser "http://localhost:3001/#app"
+    open_browser "http://localhost:$PORT/#app"
     wait "$SERVER_PID"
     exit 0
 fi

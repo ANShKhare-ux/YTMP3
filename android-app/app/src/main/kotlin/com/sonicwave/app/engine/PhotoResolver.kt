@@ -346,9 +346,13 @@ object PhotoResolver {
     suspend fun downloadSinglePhoto(
         photoUrl: String,
         destFile: File,
+        isCancelled: (() -> Boolean)? = null,
         onProgress: ((Float) -> Unit)? = null
     ): Boolean = withContext(Dispatchers.IO) {
         try {
+            if (isCancelled?.invoke() == true) {
+                throw java.util.concurrent.CancellationException("Conversion cancelled by user")
+            }
             val conn = (URL(photoUrl).openConnection() as HttpURLConnection).apply {
                 setRequestProperty("User-Agent", BROWSER_UA)
                 connectTimeout = 15000
@@ -370,6 +374,12 @@ object PhotoResolver {
             var totalRead = 0L
 
             while (input.read(buffer).also { bytesRead = it } != -1) {
+                if (isCancelled?.invoke() == true) {
+                    output.close()
+                    input.close()
+                    destFile.delete()
+                    throw java.util.concurrent.CancellationException("Conversion cancelled by user")
+                }
                 output.write(buffer, 0, bytesRead)
                 totalRead += bytesRead
                 if (totalBytes > 0 && onProgress != null) {
@@ -383,6 +393,8 @@ object PhotoResolver {
             input.close()
             onProgress?.invoke(100f)
             true
+        } catch (ce: java.util.concurrent.CancellationException) {
+            throw ce
         } catch (e: Exception) {
             Log.e(TAG, "Download single photo error", e)
             false
@@ -395,6 +407,7 @@ object PhotoResolver {
     suspend fun downloadCarouselZip(
         photos: List<PhotoSlide>,
         zipFile: File,
+        isCancelled: (() -> Boolean)? = null,
         onProgress: ((Float) -> Unit)? = null
     ): Boolean = withContext(Dispatchers.IO) {
         try {
@@ -404,6 +417,11 @@ object PhotoResolver {
             val zos = ZipOutputStream(FileOutputStream(zipFile))
 
             photos.forEachIndexed { index, slide ->
+                if (isCancelled?.invoke() == true) {
+                    zos.close()
+                    zipFile.delete()
+                    throw java.util.concurrent.CancellationException("Conversion cancelled by user")
+                }
                 val conn = (URL(slide.url).openConnection() as HttpURLConnection).apply {
                     setRequestProperty("User-Agent", BROWSER_UA)
                     connectTimeout = 15000
@@ -421,6 +439,13 @@ object PhotoResolver {
                     val buffer = ByteArray(8192)
                     var count: Int
                     while (input.read(buffer).also { count = it } != -1) {
+                        if (isCancelled?.invoke() == true) {
+                            input.close()
+                            zos.closeEntry()
+                            zos.close()
+                            zipFile.delete()
+                            throw java.util.concurrent.CancellationException("Conversion cancelled by user")
+                        }
                         zos.write(buffer, 0, count)
                     }
                     input.close()
@@ -435,6 +460,8 @@ object PhotoResolver {
             zos.close()
             onProgress?.invoke(100f)
             true
+        } catch (ce: java.util.concurrent.CancellationException) {
+            throw ce
         } catch (e: Exception) {
             Log.e(TAG, "Download carousel zip error", e)
             false

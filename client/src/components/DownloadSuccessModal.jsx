@@ -11,14 +11,16 @@ import {
   Sparkles,
   ArrowRight
 } from 'lucide-react';
+import { resolveReleaseAssetUrl } from '../utils/releaseAssets';
 
 /**
- * Programmatically triggers the download of the Windows standalone installer executable.
+ * Shared programmatic binary download helper supporting optional CDN mirrors
+ * via `VITE_RELEASE_CDN_URL` with local `/filename` fallback.
  */
-export function triggerExeDownload() {
+function triggerBinaryDownload(filename) {
   const link = document.createElement('a');
-  link.href = '/SonicWave-Custom-Installer.exe';
-  link.setAttribute('download', 'SonicWave-Custom-Installer.exe');
+  link.href = resolveReleaseAssetUrl(filename);
+  link.setAttribute('download', filename);
   link.style.display = 'none';
   document.body.appendChild(link);
   link.click();
@@ -29,63 +31,34 @@ export function triggerExeDownload() {
       }
     } catch {}
   }, 500);
+}
+
+/**
+ * Programmatically triggers the download of the Windows standalone installer executable.
+ */
+export function triggerExeDownload() {
+  triggerBinaryDownload('SonicWave-Custom-Installer.exe');
 }
 
 /**
  * Programmatically triggers the download of the Windows zip distribution.
  */
 export function triggerZipDownload() {
-  const link = document.createElement('a');
-  link.href = '/SonicWave-v1.0.0-Windows.zip';
-  link.setAttribute('download', 'SonicWave-v1.0.0-Windows.zip');
-  link.style.display = 'none';
-  document.body.appendChild(link);
-  link.click();
-  setTimeout(() => {
-    try {
-      if (document.body.contains(link)) {
-        document.body.removeChild(link);
-      }
-    } catch {}
-  }, 500);
+  triggerBinaryDownload('SonicWave-v1.0.0-Windows.zip');
 }
 
 /**
  * Programmatically triggers the download of the macOS zip distribution.
  */
 export function triggerMacZipDownload() {
-  const link = document.createElement('a');
-  link.href = '/SonicWave-v1.0.0-macOS.zip';
-  link.setAttribute('download', 'SonicWave-v1.0.0-macOS.zip');
-  link.style.display = 'none';
-  document.body.appendChild(link);
-  link.click();
-  setTimeout(() => {
-    try {
-      if (document.body.contains(link)) {
-        document.body.removeChild(link);
-      }
-    } catch {}
-  }, 500);
+  triggerBinaryDownload('SonicWave-v1.0.0-macOS.zip');
 }
 
 /**
  * Programmatically triggers the download of the Android standalone APK package.
  */
 export function triggerApkDownload() {
-  const link = document.createElement('a');
-  link.href = '/SonicWave.apk';
-  link.setAttribute('download', 'SonicWave.apk');
-  link.style.display = 'none';
-  document.body.appendChild(link);
-  link.click();
-  setTimeout(() => {
-    try {
-      if (document.body.contains(link)) {
-        document.body.removeChild(link);
-      }
-    } catch {}
-  }, 500);
+  triggerBinaryDownload('SonicWave.apk');
 }
 
 /**
@@ -247,12 +220,12 @@ export default function DownloadSuccessModal({
                 </span>
                 <span className="cursor-success-filemeta">
                   {isApk
-                    ? 'Android 8.0+ \u2022 ARM64 (v8a) \u2022 Embedded Engine'
+                    ? '73.0 MB \u2022 Android 8.0+ \u2022 ARM64 (v8a) \u2022 Embedded Engine'
                     : isMac
-                    ? '2.7 MB \u2022 macOS 12+ (Sonoma/Ventura/Monterey) \u2022 M1-M4 & Intel'
+                    ? '1.49 MB \u2022 macOS 12+ (Sonoma/Ventura/Monterey) \u2022 M1-M4 & Intel'
                     : isExe
-                    ? 'Windows 10 & 11 \u2022 Native Standalone Desktop Window (.exe)'
-                    : 'Windows 10 & 11 \u2022 Web Portable Package in Browser (.zip)'}
+                    ? '1.56 MB \u2022 Windows 10 & 11 \u2022 Native Standalone Desktop Window (.exe)'
+                    : '1.49 MB \u2022 Windows 10 & 11 \u2022 Web Portable Package in Browser (.zip)'}
                 </span>
               </div>
             </div>

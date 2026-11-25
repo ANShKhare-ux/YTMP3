@@ -236,10 +236,10 @@ export default function DownloadPage({ onNavigate }) {
               </div>
               <div style={{ fontSize: '13px', color: 'var(--text-subdued)' }}>
                 {userPlatform === 'android'
-                  ? 'Recommended: Android Standalone APK (73 MB) — on-device extraction with Share Sheet support.'
+                  ? 'Recommended: Android Standalone APK (73.0 MB) — on-device extraction with Share Sheet support.'
                   : userPlatform === 'mac'
-                  ? 'Recommended: macOS Portable Terminal Package (1.45 MB) — Apple Silicon & Intel ready.'
-                  : 'Recommended: Windows Custom GUI Installer (.exe, 1.5 MB) — native desktop window & shortcuts.'}
+                  ? 'Recommended: macOS Portable Terminal Package (1.49 MB) — Apple Silicon & Intel ready.'
+                  : 'Recommended: Windows Custom GUI Installer (.exe, 1.56 MB) — native desktop window & shortcuts.'}
               </div>
             </div>
           </div>
@@ -256,6 +256,17 @@ export default function DownloadPage({ onNavigate }) {
         </div>
 
         {/* 4 Download Methods Grid: 4 Aligned in a Single Line */}
+        <h2
+          style={{
+            fontSize: '20px',
+            fontWeight: 600,
+            color: '#ffffff',
+            margin: '0 0 16px',
+            letterSpacing: '-0.01em'
+          }}
+        >
+          Official distribution packages
+        </h2>
         <div className="download-methods-grid">
           
           {/* METHOD 1: Windows Native Custom Installer */}
@@ -300,7 +311,7 @@ export default function DownloadPage({ onNavigate }) {
 
             <div className="download-card-specs">
               <div><strong>File:</strong> <code>SonicWave-Custom-Installer.exe</code></div>
-              <div><strong>Size:</strong> 1.5 MB &bull; <strong>OS:</strong> Windows 11 &amp; 10 (64-bit)</div>
+              <div><strong>Size:</strong> 1.56 MB &bull; <strong>OS:</strong> Windows 11 &amp; 10 (64-bit)</div>
               <div><strong>Status:</strong> SHA-256 Verified &bull; Zero Registry Bloat</div>
             </div>
 
@@ -371,7 +382,7 @@ export default function DownloadPage({ onNavigate }) {
 
             <div className="download-card-specs">
               <div><strong>File:</strong> <code>SonicWave.apk</code></div>
-              <div><strong>Size:</strong> 73 MB &bull; <strong>OS:</strong> Android 8.0+ through Android 15</div>
+              <div><strong>Size:</strong> 73.0 MB &bull; <strong>OS:</strong> Android 8.0+ through Android 15</div>
               <div><strong>Signature:</strong> Release Keystore (v1, v2, v3) &bull; Target SDK 34</div>
             </div>
 
@@ -381,7 +392,7 @@ export default function DownloadPage({ onNavigate }) {
               onClick={() => startDownload('apk')}
             >
               <Download size={15} />
-              <span>Download Android APK (73 MB)</span>
+              <span>Download Android APK (73.0 MB)</span>
             </button>
 
             {/* Step-by-Step Guide */}
@@ -420,7 +431,7 @@ export default function DownloadPage({ onNavigate }) {
 
             <div className="download-card-specs">
               <div><strong>File:</strong> <code>SonicWave-v1.0.0-Windows.zip</code></div>
-              <div><strong>Size:</strong> 1.45 MB &bull; <strong>OS:</strong> Windows 11 &amp; 10</div>
+              <div><strong>Size:</strong> 1.49 MB &bull; <strong>OS:</strong> Windows 11 &amp; 10</div>
               <div><strong>Launcher:</strong> 1-click <code>start.bat</code> &bull; Self-Bootstrapping</div>
             </div>
 
@@ -488,7 +499,7 @@ export default function DownloadPage({ onNavigate }) {
 
             <div className="download-card-specs">
               <div><strong>File:</strong> <code>SonicWave-v1.0.0-macOS.zip</code></div>
-              <div><strong>Size:</strong> 1.45 MB &bull; <strong>OS:</strong> macOS 12+ (Apple Silicon &amp; Intel)</div>
+              <div><strong>Size:</strong> 1.49 MB &bull; <strong>OS:</strong> macOS 12+ (Apple Silicon &amp; Intel)</div>
               <div><strong>Launcher:</strong> POSIX bash <code>start.sh</code> &bull; Signal Handled</div>
             </div>
 
@@ -575,10 +586,10 @@ export default function DownloadPage({ onNavigate }) {
                 </tr>
                 <tr>
                   <td style={{ padding: '12px 16px', color: '#ffffff', fontWeight: 600 }}>Download Archive Size</td>
-                  <td style={{ padding: '12px 16px' }}>1.5 MB</td>
-                  <td style={{ padding: '12px 16px' }}>73 MB</td>
-                  <td style={{ padding: '12px 16px' }}>1.45 MB</td>
-                  <td style={{ padding: '12px 16px' }}>1.45 MB</td>
+                  <td style={{ padding: '12px 16px' }}>1.56 MB</td>
+                  <td style={{ padding: '12px 16px' }}>73.0 MB</td>
+                  <td style={{ padding: '12px 16px' }}>1.49 MB</td>
+                  <td style={{ padding: '12px 16px' }}>1.49 MB</td>
                 </tr>
               </tbody>
             </table>
@@ -605,7 +616,7 @@ export default function DownloadPage({ onNavigate }) {
                 How do I install the Android APK without "App not installed as package appears to be invalid"?
               </h3>
               <p style={{ fontSize: '13px', color: 'var(--text-subdued)', margin: 0, lineHeight: 1.6 }}>
-                Ensure you delete any older APK files from your Downloads folder and download the official <strong>73 MB release APK</strong> above. Our release APK is verified with full v1 (JAR), v2, and v3 signatures and 4-byte zip alignment, making it fully compatible with Android 8.0 through Android 15.
+                Ensure you delete any older APK files from your Downloads folder and download the official <strong>73.0 MB release APK</strong> above. Our release APK is verified with full v1 (JAR), v2, and v3 signatures and 4-byte zip alignment, making it fully compatible with Android 8.0 through Android 15.
               </p>
             </div>
 

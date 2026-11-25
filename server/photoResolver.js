@@ -634,12 +634,14 @@ function createZipBuffer(entries) {
   }
 
   const { time, date } = dosTimeDate();
+  const ALREADY_COMPRESSED_EXT = /\.(jpe?g|png|webp|gif|avif|mp3|m4a|mp4|zip)$/i;
 
   for (const entry of entries) {
     const nameBuf = Buffer.from(entry.filename, 'utf8');
     const rawData = Buffer.isBuffer(entry.data) ? entry.data : Buffer.from(entry.data);
-    const compressed = zlib.deflateRawSync(rawData);
-    const isDeflated = compressed.length < rawData.length;
+    const skipDeflate = ALREADY_COMPRESSED_EXT.test(entry.filename || '');
+    const compressed = skipDeflate ? null : zlib.deflateRawSync(rawData);
+    const isDeflated = Boolean(compressed && compressed.length < rawData.length);
     const finalData = isDeflated ? compressed : rawData;
     const method = isDeflated ? 8 : 0;
     const crc = crc32(rawData);

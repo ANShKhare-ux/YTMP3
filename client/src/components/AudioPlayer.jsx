@@ -12,43 +12,234 @@ import {
   SkipBack,
   SkipForward,
   AlertCircle,
-  X
+  X,
+  FolderOpen
 } from 'lucide-react';
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
+const PLAYBACK_RATES = [1, 1.25, 1.5, 2, 0.75];
+
+function readStoredNumber(key, fallback, min, max) {
+  try {
+    const raw = localStorage.getItem(key);
+    if (raw === null) return fallback;
+    const parsed = Number(raw);
+    if (!Number.isFinite(parsed) || parsed < min || parsed > max) return fallback;
+    return parsed;
+  } catch {
+    return fallback;
+  }
+}
 
 export default function AudioPlayer({
   track,
   onNextTrack,
   onPrevTrack,
   hasNext = false,
-  hasPrev = false
+  hasPrev = false,
+  autoPlay,
+  onToggleAutoPlay,
+  audioNormalization = false,
+  showVisualizer = true,
+  isDesktop = false,
+  savedFilePath = '',
+  onOpenFolder
 }) {
   const mediaRef = useRef(null);
   const videoContainerRef = useRef(null);
+  const canvasRef = useRef(null);
+  const audioCtxRef = useRef(null);
+  const mediaPipelineMapRef = useRef(new WeakMap());
+  const activePipelineRef = useRef(null);
+  const rafRef = useRef(null);
   const isSeekingRef = useRef(false);
+
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [volume, setVolume] = useState(1);
-  const [isMuted, setIsMuted] = useState(false);
+  const [volume, setVolume] = useState(() => readStoredNumber('sonicwave_volume', 1, 0, 1));
+  const [isMuted, setIsMuted] = useState(() => {
+    try {
+      return localStorage.getItem('sonicwave_muted') === 'true';
+    } catch {
+      return false;
+    }
+  });
   const [downloaded, setDownloaded] = useState(false);
-  const [playbackRate, setPlaybackRate] = useState(1);
+  const [playbackRate, setPlaybackRate] = useState(() => {
+    const saved = readStoredNumber('sonicwave_playback_rate', 1, 0.5, 2.5);
+    return PLAYBACK_RATES.includes(saved) ? saved : 1;
+  });
+  const [localAutoPlay, setLocalAutoPlay] = useState(() => {
+    try {
+      const saved = localStorage.getItem('sonicwave_autoplay');
+      return saved === null ? true : saved === 'true';
+    } catch {
+      return true;
+    }
+  });
   const [playbackError, setPlaybackError] = useState(null);
 
+  const effectiveAutoPlay = typeof autoPlay === 'boolean' ? autoPlay : localAutoPlay;
   const isVideo = track?.format === 'mp4';
 
-  // Reset state on track change
+  const ensureWebAudioPipeline = useCallback(() => {
+    const el = mediaRef.current;
+    if (!el || typeof window === 'undefined') return null;
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return null;
+
+    try {
+      if (!audioCtxRef.current || audioCtxRef.current.state === 'closed') {
+        audioCtxRef.current = new AudioCtx();
+      }
+      const ctx = audioCtxRef.current;
+      if (ctx.state === 'suspended') {
+        ctx.resume().catch(() => {});
+      }
+
+      let pipeline = mediaPipelineMapRef.current.get(el);
+      if (!pipeline) {
+        const source = ctx.createMediaElementSource(el);
+        const compressor = ctx.createDynamicsCompressor();
+        const analyser = ctx.createAnalyser();
+        analyser.fftSize = 64;
+        analyser.smoothingTimeConstant = 0.78;
+
+        source.connect(compressor);
+        compressor.connect(analyser);
+        analyser.connect(ctx.destination);
+
+        pipeline = { source, compressor, analyser };
+        mediaPipelineMapRef.current.set(el, pipeline);
+      }
+
+      const comp = pipeline.compressor;
+      comp.threshold.setValueAtTime(audioNormalization ? -22 : 0, ctx.currentTime);
+      comp.ratio.setValueAtTime(audioNormalization ? 6 : 1, ctx.currentTime);
+      comp.knee.setValueAtTime(audioNormalization ? 24 : 0, ctx.currentTime);
+
+      activePipelineRef.current = pipeline;
+      return pipeline;
+    } catch (err) {
+      console.warn('Web Audio visualizer setup skipped:', err);
+      return null;
+    }
+  }, [audioNormalization]);
+
+  // Update compressor dynamics live when normalization setting toggles
+  useEffect(() => {
+    const pipeline = activePipelineRef.current;
+    const ctx = audioCtxRef.current;
+    if (!pipeline || !ctx || ctx.state === 'closed') return;
+    pipeline.compressor.threshold.setValueAtTime(audioNormalization ? -22 : 0, ctx.currentTime);
+    pipeline.compressor.ratio.setValueAtTime(audioNormalization ? 6 : 1, ctx.currentTime);
+    pipeline.compressor.knee.setValueAtTime(audioNormalization ? 24 : 0, ctx.currentTime);
+  }, [audioNormalization]);
+
+  // Persist player preferences cleanly in localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem('sonicwave_volume', String(volume));
+    } catch {}
+  }, [volume]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('sonicwave_muted', String(isMuted));
+    } catch {}
+  }, [isMuted]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('sonicwave_playback_rate', String(playbackRate));
+    } catch {}
+  }, [playbackRate]);
+
+  useEffect(() => () => {
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    if (audioCtxRef.current && audioCtxRef.current.state !== 'closed') {
+      audioCtxRef.current.close().catch(() => {});
+    }
+  }, []);
+
+  // Reset state & optionally auto-play on track change
   useEffect(() => {
     setPlaybackError(null);
-    if (mediaRef.current) {
-      mediaRef.current.pause();
-      setIsPlaying(false);
-      setCurrentTime(0);
-      mediaRef.current.playbackRate = playbackRate;
-      mediaRef.current.load();
+    const el = mediaRef.current;
+    if (!el || !track?.jobId) return;
+
+    el.pause();
+    setIsPlaying(false);
+    setCurrentTime(0);
+    el.playbackRate = playbackRate;
+    el.volume = volume;
+    el.muted = isMuted;
+    el.load();
+
+    if (effectiveAutoPlay) {
+      ensureWebAudioPipeline();
+      el.play()
+        .then(() => setIsPlaying(true))
+        .catch(() => {
+          setIsPlaying(false);
+        });
     }
   }, [track?.jobId]);
+
+  // Drive live FFT canvas spectrum while playing audio
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    }
+
+    if (!canvas || isVideo || !isPlaying || !showVisualizer) {
+      if (canvas) {
+        const c = canvas.getContext('2d');
+        if (c) c.clearRect(0, 0, canvas.width, canvas.height);
+      }
+      return;
+    }
+
+    const ctx2d = canvas.getContext('2d');
+    const analyser = activePipelineRef.current?.analyser;
+    if (!ctx2d || !analyser) return;
+
+    const barCount = 12;
+    const freqData = new Uint8Array(analyser.frequencyBinCount);
+
+    const drawFrame = () => {
+      analyser.getByteFrequencyData(freqData);
+      const { width, height } = canvas;
+      ctx2d.clearRect(0, 0, width, height);
+
+      const gap = 2;
+      const barWidth = Math.max(2, (width - gap * (barCount - 1)) / barCount);
+
+      for (let i = 0; i < barCount; i += 1) {
+        const binIndex = Math.min(freqData.length - 1, Math.floor((i * freqData.length) / barCount));
+        const norm = freqData[binIndex] / 255;
+        const barHeight = Math.max(3, Math.round(norm * (height - 2)));
+        const x = i * (barWidth + gap);
+        const y = height - barHeight;
+
+        ctx2d.fillStyle = norm > 0.65 ? '#1ed760' : 'rgba(30, 215, 96, 0.78)';
+        ctx2d.fillRect(x, y, barWidth, barHeight);
+      }
+
+      rafRef.current = requestAnimationFrame(drawFrame);
+    };
+
+    rafRef.current = requestAnimationFrame(drawFrame);
+    return () => {
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
+    };
+  }, [isPlaying, isVideo, showVisualizer, track?.jobId]);
 
   const streamUrl = track?.jobId ? `${API_BASE}/api/stream/${track.jobId}` : '';
   const downloadUrl = track?.jobId ? `${API_BASE}/api/download/${track.jobId}` : '';
@@ -67,14 +258,15 @@ export default function AudioPlayer({
       setIsPlaying(false);
     } else {
       setPlaybackError(null);
+      ensureWebAudioPipeline();
       mediaRef.current.play()
         .then(() => setIsPlaying(true))
-        .catch(err => {
+        .catch((err) => {
           console.warn('Media playback error:', err);
           setPlaybackError('Unable to start playback. The file may have expired or is unavailable.');
         });
     }
-  }, [isPlaying]);
+  }, [isPlaying, ensureWebAudioPipeline]);
 
   const toggleMute = useCallback(() => {
     if (!mediaRef.current) return;
@@ -144,6 +336,8 @@ export default function AudioPlayer({
     if (mediaRef.current) {
       setDuration(mediaRef.current.duration);
       mediaRef.current.playbackRate = playbackRate;
+      mediaRef.current.volume = volume;
+      mediaRef.current.muted = isMuted;
     }
   };
 
@@ -174,13 +368,26 @@ export default function AudioPlayer({
   };
 
   const cyclePlaybackRate = () => {
-    const rates = [1, 1.25, 1.5, 2, 0.75];
-    const currentIndex = rates.indexOf(playbackRate);
-    const nextRate = rates[(currentIndex + 1) % rates.length];
+    const currentIndex = PLAYBACK_RATES.indexOf(playbackRate);
+    const nextRate = PLAYBACK_RATES[(currentIndex + 1) % PLAYBACK_RATES.length];
     setPlaybackRate(nextRate);
     if (mediaRef.current) {
       mediaRef.current.playbackRate = nextRate;
     }
+  };
+
+  const handleAutoPlayClick = () => {
+    if (onToggleAutoPlay) {
+      onToggleAutoPlay();
+      return;
+    }
+    setLocalAutoPlay((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem('sonicwave_autoplay', String(next));
+      } catch {}
+      return next;
+    });
   };
 
   const handleDownloadClick = () => {
@@ -214,6 +421,7 @@ export default function AudioPlayer({
           <video
             ref={mediaRef}
             src={streamUrl}
+            crossOrigin="anonymous"
             onTimeUpdate={handleTimeUpdate}
             onLoadedMetadata={handleLoadedMetadata}
             onEnded={handleMediaEnded}
@@ -250,6 +458,7 @@ export default function AudioPlayer({
         <audio
           ref={mediaRef}
           src={streamUrl}
+          crossOrigin="anonymous"
           onTimeUpdate={handleTimeUpdate}
           onLoadedMetadata={handleLoadedMetadata}
           onEnded={handleMediaEnded}
@@ -321,13 +530,15 @@ export default function AudioPlayer({
             </span>
           </div>
 
-          {!isVideo && isPlaying && (
-            <div className="wave-bars" title="Playing">
-              <div className="wave-bar" />
-              <div className="wave-bar" />
-              <div className="wave-bar" />
-              <div className="wave-bar" />
-            </div>
+          {!isVideo && isPlaying && showVisualizer && (
+            <canvas
+              ref={canvasRef}
+              width={66}
+              height={20}
+              aria-hidden="true"
+              title="Real-time Web Audio spectrum"
+              style={{ flexShrink: 0, display: 'block' }}
+            />
           )}
         </div>
 
@@ -388,6 +599,25 @@ export default function AudioPlayer({
             >
               {playbackRate}x
             </button>
+
+            {/* Auto-Play Next / Newly Selected Track Toggle */}
+            <button
+              type="button"
+              className="btn-dark-pill"
+              onClick={handleAutoPlayClick}
+              aria-pressed={effectiveAutoPlay}
+              title={effectiveAutoPlay ? 'Auto-play enabled' : 'Auto-play disabled'}
+              style={{
+                padding: '3px 8px',
+                fontSize: '10px',
+                fontWeight: 700,
+                letterSpacing: '0.5px',
+                borderColor: effectiveAutoPlay ? 'rgba(30, 215, 96, 0.55)' : 'var(--border-subtle)',
+                color: effectiveAutoPlay ? 'var(--spotify-green)' : 'var(--text-subdued)'
+              }}
+            >
+              AUTO
+            </button>
           </div>
 
           <div className="player-scrubber-row">
@@ -446,6 +676,26 @@ export default function AudioPlayer({
               aria-label="Volume"
             />
           </div>
+
+          {isDesktop && onOpenFolder && (
+            <button
+              type="button"
+              className="btn-dark-pill"
+              onClick={onOpenFolder}
+              title={savedFilePath ? `Open folder containing ${savedFilePath}` : 'Save to folder & reveal location'}
+              aria-label="Open file folder"
+              style={{
+                padding: '6px 12px',
+                fontSize: '11px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px'
+              }}
+            >
+              <FolderOpen size={14} aria-hidden="true" />
+              <span>OPEN FOLDER</span>
+            </button>
+          )}
 
           <a
             id="download-file-btn"

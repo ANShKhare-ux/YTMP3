@@ -1,0 +1,333 @@
+================================================================================
+SONICWAVE (YTMP3) — COMPREHENSIVE IMPROVEMENT PLAN (WEBAPP + MAIN APP)
+Generated: 2026-11-25 | Status: AWAITING USER APPROVAL (No code modified yet)
+================================================================================
+
+All findings below are grounded in direct inspection of the codebase.
+Each item includes an ID (e.g., W1, M1) so you can easily approve specific
+items, groups, or the entire plan.
+
+
+================================================================================
+PART 1: WEBAPP IMPROVEMENTS (Public Website, Docs, SEO, Legal, Intro & Assets)
+================================================================================
+
+[W1] [CRITICAL BUG] Fix Runtime ReferenceError in Intro Audio Toggle
+  - Where: client/src/components/WebsiteIntro.jsx (lines 14, 90-98, 52-75)
+  - Current Behavior: `toggleMute()` still calls `setHasInteracted(true)` at line 97,
+    even though `hasInteracted` state was replaced with `needsGestureForAudio`.
+    Clicking the Sound button or pressing `M` throws `ReferenceError:
+    setHasInteracted is not defined`. Also, `enableAudioOnGesture` window
+    listeners attached on autoplay fallback are not cleaned up if the user
+    skips/unmounts before clicking.
+  - Improvement: Replace `setHasInteracted(true)` with `setNeedsGestureForAudio(false)`
+    and track/remove `enableAudioOnGesture` listeners inside `useEffect` cleanup.
+
+[W2] [HIGH IMPACT] Route-Level Code Splitting (Shrink Initial JS Bundle)
+  - Where: client/src/App.jsx (lines 1-14)
+  - Current Behavior: All 12 route components (LandingPage, DownloadPage, AboutUs,
+    PrivacyPolicy, TermsOfUse, CopyrightPolicy, ContactSupport, InstallGuide,
+    SupportedPlatforms, TroubleshootingGuide, ConverterGuide, NotFound) are
+    statically imported at top level, producing an ~666 KB main `index-*.js` chunk
+    (205 KB gzipped) for every visitor.
+  - Improvement: Lazy-load all non-home routes via `React.lazy()` + `<Suspense>`
+    with a sleek dark loading fallback so visitors on `/` only download LandingPage
+    and WebsiteIntro initially.
+
+[W3] [HIGH IMPACT] Remove Unused GSAP Plugins from LandingPage Bundle
+  - Where: client/src/components/LandingPage.jsx (lines 34-71)
+  - Current Behavior: Imports and registers 16 GSAP plugins (`MotionPathPlugin`,
+    `EasePack`, `TextPlugin`, `Observer`, etc.) synchronously, even though
+    several are never called.
+  - Improvement: Prune unused GSAP plugin imports and keep only the active ones
+    (`useGSAP`, `ScrollTrigger`, `ScrollToPlugin`, `CustomEase`, `Draggable`,
+    `InertiaPlugin`, `Flip`, `SplitText`, `ScrambleTextPlugin`, `DrawSVGPlugin`,
+    `CustomBounce`, `CustomWiggle`)—or load non-hero plugins lazily after mount.
+
+[W4] [HIGH IMPACT] Unify File Size Claims & Platform Copy Across Web Pages
+  - Where:
+      * client/src/components/LandingPage.jsx (line 1659: says 1.3 MB Win / 2.7 MB Mac;
+        line 2000: FAQ subhead omits Android)
+      * client/src/components/DownloadSuccessModal.jsx (line 252: says 2.7 MB macOS)
+      * client/src/components/DownloadPage.jsx (lines 239-243, 303, 423, 491, 578-581:
+        mixes 1.45 MB / 1.5 MB / 73 MB)
+      * client/public/llms.txt (line 41) & client/index.html (line 100)
+  - Actual Verified Sizes in client/public/:
+      * SonicWave-Custom-Installer.exe = 1,561,600 bytes (~1.49 MiB / 1.56 MB)
+      * SonicWave-v1.0.0-Windows.zip   = 1,486,644 bytes (~1.42 MiB / 1.49 MB)
+      * SonicWave-v1.0.0-macOS.zip     = 1,486,644 bytes (~1.42 MiB / 1.49 MB)
+      * SonicWave.apk                  = 73,047,469 bytes (~69.7 MiB / 73.0 MB)
+  - Improvement: Standardize accurate sizes from a single shared constants module
+    and update FAQ/schema/noscript copy to consistently reflect Windows, macOS,
+    Android APK, and Photo/Carousel downloads.
+
+[W5] [MEDIUM] Make the Hero Showcase Audio Player Play Real Sound
+  - Where: client/src/components/LandingPage.jsx (lines 138-166, 286-315, 1468-1497)
+  - Current Behavior: Clicking Play on the hero preview widget ("Neon Horizon",
+    "Midnight Rain Lofi", "Acoustic Sunset") only advances `demoProgress` with a
+    500ms timer and animates CSS/GSAP bars—no audio actually plays, even though
+    there is a working Mute/Unmute toggle and volume UI.
+  - Improvement: Wire Web Audio API synth loops or short sample audio previews
+    matching the 3 demo tracks, respecting `isMuted`, Play/Pause, and scrubbing.
+
+[W6] [MEDIUM] Add Real Showcase Tabs for Desktop Photo/Carousel & Android APK UI
+  - Where: client/src/components/LandingPage.jsx (hero showcase & features section)
+  - Current Behavior: Hero showcase & comparison highlights mostly focus on audio
+    and YouTube, whereas the app now also extracts full 1080p Instagram Carousels,
+    Reddit galleries, Twitter/X photos, and offers an on-device Android app.
+  - Improvement: Add toggleable showcase views in the hero preview (Studio Audio,
+    Carousel Gallery, Mobile Share Sheet) to surface all core capabilities upfront.
+
+[W7] [MEDIUM] Improve Contact Form Fallback UX (Non-Gmail & Popup Blockers)
+  - Where: client/src/components/legal/ContactSupport.jsx (lines 95-102, 262-296)
+  - Current Behavior: Form submission immediately calls `window.open` to a Gmail
+    Web Compose URL, which popup blockers can block and does not assist desktop
+    mail client users until after submission.
+  - Improvement: Add a 1-click "Copy Formatted Inquiry" button right in the form
+    and confirmation box, plus clean mailto/Gmail options and inline validation
+    feedback before opening external links.
+
+[W8] [MEDIUM] Accessibility & Semantic HTML Polish on Webapp
+  - Where:
+      * client/src/components/LandingPage.jsx (line 981 uses `href="#"`)
+      * client/src/components/DownloadPage.jsx (jumps from `<h1>` at line 202 to
+        `<h3>` card titles at lines 291/362/411/479 and `<h4>` guide titles)
+  - Improvement: Change `href="#"` to `href="/"` (or `#top`), fix heading
+    hierarchy (`<h2>` for distribution cards / `<h3>` for step titles) for clean
+    WCAG 2.2 AA screen-reader navigation.
+
+[W9] [MEDIUM] Dynamic SEO Metadata, Sitemap & Structured Data Sync
+  - Where: client/public/sitemap.xml, client/index.html
+  - Current Behavior: `sitemap.xml` still shows older `lastmod` dates
+    (`2026-11-14`, `2026-11-20`), and `<noscript>` + JSON-LD `SoftwareApplication`
+    omit macOS, Android `.apk`, and Photo/Carousel extractor support.
+  - Improvement: Update JSON-LD schema `operatingSystem`, `featureList`, `<noscript>`
+    links, and `sitemap.xml` timestamps cleanly.
+
+[W10] [NICE TO HAVE] Offload Heavy Binaries (73 MB APK) from Vercel Static Repo
+  - Where: client/public/SonicWave.apk (73 MB), client/public/*.exe, *.zip
+  - Current Behavior: Large binaries stored directly in git and `client/public/`
+    inflate git clone size and Vercel upload time on every frontend deploy.
+  - Improvement: Host release binaries on GitHub Releases and route/mirror download
+    URLs cleanly (with automatic local fallback when running standalone server).
+
+[W11] [NICE TO HAVE] Add PWA Manifest (manifest.webmanifest)
+  - Where: client/public/, client/index.html
+  - Current Behavior: Site has `favicon.ico`, `favicon-96.png`, and
+    `apple-touch-icon.png`, but lacks `manifest.webmanifest`.
+  - Improvement: Add `manifest.webmanifest` for installable docs/app hub metadata
+    on Android and desktop browsers.
+
+
+================================================================================
+PART 2: MAIN APP IMPROVEMENTS (Converter Studio UI, Backend, Desktop & Android)
+================================================================================
+
+--- A. Converter Studio Frontend (client/src/AppDesktop.jsx & components/) ---
+
+[M1] [HIGH IMPACT] Fix Client History Missing `url` (Enables Expired Re-Convert)
+  - Where: client/src/AppDesktop.jsx (lines 331-346, 400-414) & HistorySection.jsx
+  - Current Behavior: Client-side completed jobs save `{ id, title, artist,
+    thumbnail, format, quality, timestamp }` WITHOUT `url` or `isAvailable`.
+    Meanwhile `HistorySection.jsx` line 117 requires `item.url` to show the
+    "Re-convert" button when a cached file expires! Also, client truncates
+    `localStorage` history at 15 items while backend `history.json` stores 50.
+  - Improvement: Persist `url` (and photo flags) on history entries, align cap
+    to 50 items, and add individual row delete + search/filter bar in
+    `HistorySection.jsx`.
+
+[M2] [HIGH IMPACT] Replace Native `alert()` & Dead `PricingModal` with Real Settings Modal
+  - Where:
+      * client/src/AppDesktop.jsx (lines 621, 672-681, 928-935)
+      * client/src/components/PricingModal.jsx (lines 16, 74-92)
+  - Current Behavior:
+      1) Command Palette "Update Engine (yt-dlp)" triggers blocking browser `alert()`.
+      2) Top bar shows a yellow Crown "Studio Pro" button opening `PricingModal`,
+         where the `billingPeriod` toggle (`Cloud Converters` / `SonicWave Local`)
+         changes tab styling without switching any cards.
+      3) Sidebar says `"100H+ Turbo Engine"`.
+  - Improvement:
+      1) Replace `alert()` with an in-app status toast / modal showing live
+         engine update progress and installed binary versions (`yt-dlp`, `FFmpeg`,
+         `aria2c`).
+      2) Fix or replace the "Studio Pro" pricing modal in the desktop app with a
+         real **Engine & Preferences Settings Modal** (Output Save Folder, Max
+         Concurrency, Auto-Save toggle, Audio Normalization, Cookies Manager).
+
+[M3] [HIGH IMPACT] Real-Time Web Audio Frequency Visualizer & Player Polish
+  - Where: client/src/components/AudioPlayer.jsx (lines 36, 41-51, 324-331)
+  - Current Behavior: Marketing claims *"real-time waveform visualization"*, but
+    `AudioPlayer.jsx` renders 4 static CSS-animated `<div className="wave-bar" />`
+    elements unrelated to the audio frequencies. Also, `playbackRate` does not
+    persist in `localStorage`, and clicking a history track does not auto-play.
+  - Improvement: Connect HTMLMediaElement to Web Audio API `AnalyserNode` (with
+    CORS-safe headers on `/api/stream/:jobId`) for a genuine reactive canvas/bar
+    spectrum, persist `playbackRate` & `volume`, and add an optional auto-play
+    toggle when selecting tracks or finishing conversions.
+
+[M4] [MEDIUM] Auto-Save / "Open File Location" After Desktop Conversion
+  - Where: client/src/AppDesktop.jsx, electron/main.js, electron/preload.js
+  - Current Behavior: After conversion finishes, users must manually click
+    `SAVE MP3 FILE` to copy from `server/downloads/` into their OS Downloads folder.
+  - Improvement: In Desktop/Electron mode, save directly to user's chosen Music /
+    Downloads folder and add an **"Open Folder"** button (`shell.showItemInFolder`)
+    in `ProgressBar.jsx` and `AudioPlayer.jsx`.
+
+
+--- B. Backend Engine & Security (server/) ---
+
+[M5] [CRITICAL SECURITY] Fix SSRF & Unbounded Memory Buffer in `/api/photo-download`
+  - Where: server/index.js (lines 393-425)
+  - Current Behavior: `/api/photo-download` only checks `url.startsWith('https://')`
+    (does NOT call `normalizeUrl(url)` to block internal/private/metadata IPs or
+    follow-redirect SSRF) and loads the entire response into memory via
+    `await upstreamRes.arrayBuffer()` without a max-bytes limit.
+  - Improvement: Validate URL via `normalizeUrl(url)`, block redirects to private
+    IPs, verify `content-type` is `image/*`, enforce a strict size limit (e.g.
+    25 MB), and stream response chunks cleanly to `res`.
+
+[M6] [SECURITY / RULE] Eliminate Shell String Invocation in `cancelConversion`
+  - Where: server/converter.js (line 1829)
+  - Current Behavior: Calls `execSync(\`taskkill /pid ${pid} /T /F\`)` via shell
+    interpolation instead of argument array (violates `AGENTS.md` Rule 2.5).
+  - Improvement: Use `execFileSync('taskkill', ['/pid', String(Number(pid)), '/T', '/F'], { stdio: 'ignore' })`
+    with integer PID validation.
+
+[M7] [HIGH IMPACT] Convert HTTP 429 Hard Rejection into Persistent Conversion Queue
+  - Where: server/index.js (lines 129-136) & server/converter.js
+  - Current Behavior: When 3 jobs are active (`MAX_CONCURRENT_CONVERSIONS = 3`),
+    the 4th request fails immediately with HTTP `429 Too Many Requests`.
+  - Improvement: Add a FIFO **Job Queue** (`status: 'queued'`) so users can submit
+    multiple links or entire playlists and watch them process automatically as
+    worker slots free up.
+
+[M8] [HIGH IMPACT] Playlist & Multi-Track Batch Extraction Mode
+  - Where: server/converter.js (lines 1176, 1427, 1459), AppDesktop.jsx
+  - Current Behavior: `yt-dlp` enforces `--no-playlist` everywhere; pasting a
+    YouTube playlist or SoundCloud album URL only extracts or fails on a single item.
+  - Improvement: Detect playlist URLs, fetch entries via `--flat-playlist --dump-single-json`,
+    display a selectable track checklist in the UI, and batch-queue selected tracks
+    (with optional ZIP packaging).
+
+[M9] [HIGH IMPACT] Permanent Library Output Mode (Stop 2-Hour Eviction of Saved Tracks)
+  - Where: server/converter.js (lines 82-115, cleanOldDownloads)
+  - Current Behavior: `cleanOldDownloads` deletes every file in `server/downloads/`
+    older than 2 hours, causing `AudioPlayer` to fail with *"file not found or
+    expired"* for recent history items.
+  - Improvement: Support a user-configured persistent Library folder (e.g.
+    `~/Downloads/SonicWave`) where finalized files are stored without 2-hour
+    auto-deletion, while still cleaning temporary partials/orphans.
+
+[M10] [HIGH IMPACT] Auto-Provision `aria2c` in `binManager.js` + Redundant M4A Fix
+  - Where: server/binManager.js & server/converter.js (lines 1376-1446)
+  - Current Behavior: `converter.js` enables `aria2c` only if found on PATH or
+    manually copied into `server/bin/`, because `binManager.js` never downloads
+    `aria2c`. Also, `m4a` sets `-f ba[ext=m4a]` alongside `--extract-audio` and
+    `aria2c` runs alongside yt-dlp `-N 16`.
+  - Improvement: Auto-provision verified `aria2c` in `binManager.js` (or accurately
+    report `downloader` status in `/api/status`), clean up redundant M4A transcode
+    when source is already native AAC/M4A, and avoid conflicting `-N 16` flags
+    when external `aria2c` is active.
+
+[M11] [HIGH IMPACT] In-App Cookies & Bot-Bypass Manager (`/api/settings/cookies`)
+  - Where: server/index.js, server/converter.js (getCookiePath)
+  - Current Behavior: Users hitting YouTube/Instagram "Sign in to confirm you are
+    not a bot" errors must manually locate `server/` on disk and drop `cookies.txt`.
+  - Improvement: Expose localhost-only endpoints to check cookie file presence,
+    upload/paste Netscape cookies in Settings UI, and show cookie health cleanly.
+
+[M12] [MEDIUM] Trim/Cut Clips, Audio Normalization, SponsorBlock & Zip Speedup
+  - Where: server/converter.js, server/photoResolver.js (line 641)
+  - Current Behavior:
+      1) `photoResolver.createZipBuffer` runs synchronous `zlib.deflateRawSync` on
+         JPG/PNG/WebP images (already compressed), wasting CPU and blocking the
+         Node event loop.
+      2) No UI/engine support for trim ranges (`--download-sections`), loudness
+         normalization (`loudnorm`), SponsorBlock skipping, or chapter splitting.
+  - Improvement: Store already-compressed JPG/PNG/WebP in ZIP with `method=0`
+    (zero CPU compression overhead, instant ZIP creation) and add optional
+    Start/End clip trimming + loudness normalization controls in `OptionsSelector.jsx`.
+
+
+--- C. Desktop Runtime & Packaging (electron/, launcher/, scripts/) ---
+
+[M13] [CRITICAL UX] Eliminate System Node.js Requirement in Windows `.exe` Installer
+  - Where: launcher/SonicWaveApp.cs (lines 32-47, 98-136), scripts/package-desktop.mjs
+  - Current Behavior: The default `SonicWave-Custom-Installer.exe` ships
+    `SonicWave.exe` (C# launcher), which requires the user to already have
+    **Node.js** + **Edge/Chrome** installed globally (showing an error dialog linking
+    to nodejs.org if absent). Meanwhile our landing page FAQ promises *"No manual
+    configuration required"*.
+  - Improvement: Either embed a lightweight portable Node.js binary inside the
+    custom installer payload OR package the Electron standalone build (`electron/main.js`)
+    directly into the installer so SonicWave runs out-of-the-box on any clean Windows PC.
+
+[M14] [HIGH IMPACT] Fix `SonicWave-v1.0.0-macOS.zip` Shipping Windows Files
+  - Where: scripts/package-desktop.mjs (line 179)
+  - Current Behavior: Line 179 literally copies the Windows ZIP as the macOS ZIP
+    (`fs.copyFileSync(zipOutputFilePublic, macZipOutputFilePublic)`), bundling
+    `SonicWave.exe` and `start.bat` inside the macOS download and stripping Unix
+    executable bits (`chmod +x`) from `start.sh`.
+  - Improvement: Build an authentic macOS archive excluding `.exe`/`.bat` files
+    and preserving POSIX `+x` permissions on `start.sh` (using `zip`/`tar` or
+    proper ZIP external file attributes `0o755`).
+
+[M15] [HIGH IMPACT] Dynamic Port Allocation & Rich Electron Preload IPC
+  - Where: electron/main.js (lines 6-14, 171-194), electron/preload.js, server/index.js
+  - Current Behavior:
+      1) Port `3001` is hardcoded across `electron/main.js`, `SonicWaveApp.cs`,
+         and `server/index.js`. If port 3001 is busy, launch breaks or connects
+         to the wrong service.
+      2) `electron/main.js` disables hardware acceleration globally on Windows
+         (`app.disableHardwareAcceleration()`), lowering 60fps UI smoothness on
+         healthy GPUs.
+      3) `electron/preload.js` only exposes `{ isDesktop, platform, version }`—no
+         native folder picker, file reveal (`showItemInFolder`), or system tray.
+  - Improvement: Scan for an available free port dynamically, replace blanket GPU
+    disable with fallback-only handling, and expose safe IPC methods in
+    `preload.js` for directory picking, "Reveal in Explorer/Finder", and tray minimize.
+
+
+--- D. Standalone Android APK (android-app/) ---
+
+[M16] [CRITICAL UX] Android Foreground Service + ViewModel State Survival
+  - Where:
+      * android-app/app/src/main/kotlin/com/sonicwave/app/ui/SonicWaveAppScreen.kt (lines 111-147, 852)
+      * android-app/app/src/main/kotlin/com/sonicwave/app/engine/ConversionEngine.kt
+      * android-app/app/src/main/AndroidManifest.xml (lines 17-20)
+  - Current Behavior: `AndroidManifest.xml` declares `FOREGROUND_SERVICE_DATA_SYNC`
+    and `POST_NOTIFICATIONS`, but no Foreground Service exists! Downloads execute
+    inside Composable `rememberCoroutineScope()`, and `resolvedMedia` lives in
+    Composable `remember {}` state. Rotating the screen wipes UI state, and
+    switching apps can cause Android to kill long conversions.
+  - Improvement: Move conversion & state management into an Android `ViewModel`
+    backed by a real `ForegroundService` displaying persistent progress + completion
+    notifications (with Android 13+ runtime `POST_NOTIFICATIONS` permission prompt).
+
+[M17] [HIGH IMPACT] Add Cancellation, Scoped Storage MediaStore & Error Surfacing on Android
+  - Where: android-app/app/src/main/kotlin/com/sonicwave/app/engine/ConversionEngine.kt (lines 86-111, 141-147, 240, 275, 296-299)
+  - Current Behavior:
+      1) No Cancel button (`YoutubeDL.getInstance().destroyProcessById(jobId)` not wired).
+      2) `resolveMedia` swallows `yt-dlp` errors and returns a fake `Result.success("$platform Media")`.
+      3) Output uses legacy `Environment.getExternalStoragePublicDirectory` +
+         `lastModified()` scanning instead of deterministic job folders + `MediaStore`.
+      4) `m4a` extraction passes `-x --audio-format m4a` redundantly on `ba[ext=m4a]`.
+  - Improvement: Wire Cancel button & process ID termination, surface real formatted
+    error messages during `resolveMedia`, write into temp job dir and export via
+    `MediaStore` reliably on Android 10–15, and fix M4A direct stream copy.
+
+[M18] [HIGH IMPACT] Android R8 Shrinking (Slim 73 MB APK) + In-App History & Audio Player
+  - Where: android-app/app/build.gradle.kts (line 36), SonicWaveAppScreen.kt
+  - Current Behavior: Release build sets `isMinifyEnabled = false` (`73 MB` APK),
+    and the Android app lacks a Conversion History tab or built-in mini-player
+    (forcing users to leave the app to listen/view files).
+  - Improvement: Enable R8 optimization (`isMinifyEnabled = true`, `isShrinkResources = true`)
+    with keep rules for Compose/youtubedl-android to reduce APK overhead, and add
+    persistent local History + embedded ExoPlayer/MediaPlayer audition card.
+
+
+================================================================================
+NEXT STEP:
+Reply with which items (e.g. "Approve all", "Approve W1, W2, M1, M5, M14",
+or "Start with Webapp fixes first") you would like me to implement.
+================================================================================

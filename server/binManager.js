@@ -7,6 +7,9 @@ const isWin = process.platform === 'win32';
 const BIN_DIR = path.join(__dirname, 'bin');
 const YT_DLP_NAME = isWin ? 'yt-dlp.exe' : 'yt-dlp';
 const YT_DLP_PATH = path.join(BIN_DIR, YT_DLP_NAME);
+const ARIA2_NAME = isWin ? 'aria2c.exe' : 'aria2c';
+const ARIA2_PATH = path.join(BIN_DIR, ARIA2_NAME);
+const ARIA2_WIN_ZIP_URL = 'https://github.com/aria2/aria2/releases/download/release-1.37.0/aria2-1.37.0-win-64bit-build1.zip';
 const YT_DLP_URL = isWin
   ? 'https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe'
   : 'https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp';
@@ -102,6 +105,9 @@ async function verifyBinaries(options = {}) {
     ytDlpVersion: null,
     ffmpeg: false,
     ffmpegVersion: null,
+    aria2: false,
+    aria2Version: null,
+    downloader: 'builtin',
     binDir: BIN_DIR
   };
 
@@ -175,7 +181,91 @@ async function verifyBinaries(options = {}) {
     }
   }
 
+  // 3. Detect aria2c external accelerator (local bin/ first, then system PATH)
+  cleanCorruptBinary(ARIA2_PATH);
+  const aria2Candidates = fs.existsSync(ARIA2_PATH) ? [ARIA2_PATH, 'aria2c'] : ['aria2c'];
+  for (const candidate of aria2Candidates) {
+    try {
+      const output = execFileSync(candidate, ['-v'], { encoding: 'utf8', timeout: 3000 })
+        .split(/\r?\n/)[0]
+        .trim();
+      status.aria2 = true;
+      status.aria2Version = output || 'aria2c';
+      status.downloader = 'aria2c';
+      break;
+    } catch {}
+  }
+
   return status;
+}
+
+function getAria2Path() {
+  if (fs.existsSync(ARIA2_PATH)) return ARIA2_PATH;
+  return null;
+}
+
+function installAria2() {
+  return new Promise(async (resolve) => {
+    cleanCorruptBinary(ARIA2_PATH);
+    if (fs.existsSync(ARIA2_PATH)) {
+      try {
+        const ver = execFileSync(ARIA2_PATH, ['-v'], { encoding: 'utf8', timeout: 3000 }).split(/\r?\n/)[0].trim();
+        return resolve({ success: true, version: ver, downloader: 'aria2c', alreadyInstalled: true });
+      } catch {}
+    }
+
+    if (!isWin) {
+      return resolve({
+        success: false,
+        error: 'Automatic aria2c provisioning is built-in for Windows x64; install via Homebrew/apt on macOS or Linux.'
+      });
+    }
+
+    const tempZip = path.join(BIN_DIR, 'aria2-download.zip');
+    const tempExtract = path.join(BIN_DIR, 'aria2-extract');
+    try {
+      await downloadFile(ARIA2_WIN_ZIP_URL, tempZip);
+      if (fs.existsSync(tempExtract)) {
+        fs.rmSync(tempExtract, { recursive: true, force: true });
+      }
+      fs.mkdirSync(tempExtract, { recursive: true });
+      execFileSync(
+        'powershell.exe',
+        ['-NoProfile', '-NonInteractive', '-Command', 'Expand-Archive -Path $env:ARIA2_ZIP -DestinationPath $env:ARIA2_DEST -Force'],
+        {
+          env: { ...process.env, ARIA2_ZIP: tempZip, ARIA2_DEST: tempExtract },
+          stdio: 'ignore',
+          timeout: 30000
+        }
+      );
+
+      const findBinary = (dir) => {
+        for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+          const full = path.join(dir, entry.name);
+          if (entry.isDirectory()) {
+            const nested = findBinary(full);
+            if (nested) return nested;
+          } else if (entry.name.toLowerCase() === 'aria2c.exe') {
+            return full;
+          }
+        }
+        return null;
+      };
+
+      const extractedBin = findBinary(tempExtract);
+      if (!extractedBin) {
+        return resolve({ success: false, error: 'aria2c.exe was not found inside release archive.' });
+      }
+      fs.copyFileSync(extractedBin, ARIA2_PATH);
+      const ver = execFileSync(ARIA2_PATH, ['-v'], { encoding: 'utf8', timeout: 3000 }).split(/\r?\n/)[0].trim();
+      resolve({ success: true, version: ver, downloader: 'aria2c' });
+    } catch (err) {
+      resolve({ success: false, error: err.message || 'Failed to install aria2c.' });
+    } finally {
+      try { if (fs.existsSync(tempZip)) fs.unlinkSync(tempZip); } catch {}
+      try { if (fs.existsSync(tempExtract)) fs.rmSync(tempExtract, { recursive: true, force: true }); } catch {}
+    }
+  });
 }
 
 function getYtDlpPath() {
@@ -220,11 +310,14 @@ function updateYtDlp() {
 module.exports = {
   verifyBinaries,
   updateYtDlp,
+  installAria2,
   getYtDlpPath,
   getFfmpegPath,
   getFfmpegLocation,
+  getAria2Path,
   getBinDir,
   cleanCorruptBinary,
   YT_DLP_PATH,
+  ARIA2_PATH,
   BIN_DIR
 };

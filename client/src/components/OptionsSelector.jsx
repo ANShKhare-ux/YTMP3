@@ -33,7 +33,15 @@ export default function OptionsSelector({
   turbo = true,
   setTurbo,
   activeSlideIndex = 0,
-  setActiveSlideIndex
+  setActiveSlideIndex,
+  trimStart = '',
+  setTrimStart,
+  trimEnd = '',
+  setTrimEnd,
+  normalizeAudio = false,
+  setNormalizeAudio,
+  sponsorBlock = false,
+  setSponsorBlock
 }) {
   const isVideo = format === 'mp4';
   const isLossless = format === 'wav' || format === 'flac';
@@ -330,6 +338,95 @@ export default function OptionsSelector({
           </div>
         </div>
       </div>
+
+      {/* Clip Trimming, Loudness Normalization & SponsorBlock Tools */}
+      {!videoInfo?.isPhoto && (
+        <div
+          style={{
+            marginTop: '14px',
+            padding: '12px 14px',
+            backgroundColor: 'var(--bg-base)',
+            border: '1px solid var(--border-separator)',
+            borderRadius: 'var(--radius-sm)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '12px'
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '11.5px', fontWeight: 700, color: 'var(--text-subdued)', textTransform: 'uppercase', letterSpacing: '0.6px' }}>
+              Clip Trim:
+            </span>
+            <input
+              type="text"
+              value={trimStart}
+              onChange={(e) => setTrimStart && setTrimStart(e.target.value)}
+              disabled={isConverting}
+              placeholder="Start (e.g. 0:15)"
+              aria-label="Clip start time"
+              style={{
+                width: '112px',
+                padding: '5px 8px',
+                borderRadius: '6px',
+                border: '1px solid var(--border-subtle)',
+                backgroundColor: 'var(--bg-elevated)',
+                color: 'var(--text-white)',
+                fontSize: '12px',
+                fontFamily: 'var(--font-mono)'
+              }}
+            />
+            <span style={{ color: 'var(--text-muted)', fontSize: '12px' }}>to</span>
+            <input
+              type="text"
+              value={trimEnd}
+              onChange={(e) => setTrimEnd && setTrimEnd(e.target.value)}
+              disabled={isConverting}
+              placeholder="End (e.g. 1:30)"
+              aria-label="Clip end time"
+              style={{
+                width: '112px',
+                padding: '5px 8px',
+                borderRadius: '6px',
+                border: '1px solid var(--border-subtle)',
+                backgroundColor: 'var(--bg-elevated)',
+                color: 'var(--text-white)',
+                fontSize: '12px',
+                fontFamily: 'var(--font-mono)'
+              }}
+            />
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            {!isVideo && setNormalizeAudio && (
+              <button
+                type="button"
+                className={`history-filter-pill ${normalizeAudio ? 'active' : ''}`}
+                onClick={() => setNormalizeAudio(!normalizeAudio)}
+                disabled={isConverting}
+                aria-pressed={normalizeAudio}
+                title="Normalize exported audio loudness to -14 LUFS via FFmpeg loudnorm"
+              >
+                Normalize Audio (-14 LUFS)
+              </button>
+            )}
+
+            {videoInfo?.platformId === 'youtube' && setSponsorBlock && (
+              <button
+                type="button"
+                className={`history-filter-pill ${sponsorBlock ? 'active' : ''}`}
+                onClick={() => setSponsorBlock(!sponsorBlock)}
+                disabled={isConverting}
+                aria-pressed={sponsorBlock}
+                title="Automatically remove sponsored segments via SponsorBlock"
+              >
+                Skip Sponsors
+              </button>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -6,6 +6,7 @@
     <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96.png" />
     <link rel="icon" type="image/svg+xml" href="/logo.svg" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#010102" />
     <meta name="color-scheme" content="dark" />
@@ -14,10 +15,10 @@
     <link rel="preload" href="/sonicwave-intro.mp4" as="video" type="video/mp4" fetchpriority="high" />
 
     <!-- Primary Search Engine & Verification Metadata -->
-    <title>SonicWave — Free Windows Media Downloader &amp; Offline Player</title>
+    <title>SonicWave — Free Media Downloader &amp; Offline Player (Windows, Mac &amp; Android)</title>
     <meta
       name="description"
-      content="Fast, ad-free media downloader and offline audio player for Windows. Extract 320 kbps MP3 and 1080p MP4 from YouTube and 1,000+ platforms with local FFmpeg."
+      content="Fast, ad-free media downloader, photo/carousel extractor, and offline player for Windows, macOS, and Android. Extract 320 kbps MP3, FLAC, and 1080p MP4 from YouTube, Instagram, and 1,000+ platforms."
     />
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
     <meta name="googlebot" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
@@ -30,10 +31,10 @@
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://ytmp-3-five.vercel.app/" />
-    <meta property="og:title" content="SonicWave — Free Windows Media Downloader &amp; Offline Player" />
+    <meta property="og:title" content="SonicWave — Free Media Downloader &amp; Offline Player (Windows, Mac &amp; Android)" />
     <meta
       property="og:description"
-      content="Fast, ad-free media downloader and offline audio player for Windows. Extract 320 kbps MP3 and 1080p MP4 from YouTube and 1,000+ platforms with local FFmpeg."
+      content="Fast, ad-free media downloader, photo/carousel extractor, and offline player for Windows, macOS, and Android. Extract 320 kbps MP3, FLAC, and 1080p MP4 from YouTube and 1,000+ platforms."
     />
     <meta property="og:site_name" content="SonicWave" />
     <meta property="og:image" content="https://ytmp-3-five.vercel.app/og/sonicwave-share.png" />
@@ -41,18 +42,18 @@
     <meta property="og:image:type" content="image/png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="SonicWave Windows Media Downloader and Offline Player preview" />
+    <meta property="og:image:alt" content="SonicWave Media Downloader and Offline Player preview" />
 
     <!-- Twitter / X -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:url" content="https://ytmp-3-five.vercel.app/" />
-    <meta name="twitter:title" content="SonicWave — Free Windows Media Downloader &amp; Offline Player" />
+    <meta name="twitter:title" content="SonicWave — Free Media Downloader &amp; Offline Player (Windows, Mac &amp; Android)" />
     <meta
       name="twitter:description"
-      content="Fast, ad-free media downloader and offline audio player for Windows. Extract 320 kbps MP3 and 1080p MP4 directly to your PC with local FFmpeg."
+      content="Fast, ad-free media downloader, carousel/photo extractor, and offline player for Windows, macOS, and Android. Extract 320 kbps MP3, FLAC, and 1080p MP4 with zero ads."
     />
     <meta name="twitter:image" content="https://ytmp-3-five.vercel.app/og/sonicwave-share.png" />
-    <meta name="twitter:image:alt" content="SonicWave Windows Media Downloader and Offline Player preview" />
+    <meta name="twitter:image:alt" content="SonicWave Media Downloader and Offline Player preview" />
 
     <!-- Structured Data: Schema.org Graph (WebSite, SoftwareApplication, FAQPage) -->
     <script type="application/ld+json">
@@ -94,24 +95,26 @@
             "@type": "SoftwareApplication",
             "@id": "https://ytmp-3-five.vercel.app/#software",
             "name": "SonicWave",
-            "operatingSystem": "Windows 10, Windows 11 (64-bit)",
+            "operatingSystem": "Windows 10, Windows 11 (64-bit), macOS 12+, Android 8.0+",
             "applicationCategory": "MultimediaApplication",
             "softwareVersion": "1.0.0",
-            "fileSize": "1.3 MB",
-            "downloadUrl": "https://ytmp-3-five.vercel.app/SonicWave-v1.0.0-Windows.zip",
+            "fileSize": "1.49 MB",
+            "downloadUrl": "https://ytmp-3-five.vercel.app/download",
             "offers": {
               "@type": "Offer",
               "price": "0",
               "priceCurrency": "USD"
             },
-            "description": "Clean, ad-free media downloader and offline audio player for Windows with multi-threaded downloads, 320 kbps MP3, and 1080p MP4 output.",
+            "description": "Clean, ad-free media downloader, photo/carousel extractor, and offline audio player for Windows, macOS, and Android with multi-threaded downloads, 320 kbps MP3, FLAC, and 1080p MP4 output.",
             "image": "https://ytmp-3-five.vercel.app/og/sonicwave-share.png",
             "featureList": [
               "16-stream parallel multi-thread download acceleration",
               "True 320 kbps CBR/VBR MP3, FLAC, and WAV audio extraction",
               "1080p Full HD video demuxing with local FFmpeg",
+              "Multi-slide Instagram Carousel, Reddit gallery, and X/Twitter photo extraction with batch ZIP export",
+              "Signed Android 8.0+ APK with native Share Sheet quick extraction",
               "Support for YouTube, Instagram Reels, TikTok, Twitter/X, SoundCloud, and 1,000+ platforms",
-              "100% ad-free local PC execution with zero telemetry",
+              "100% ad-free local execution with zero telemetry",
               "Embedded high-resolution ID3 metadata and album cover art",
               "Docked in-app audio audition player with real-time waveform visualizer"
             ]
@@ -217,20 +220,24 @@
           <a href="#faq">FAQ</a>
           <a href="/SonicWave-Custom-Installer.exe">Download Custom Installer (.exe)</a>
           <a href="/SonicWave-v1.0.0-Windows.zip">Portable ZIP (.zip)</a>
+          <a href="/SonicWave.apk">Android APK (.apk)</a>
+          <a href="/SonicWave-v1.0.0-macOS.zip">macOS Package (.zip)</a>
         </nav>
       </header>
       <main>
         <article>
           <header>
-            <p>Windows 10 &amp; 11 Desktop Software</p>
-            <h1>High-speed media downloader &amp; offline audio player for Windows.</h1>
+            <p>Windows 10 &amp; 11, macOS 12+ &amp; Android 8.0+ Software</p>
+            <h1>High-speed media downloader, carousel extractor &amp; offline audio player for Windows, Android &amp; Mac.</h1>
             <p>
-              Extract true 320 kbps MP3 audio and 1080p Full HD video from YouTube, Instagram, TikTok,
-              Twitter/X, and 1,000+ sources directly to your PC with local FFmpeg. 100% free, zero ads, zero telemetry.
+              Extract true 320 kbps MP3 audio, lossless FLAC, 1080p Full HD video, and multi-slide Instagram Carousels / Reddit galleries
+              from YouTube, Instagram, TikTok, Twitter/X, and 1,000+ sources directly on your device with embedded FFmpeg. 100% free, zero ads, zero telemetry.
             </p>
             <p>
-              <a href="/SonicWave-Custom-Installer.exe" style="font-weight: bold; color: #1ed760;">Download SonicWave Custom Installer (.exe) &mdash; Recommended</a> &bull;
-              <a href="/SonicWave-v1.0.0-Windows.zip">Portable ZIP (.zip) &mdash; 1.3 MB</a>
+              <a href="/SonicWave-Custom-Installer.exe" style="font-weight: bold; color: #1ed760;">Windows Custom Installer (.exe) &mdash; 1.56 MB</a> &bull;
+              <a href="/SonicWave-v1.0.0-Windows.zip">Windows Portable (.zip) &mdash; 1.49 MB</a> &bull;
+              <a href="/SonicWave.apk">Android APK (.apk) &mdash; 73.0 MB</a> &bull;
+              <a href="/SonicWave-v1.0.0-macOS.zip">macOS Package (.zip) &mdash; 1.49 MB</a>
             </p>
           </header>
 

@@ -28,6 +28,7 @@ class ConversionEngineTest {
         assertEquals("", job.eta)
         assertEquals(JobStatus.IDLE, job.status)
         assertEquals("", job.outputPath)
+        assertEquals("", job.outputUri)
         assertNull(job.errorMessage)
     }
 
@@ -65,10 +66,17 @@ class ConversionEngineTest {
         assertEquals(JobStatus.PROCESSING, job.status)
 
         // 4. Completed
-        val targetPath = "/storage/emulated/0/Download/SonicWave/Test Audio Track.m4a"
-        job = job.copy(status = JobStatus.COMPLETED, progress = 100f, outputPath = targetPath)
+        val targetPath = "Download/SonicWave/Test Audio Track.m4a"
+        val targetUri = "content://media/external/downloads/42"
+        job = job.copy(
+            status = JobStatus.COMPLETED,
+            progress = 100f,
+            outputPath = targetPath,
+            outputUri = targetUri
+        )
         assertEquals(JobStatus.COMPLETED, job.status)
         assertEquals(targetPath, job.outputPath)
+        assertEquals(targetUri, job.outputUri)
         assertNull(job.errorMessage)
     }
 
@@ -97,6 +105,28 @@ class ConversionEngineTest {
         assertTrue(states.contains("PROCESSING"))
         assertTrue(states.contains("COMPLETED"))
         assertTrue(states.contains("FAILED"))
-        assertEquals(6, states.size)
+        assertTrue(states.contains("CANCELLED"))
+        assertEquals(7, states.size)
+    }
+
+    @Test
+    fun formatYtDlpError_surfacesActionableMessages() {
+        val authErr = ConversionEngine.formatYtDlpError("ERROR: [Instagram] Sign in required to view private post", "Instagram")
+        assertTrue(authErr.contains("private", ignoreCase = true) || authErr.contains("sign-in", ignoreCase = true))
+
+        val networkErr = ConversionEngine.formatYtDlpError("ERROR: Unable to resolve host www.youtube.com", "YouTube")
+        assertTrue(networkErr.contains("Network error", ignoreCase = true))
+
+        val genericErr = ConversionEngine.formatYtDlpError("ERROR: [youtube] Something unusual went wrong", "YouTube")
+        assertTrue(genericErr.contains("Something unusual went wrong"))
+        assertTrue(!genericErr.startsWith("ERROR:"))
+    }
+
+    @Test
+    fun buildFormatArgs_prioritizesNativeM4aWithoutForcingBitrateTranscode() {
+        val m4aArgs = ConversionEngine.buildFormatArgs("m4a", "best")
+        val formatSelector = m4aArgs.firstOrNull { it.first == "-f" }?.second ?: ""
+        assertTrue(formatSelector.contains("ba[ext=m4a][acodec^=mp4a]"))
+        assertTrue(m4aArgs.any { it.first == "--audio-quality" && it.second == "0" })
     }
 }

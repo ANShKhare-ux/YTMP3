@@ -8,11 +8,10 @@ import {
   RotateCw,
   Trash2,
   Play,
-  Crown,
   Command,
   ArrowRight,
   Sliders,
-  Check
+  SlidersHorizontal
 } from 'lucide-react';
 
 export default function CommandPalette({
@@ -24,6 +23,7 @@ export default function CommandPalette({
   isPlaying,
   onClearHistory,
   onUpdateEngine,
+  onOpenSettings,
   onOpenPricing,
   onNavigateStudio,
   onNavigateLanding,
@@ -108,12 +108,16 @@ export default function CommandPalette({
       action: () => { onSelectFormat('flac', '320k'); onClose(); }
     },
     {
-      id: 'open-pricing',
-      category: 'SaaS Capabilities',
-      title: 'View Studio Pro Capabilities & Plans',
-      subtitle: 'Compare local 16-stream features vs standard converters',
-      icon: <Crown size={16} style={{ color: '#ffd700' }} />,
-      action: () => { onOpenPricing(); onClose(); }
+      id: 'open-settings',
+      category: 'Engine & Preferences',
+      title: 'Open Studio Settings & Engine',
+      subtitle: 'Configure output folder, auto-play, normalization, and yt-dlp updates',
+      icon: <SlidersHorizontal size={16} style={{ color: 'var(--spotify-green)' }} />,
+      action: () => {
+        if (onOpenSettings) onOpenSettings();
+        else if (onOpenPricing) onOpenPricing();
+        onClose();
+      }
     },
 
     {

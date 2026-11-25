@@ -46,7 +46,7 @@ export default function InstallGuide({ onNavigate }) {
           SonicWave is distributed as a clean, portable Windows archive that runs locally on your PC. It does not write to the Windows Registry, does not bundle third-party adware, and requires no administrative privileges to extract and run.
         </p>
         <ul className="legal-summary-points">
-          <li><strong>Distribution package:</strong> Standalone portable ZIP archive (1.3 MB).</li>
+          <li><strong>Distribution package:</strong> Standalone portable ZIP archive (1.49 MB) or custom EXE installer (1.56 MB).</li>
           <li><strong>Self-bootstrapping engine:</strong> Automatically verifies and provisions local <code>yt-dlp</code> and <code>ffmpeg</code> binaries on first run.</li>
           <li><strong>Zero registry pollution:</strong> Simply delete the folder when you wish to remove it.</li>
         </ul>
@@ -169,7 +169,7 @@ export default function InstallGuide({ onNavigate }) {
                   setIsDownloadSuccessOpen(true);
                 }}
               >
-                <Download size={14} /> Download SonicWave v1.0.0 for Windows (.zip) &mdash; 1.3 MB
+                <Download size={14} /> Download SonicWave v1.0.0 for Windows (.zip) &mdash; 1.49 MB
               </a>
             </div>
           </li>
@@ -215,7 +215,7 @@ export default function InstallGuide({ onNavigate }) {
                 setIsDownloadSuccessOpen(true);
               }}
             >
-              <Download size={14} /> Download SonicWave for macOS (.zip) &mdash; 2.7 MB
+              <Download size={14} /> Download SonicWave for macOS (.zip) &mdash; 1.49 MB
             </a>
           </div>
           <p style={{ margin: '0 0 10px', fontSize: 13.5, color: 'var(--cursor-ink-muted)' }}>

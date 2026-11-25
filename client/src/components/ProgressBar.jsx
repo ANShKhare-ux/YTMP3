@@ -1,16 +1,40 @@
 import React from 'react';
-import { DownloadCloud, Cpu, Tag, CheckCircle2, AlertCircle, Loader2, Video, Zap, Download, XCircle } from 'lucide-react';
+import {
+  DownloadCloud,
+  Cpu,
+  Tag,
+  CheckCircle2,
+  AlertCircle,
+  Loader2,
+  Video,
+  Zap,
+  Download,
+  XCircle,
+  FolderOpen
+} from 'lucide-react';
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
-export default function ProgressBar({ job, onCancel }) {
+export default function ProgressBar({
+  job,
+  onCancel,
+  isDesktop = false,
+  savedFilePath = '',
+  onOpenFolder
+}) {
   if (!job) return null;
 
   const isVideo = job.format === 'mp4';
-  const isCancellable = ['starting', 'downloading', 'converting', 'tagging'].includes(job.status);
+  const isCancellable = ['queued', 'starting', 'downloading', 'converting', 'tagging'].includes(job.status);
 
   const getStatusDetails = () => {
     switch (job.status) {
+      case 'queued':
+        return {
+          icon: <Loader2 size={16} className="spinner" style={{ color: 'var(--text-warning)' }} />,
+          label: `Queued (Position #${job.queuePosition || 1}) — waiting for open conversion slot...`,
+          color: 'var(--text-warning)'
+        };
       case 'starting':
         return {
           icon: <Loader2 size={16} className="spinner" style={{ color: 'var(--spotify-green)' }} />,
@@ -42,7 +66,9 @@ export default function ProgressBar({ job, onCancel }) {
       case 'completed':
         return {
           icon: <CheckCircle2 size={16} style={{ color: 'var(--spotify-green)' }} />,
-          label: isVideo ? 'MP4 Video ready! Watch in-browser or download.' : 'Audio ready! Play in-browser or save file.',
+          label: savedFilePath
+            ? `Ready & auto-saved to ${savedFilePath}`
+            : (isVideo ? 'MP4 Video ready! Watch in-browser or download.' : 'Audio ready! Play in-browser or save file.'),
           color: 'var(--spotify-green)'
         };
       case 'failed':
@@ -120,7 +146,26 @@ export default function ProgressBar({ job, onCancel }) {
       )}
 
       {job.status === 'completed' && (
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '12px' }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', flexWrap: 'wrap', marginTop: '12px' }}>
+          {isDesktop && onOpenFolder && (
+            <button
+              type="button"
+              className="btn-dark-pill"
+              onClick={onOpenFolder}
+              title={savedFilePath ? `Reveal ${savedFilePath} in folder` : 'Save & open containing folder'}
+              style={{
+                padding: '8px 16px',
+                fontSize: '12px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}
+            >
+              <FolderOpen size={15} />
+              <span>{savedFilePath ? 'OPEN FOLDER' : 'SAVE TO FOLDER'}</span>
+            </button>
+          )}
+
           <a
             href={`${API_BASE}/api/download/${job.id}`}
             download

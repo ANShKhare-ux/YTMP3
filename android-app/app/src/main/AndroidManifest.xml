@@ -48,6 +48,12 @@
             </intent-filter>
         </activity>
 
+        <service
+            android:name=".service.ConversionForegroundService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="com.sonicwave.app.fileprovider"

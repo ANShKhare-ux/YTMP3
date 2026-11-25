@@ -1,6 +1,7 @@
 const { spawn, execFile, execFileSync } = require('child_process');
 const path = require('path');
 const fs = require('fs');
+const os = require('os');
 const { getYtDlpPath, getFfmpegPath, getFfmpegLocation, getBinDir } = require('./binManager');
 const {
   isPhotoSupportedUrl,
@@ -18,9 +19,126 @@ if (!fs.existsSync(DATA_DIR)) {
   fs.mkdirSync(DATA_DIR, { recursive: true });
 }
 const HISTORY_FILE = path.join(DATA_DIR, 'history.json');
+const SETTINGS_FILE = path.join(DATA_DIR, 'settings.json');
+const DEFAULT_LIBRARY_DIR = path.join(os.homedir(), 'Downloads', 'SonicWave');
 
-// In-memory active jobs tracker
+function isUnsafeSystemDirectory(dirPath) {
+  const resolved = path.resolve(dirPath);
+  const parsed = path.parse(resolved);
+  if (resolved === parsed.root) return true;
+  const lower = resolved.toLowerCase();
+  const forbiddenPrefixes = [
+    'c:\\windows',
+    'c:\\program files',
+    '/bin',
+    '/sbin',
+    '/usr',
+    '/etc',
+    '/system'
+  ];
+  return forbiddenPrefixes.some((p) => lower === p || lower.startsWith(`${p}${path.sep}`));
+}
+
+function getServerSettings() {
+  const defaults = {
+    libraryMode: 'temporary',
+    libraryDir: DEFAULT_LIBRARY_DIR
+  };
+  try {
+    if (fs.existsSync(SETTINGS_FILE)) {
+      const parsed = JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf8'));
+      const mode = parsed.libraryMode === 'permanent' ? 'permanent' : 'temporary';
+      const candidateDir = typeof parsed.libraryDir === 'string' && parsed.libraryDir.trim()
+        ? path.resolve(parsed.libraryDir.trim())
+        : DEFAULT_LIBRARY_DIR;
+      return {
+        libraryMode: mode,
+        libraryDir: isUnsafeSystemDirectory(candidateDir) ? DEFAULT_LIBRARY_DIR : candidateDir
+      };
+    }
+  } catch {}
+  return defaults;
+}
+
+function updateServerSettings(patch = {}) {
+  const current = getServerSettings();
+  const nextMode = patch.libraryMode === 'permanent'
+    ? 'permanent'
+    : (patch.libraryMode === 'temporary' ? 'temporary' : current.libraryMode);
+
+  let nextDir = current.libraryDir;
+  if (typeof patch.libraryDir === 'string' && patch.libraryDir.trim()) {
+    const resolved = path.resolve(patch.libraryDir.trim());
+    if (!path.isAbsolute(resolved) || isUnsafeSystemDirectory(resolved)) {
+      throw new Error('Selected library directory is not permitted.');
+    }
+    nextDir = resolved;
+  }
+
+  if (nextMode === 'permanent') {
+    fs.mkdirSync(nextDir, { recursive: true });
+  }
+
+  const next = { libraryMode: nextMode, libraryDir: nextDir };
+  fs.writeFileSync(SETTINGS_FILE, JSON.stringify(next, null, 2), 'utf8');
+  return next;
+}
+
+function allocateFriendlyFilePath(targetDir, desiredName) {
+  const safeBase = path
+    .basename(desiredName || 'SonicWave-media.mp3')
+    .replace(/[/\\?%*:|"<>\0\r\n]/g, '_')
+    .trim() || 'SonicWave-media.mp3';
+  const parsed = path.parse(safeBase);
+  let candidate = path.join(targetDir, safeBase);
+  let index = 1;
+  while (fs.existsSync(candidate)) {
+    candidate = path.join(targetDir, `${parsed.name} (${index})${parsed.ext}`);
+    index += 1;
+  }
+  return candidate;
+}
+
+function moveToPermanentLibrary(srcFile, friendlyName) {
+  const settings = getServerSettings();
+  if (settings.libraryMode !== 'permanent' || !srcFile || !fs.existsSync(srcFile)) {
+    return { filePath: srcFile, isPermanent: false };
+  }
+  try {
+    fs.mkdirSync(settings.libraryDir, { recursive: true });
+    const destPath = allocateFriendlyFilePath(settings.libraryDir, friendlyName);
+    try {
+      fs.renameSync(srcFile, destPath);
+    } catch {
+      fs.copyFileSync(srcFile, destPath);
+      fs.unlinkSync(srcFile);
+    }
+    return { filePath: destPath, isPermanent: true };
+  } catch (err) {
+    console.warn('[converter] Failed to move file into permanent library:', err.message);
+    return { filePath: srcFile, isPermanent: false };
+  }
+}
+
+const MAX_CONCURRENT_CONVERSIONS = 3;
+const MAX_QUEUE_SIZE = 100;
+
+// In-memory active jobs tracker + FIFO queue
 const jobs = new Map();
+const jobQueue = [];
+
+function updateQueuePositions() {
+  jobQueue.forEach((id, index) => {
+    const queuedJob = jobs.get(id);
+    if (queuedJob && queuedJob.status === 'queued') {
+      queuedJob.queuePosition = index + 1;
+    }
+  });
+}
+
+function getQueueLength() {
+  return jobQueue.length;
+}
 
 /**
  * Load completed jobs from persistent history file into memory on startup
@@ -69,6 +187,7 @@ function savePersistentHistory(job) {
       duration: job.duration || 0,
       filePath: job.filePath,
       fileName: job.fileName,
+      isPermanent: Boolean(job.isPermanent),
       createdAt: job.createdAt || Date.now()
     };
     list = [cleanJob, ...list.filter(item => item.id !== job.id)].slice(0, 50);
@@ -78,7 +197,7 @@ function savePersistentHistory(job) {
   }
 }
 
-// Clean up downloads older than 2 hours every 30 minutes
+// Clean up temporary downloads older than 2 hours every 30 minutes (preserves Permanent Library files)
 function cleanOldDownloads(maxAge = 2 * 60 * 60 * 1000) {
   try {
     const now = Date.now();
@@ -99,8 +218,11 @@ function cleanOldDownloads(maxAge = 2 * 60 * 60 * 1000) {
       }
     }
 
-    // Evict old jobs from memory if their physical files are deleted
+    // Evict old temporary jobs from memory when their files expire; preserve permanent library entries
     for (const [id, job] of jobs.entries()) {
+      if (job.isPermanent && job.filePath && fs.existsSync(job.filePath)) {
+        continue;
+      }
       if ((job.status === 'completed' || job.status === 'failed' || job.status === 'cancelled') &&
           now - (job.createdAt || 0) > maxAge) {
         if (!job.filePath || !fs.existsSync(job.filePath)) {
@@ -1110,6 +1232,95 @@ function getCookiePath() {
 }
 
 /**
+ * Parses Netscape cookie file metadata without ever returning secret cookie values
+ */
+function parseNetscapeCookieEntries(rawContent) {
+  if (!rawContent || typeof rawContent !== 'string') return [];
+  const lines = rawContent.split(/\r?\n/);
+  const entries = [];
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed || (trimmed.startsWith('#') && !trimmed.startsWith('#HttpOnly_'))) {
+      continue;
+    }
+    const cleanLine = trimmed.startsWith('#HttpOnly_') ? trimmed.slice('#HttpOnly_'.length) : trimmed;
+    const cols = cleanLine.split('\t');
+    if (cols.length >= 7 && cols[0]) {
+      entries.push(cols[0].replace(/^\./, '').toLowerCase());
+    }
+  }
+  return entries;
+}
+
+function getCookiesStatus() {
+  const cookiePath = getCookiePath();
+  if (!cookiePath) {
+    return {
+      configured: false,
+      source: null,
+      entryCount: 0,
+      domainCount: 0,
+      sampleDomains: [],
+      updatedAt: null
+    };
+  }
+  try {
+    const raw = fs.readFileSync(cookiePath, 'utf8');
+    const stat = fs.statSync(cookiePath);
+    const domains = parseNetscapeCookieEntries(raw);
+    const uniqueDomains = Array.from(new Set(domains));
+    return {
+      configured: true,
+      source: cookiePath.startsWith(__dirname) ? 'server/cookies.txt' : 'cookies.txt',
+      entryCount: domains.length,
+      domainCount: uniqueDomains.length,
+      sampleDomains: uniqueDomains.slice(0, 6),
+      updatedAt: stat.mtimeMs
+    };
+  } catch {
+    return {
+      configured: false,
+      source: null,
+      entryCount: 0,
+      domainCount: 0,
+      sampleDomains: [],
+      updatedAt: null
+    };
+  }
+}
+
+function saveCookiesContent(rawContent) {
+  if (typeof rawContent !== 'string' || !rawContent.trim()) {
+    throw new Error('Cookie file contents cannot be empty.');
+  }
+  if (rawContent.length > 512 * 1024) {
+    throw new Error('Cookie file exceeds 512 KB limit.');
+  }
+  const domains = parseNetscapeCookieEntries(rawContent);
+  if (domains.length === 0) {
+    throw new Error('Invalid cookie format. Please paste or upload a Netscape cookies.txt export with tab-separated entries.');
+  }
+  const normalized = rawContent.startsWith('#')
+    ? rawContent
+    : `# Netscape HTTP Cookie File\n${rawContent}`;
+  const targetPath = path.join(__dirname, 'cookies.txt');
+  fs.writeFileSync(targetPath, normalized, { encoding: 'utf8', mode: 0o600 });
+  return getCookiesStatus();
+}
+
+function deleteCookies() {
+  const targets = [path.join(__dirname, 'cookies.txt'), path.join(__dirname, '..', 'cookies.txt')];
+  for (const p of targets) {
+    try {
+      if (fs.existsSync(p)) {
+        fs.unlinkSync(p);
+      }
+    } catch {}
+  }
+  return getCookiesStatus();
+}
+
+/**
  * Normalizes and translates raw yt-dlp error output into user-friendly error messages.
  * Prevents raw stack traces and internal bug-report URLs from leaking to the frontend.
  *
@@ -1152,16 +1363,175 @@ function formatYtDlpError(rawErrorText, fallbackMessage = 'Unable to process med
   return fallbackMessage;
 }
 
+function analyzePlaylistUrl(rawUrl) {
+  if (!rawUrl || typeof rawUrl !== 'string') {
+    return { isExplicitPlaylist: false, hasPlaylistParam: false };
+  }
+  try {
+    const parsed = new URL(rawUrl);
+    const host = parsed.hostname.toLowerCase();
+    const pathLower = parsed.pathname.toLowerCase();
+    const listParam = parsed.searchParams.get('list');
+    const isYt = host.includes('youtube.com') || host.includes('youtu.be');
+    const isExplicitYtPlaylist = isYt && pathLower === '/playlist' && Boolean(listParam);
+    const isSoundCloudSet = host.includes('soundcloud.com') && pathLower.includes('/sets/');
+    const isBandcampAlbum = host.includes('bandcamp.com') && pathLower.includes('/album/');
+    return {
+      isExplicitPlaylist: Boolean(isExplicitYtPlaylist || isSoundCloudSet || isBandcampAlbum),
+      hasPlaylistParam: Boolean((isYt && listParam) || isSoundCloudSet || isBandcampAlbum)
+    };
+  } catch {
+    return { isExplicitPlaylist: false, hasPlaylistParam: false };
+  }
+}
+
 /**
- * Get Video/Audio Metadata via yt-dlp across all social platforms
+ * Fetch playlist / album track listing via yt-dlp --flat-playlist
  */
-function getVideoInfo(rawUrl) {
+function getPlaylistInfo(rawUrl) {
   return new Promise((resolve, reject) => {
     let url;
     try {
       url = normalizeUrl(rawUrl);
     } catch (err) {
       return reject(err);
+    }
+
+    const ytDlp = getYtDlpPath();
+    const cookiePath = getCookiePath();
+    const cookieFlags = cookiePath ? ['--cookies', cookiePath] : [];
+    const lowerUrl = url.toLowerCase();
+    const isYouTube = lowerUrl.includes('youtube.com') || lowerUrl.includes('youtu.be');
+
+    const args = [
+      '--flat-playlist',
+      '--dump-single-json',
+      '--no-warnings',
+      '--no-check-certificates',
+      ...cookieFlags,
+      '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+      '--js-runtimes', 'node',
+      '--',
+      url
+    ];
+
+    execFile(ytDlp, args, { maxBuffer: 25 * 1024 * 1024 }, (error, stdout, stderr) => {
+      if (error) {
+        return reject(new Error(formatYtDlpError(stderr || error.message, 'Unable to load playlist items.')));
+      }
+      try {
+        const data = JSON.parse(stdout);
+        const rawEntries = Array.isArray(data.entries) ? data.entries : [];
+        if (rawEntries.length === 0) {
+          return reject(new Error('No downloadable tracks found in this playlist.'));
+        }
+
+        const platform = detectPlatform(url);
+        const playlistEntries = rawEntries
+          .filter((entry) => entry && (entry.url || entry.webpage_url || entry.id))
+          .slice(0, 100)
+          .map((entry, idx) => {
+            let entryUrl = entry.webpage_url || entry.url || '';
+            if (entryUrl && !/^https?:\/\//i.test(entryUrl)) {
+              entryUrl = isYouTube ? `https://www.youtube.com/watch?v=${entryUrl}` : url;
+            }
+            const itemDur = Number(entry.duration) || 0;
+            const thumb = (Array.isArray(entry.thumbnails) && entry.thumbnails.length > 0)
+              ? entry.thumbnails[entry.thumbnails.length - 1].url
+              : (entry.thumbnail || '');
+            return {
+              id: entry.id || `track-${idx + 1}`,
+              index: idx + 1,
+              title: entry.title || `Track ${idx + 1}`,
+              uploader: entry.uploader || entry.channel || data.uploader || data.channel || `${platform} Creator`,
+              duration: itemDur,
+              durationFormatted: formatDuration(itemDur),
+              thumbnail: thumb,
+              url: entryUrl
+            };
+          });
+
+        const firstThumb = playlistEntries[0]?.thumbnail || '';
+        const coverThumb = (Array.isArray(data.thumbnails) && data.thumbnails.length > 0)
+          ? data.thumbnails[data.thumbnails.length - 1].url
+          : (data.thumbnail || firstThumb);
+
+        const presets = [
+          {
+            id: 'playlist_mp3_320',
+            format: 'mp3',
+            quality: '320k',
+            label: 'All Selected Tracks (320k MP3)',
+            badge: 'Batch HQ',
+            recommended: true
+          },
+          {
+            id: 'playlist_m4a',
+            format: 'm4a',
+            quality: '320k',
+            label: 'Fast AAC Audio (M4A)',
+            badge: 'Fast Copy'
+          },
+          {
+            id: 'playlist_mp4_1080',
+            format: 'mp4',
+            quality: '1080p',
+            label: 'Batch HD Video (1080p MP4)',
+            badge: 'Full HD'
+          }
+        ];
+
+        resolve({
+          id: data.id || 'playlist',
+          url: data.webpage_url || url,
+          title: data.title || `${platform} Playlist`,
+          uploader: data.uploader || data.channel || `${platform} Creator`,
+          platform,
+          platformId: platform.toLowerCase().includes('soundcloud') ? 'soundcloud' : 'youtube',
+          contentType: 'playlist',
+          contentCategory: 'playlist',
+          contentLabel: 'Playlist',
+          isPlaylist: true,
+          isCarousel: false,
+          isPhoto: false,
+          hasAudio: true,
+          itemCount: playlistEntries.length,
+          playlistEntries,
+          contentBadge: `🎶 Playlist • ${playlistEntries.length} tracks`,
+          tailoredOptions: {
+            appTheme: platform.toLowerCase().includes('soundcloud') ? 'soundcloud' : 'youtube',
+            headline: `Batch Playlist Extraction (${playlistEntries.length} tracks)`,
+            subhead: 'Select tracks below and queue multi-threaded conversions',
+            presets
+          },
+          presets,
+          duration: playlistEntries.reduce((acc, item) => acc + (item.duration || 0), 0),
+          durationFormatted: `${playlistEntries.length} tracks`,
+          thumbnail: coverThumb,
+          viewCount: data.view_count || 0
+        });
+      } catch (parseErr) {
+        reject(new Error('Failed to parse playlist metadata.'));
+      }
+    });
+  });
+}
+
+/**
+ * Get Video/Audio Metadata via yt-dlp across all social platforms
+ */
+function getVideoInfo(rawUrl, options = {}) {
+  return new Promise((resolve, reject) => {
+    let url;
+    try {
+      url = normalizeUrl(rawUrl);
+    } catch (err) {
+      return reject(err);
+    }
+
+    const playlistCheck = analyzePlaylistUrl(url);
+    if (options.playlist || playlistCheck.isExplicitPlaylist) {
+      return getPlaylistInfo(url).then(resolve).catch(reject);
     }
 
     const lowerUrl = typeof url === 'string' ? url.toLowerCase() : '';
@@ -1289,7 +1659,8 @@ function getVideoInfo(rawUrl) {
           thumbnail: thumbnail,
           viewCount: primaryItem.view_count || data.view_count || primaryItem.like_count || data.like_count || 0,
           uploadDate: primaryItem.upload_date || data.upload_date || '',
-          description: (primaryItem.description || data.description || '').slice(0, 300)
+          description: (primaryItem.description || data.description || '').slice(0, 300),
+          hasPlaylistHint: Boolean(playlistCheck.hasPlaylistParam)
         };
 
         resolve(info);
@@ -1341,6 +1712,19 @@ function setAria2Available(available) {
 }
 
 /**
+ * Validates clip trim timestamps (SS, MM:SS, HH:MM:SS, optional ms)
+ */
+function sanitizeTimestamp(raw) {
+  if (raw === null || raw === undefined) return '';
+  const trimmed = String(raw).trim();
+  if (!trimmed) return '';
+  if (/^(?:\d+(?:\.\d{1,3})?|\d{1,2}:\d{2}(?:\.\d{1,3})?|\d{1,2}:\d{2}:\d{2}(?:\.\d{1,3})?)$/.test(trimmed)) {
+    return trimmed;
+  }
+  return '';
+}
+
+/**
  * Build yt-dlp CLI arguments for audio or video conversion
  */
 function buildConversionArgs({
@@ -1351,7 +1735,11 @@ function buildConversionArgs({
   cookiePath = null,
   ffmpegLocation = null,
   useAria2 = null,
-  turbo = true
+  turbo = true,
+  trimStart = '',
+  trimEnd = '',
+  normalizeAudio = false,
+  sponsorBlock = false
 }) {
   const validFormats = ['mp3', 'm4a', 'wav', 'flac', 'mp4'];
   const safeFormat = typeof format === 'string' ? format.toLowerCase() : 'mp3';
@@ -1379,9 +1767,10 @@ function buildConversionArgs({
     '--downloader-args', 'aria2c:-s 16 -x 16 -k 1M -j 16'
   ] : [];
 
-  // Download and performance optimization flags
+  // Download and performance optimization flags (omit -N 16 when aria2c external downloader handles sockets)
   const speedFlags = [
-    ...(turbo ? ['-N', '16', '--buffer-size', '16M', '--http-chunk-size', '5M'] : []),
+    ...(turbo && !aria2Active ? ['-N', '16'] : []),
+    ...(turbo ? ['--buffer-size', '16M', '--http-chunk-size', '5M'] : []),
     ...(isYouTube && !cookiePath ? ['--extractor-args', 'youtube:player_client=ios,android'] : []),
     ...cookieFlags,
     ...aria2Flags,
@@ -1405,6 +1794,15 @@ function buildConversionArgs({
   const isMultiItemCandidate = isInstagram && (pathname.includes('/p/') || pathname.includes('/reel/') || pathname.includes('/reels/'));
   const itemFlags = isMultiItemCandidate ? ['--playlist-items', '1'] : [];
 
+  const startTs = sanitizeTimestamp(trimStart);
+  const endTs = sanitizeTimestamp(trimEnd);
+  const trimFlags = (startTs || endTs)
+    ? ['--download-sections', `*${startTs || '0'}-${endTs || 'inf'}`, '--force-keyframes-at-cuts']
+    : [];
+  const sponsorFlags = (isYouTube && Boolean(sponsorBlock))
+    ? ['--sponsorblock-remove', 'sponsor']
+    : [];
+
   let args = [];
 
   if (isVideo) {
@@ -1426,6 +1824,8 @@ function buildConversionArgs({
       '--newline',
       '--no-playlist',
       ...itemFlags,
+      ...trimFlags,
+      ...sponsorFlags,
       '--embed-metadata',
       '--embed-thumbnail',
       '--no-check-certificates',
@@ -1435,29 +1835,29 @@ function buildConversionArgs({
       url
     ];
   } else {
-    // Audio extraction with multi-threaded encoding or stream copy
+    // Audio extraction with multi-threaded encoding, stream copy, or loudnorm
     let audioFilter = 'ba/b';
-    let postArgs = 'ExtractAudio:-threads 0';
+    let postArgs = normalizeAudio
+      ? 'ExtractAudio:-af loudnorm=I=-14:TP=-1.5:LRA=11 -threads 0'
+      : 'ExtractAudio:-threads 0';
 
     if (targetFormat === 'm4a') {
-      // Stream copy AAC when available
-      audioFilter = 'ba[ext=m4a]/ba/b';
-      postArgs = 'ExtractAudio:-threads 0';
-    } else if (targetFormat === 'mp3') {
-      // Fastest multi-core MP3 encoding
-      postArgs = 'ExtractAudio:-threads 0';
+      // Stream-copy native AAC/M4A tracks directly without forced re-encoding bitrate
+      audioFilter = 'ba[ext=m4a][acodec^=mp4a]/ba[ext=m4a]/ba/b';
     }
 
     args = [
       '-f', audioFilter,
       '--extract-audio',
       '--audio-format', targetFormat,
-      '--audio-quality', targetQuality,
+      ...(targetFormat === 'm4a' ? [] : ['--audio-quality', targetQuality]),
       '--postprocessor-args', postArgs,
       '--output', outputTemplate,
       '--newline',
       '--no-playlist',
       ...itemFlags,
+      ...trimFlags,
+      ...sponsorFlags,
       '--embed-metadata',
       '--embed-thumbnail',
       '--convert-thumbnails', 'jpg',
@@ -1608,14 +2008,17 @@ function attachProcessListeners(jobState, child, targetFormat) {
     if (code === 0) {
       const outputFile = findOutputFile(jobState.id, targetFormat);
       if (outputFile) {
-        jobState.status = 'completed';
-        jobState.progress = 100;
-        jobState.filePath = outputFile;
-        jobState.fileName = jobState.title
+        const friendlyName = jobState.title
           ? `${jobState.title.replace(/[/\\?%*:|"<>]/g, '_')}.${targetFormat}`
           : path.basename(outputFile);
+        const libraryPlacement = moveToPermanentLibrary(outputFile, friendlyName);
+        jobState.status = 'completed';
+        jobState.progress = 100;
+        jobState.filePath = libraryPlacement.filePath;
+        jobState.isPermanent = libraryPlacement.isPermanent;
+        jobState.fileName = friendlyName;
         savePersistentHistory(jobState);
-        console.log(`[converter] Job ${jobState.id} completed successfully with file ${jobState.fileName}`);
+        console.log(`[converter] Job ${jobState.id} completed successfully with file ${jobState.fileName}${jobState.isPermanent ? ' (Permanent Library)' : ''}`);
       } else {
         jobState.status = 'failed';
         jobState.error = 'Output media file was not created.';
@@ -1644,13 +2047,89 @@ function attachProcessListeners(jobState, child, targetFormat) {
         }
       } catch {}
     }
+
+    delete jobState.process;
+    delete jobState._queuedOptions;
+    setImmediate(processQueue);
   });
 
   child.on('error', (err) => {
     console.error(`[converter] Job ${jobState.id} failed to spawn:`, err.message);
     jobState.status = 'failed';
     jobState.error = err.message;
+    delete jobState.process;
+    delete jobState._queuedOptions;
+    setImmediate(processQueue);
   });
+}
+
+function spawnQueuedConversion(jobState) {
+  const opts = jobState._queuedOptions || {};
+  const ytDlp = getYtDlpPath();
+  const outputTemplate = path.join(DOWNLOADS_DIR, `${jobState.id}.%(ext)s`);
+  const cookiePath = getCookiePath();
+  const ffmpegLocation = getFfmpegLocation();
+
+  const {
+    args,
+    targetFormat,
+    targetQuality,
+    isVideo,
+    useAria2: activeAria2
+  } = buildConversionArgs({
+    url: jobState.url,
+    format: opts.format || jobState.format,
+    quality: opts.quality || jobState.quality,
+    outputTemplate,
+    cookiePath,
+    ffmpegLocation,
+    turbo: opts.turbo !== false,
+    trimStart: opts.trimStart || '',
+    trimEnd: opts.trimEnd || '',
+    normalizeAudio: Boolean(opts.normalizeAudio),
+    sponsorBlock: Boolean(opts.sponsorBlock)
+  });
+
+  jobState.format = targetFormat;
+  jobState.quality = targetQuality;
+  jobState.isVideo = isVideo;
+  jobState.downloader = activeAria2 ? 'aria2c' : 'builtin';
+  jobState.status = 'starting';
+  jobState.queuePosition = null;
+  jobState.speed = '0 KiB/s';
+  jobState.eta = '--:--';
+
+  console.log(`[converter] Starting job ${jobState.id} (Turbo: ${Boolean(jobState.turbo)}, downloader: ${activeAria2 ? 'aria2c' : 'builtin'}): ${jobState.url} (${targetFormat}, ${targetQuality})`);
+
+  const binDir = getBinDir();
+  const env = { ...process.env };
+  const envPathKey = Object.keys(env).find(k => k.toLowerCase() === 'path') || (process.platform === 'win32' ? 'Path' : 'PATH');
+  const currentPath = env[envPathKey] || '';
+  if (binDir && !currentPath.includes(binDir)) {
+    const updatedPath = `${binDir}${path.delimiter}${currentPath}`;
+    for (const key of Object.keys(env)) {
+      if (key.toLowerCase() === 'path') {
+        env[key] = updatedPath;
+      }
+    }
+    env[envPathKey] = updatedPath;
+  }
+
+  const child = spawn(ytDlp, args, { env });
+  jobState.process = child;
+  attachProcessListeners(jobState, child, targetFormat);
+}
+
+function processQueue() {
+  while (jobQueue.length > 0 && getActiveJobCount() < MAX_CONCURRENT_CONVERSIONS) {
+    const nextJobId = jobQueue.shift();
+    const nextJob = jobs.get(nextJobId);
+    if (!nextJob || nextJob.status !== 'queued') {
+      continue;
+    }
+    spawnQueuedConversion(nextJob);
+  }
+  updateQueuePositions();
 }
 
 /**
@@ -1668,7 +2147,11 @@ function startConversion({
   title = '',
   artist = '',
   thumbnail = '',
-  slideIndex = null
+  slideIndex = null,
+  trimStart = '',
+  trimEnd = '',
+  normalizeAudio = false,
+  sponsorBlock = false
 }) {
   const targetFmt = (format || 'mp3').toLowerCase();
   const isPhotoJob = Boolean(isPhoto) || ['zip', 'jpg', 'jpeg', 'png', 'webp'].includes(targetFmt);
@@ -1705,23 +2188,27 @@ function startConversion({
     jobs.set(jobId, jobState);
     console.log(`[converter] Starting photo/carousel download job ${jobId}: ${url} (${targetFmt})`);
 
-    // Run photo download job asynchronously
-    downloadPhotoJob(jobState, targetFmt, DOWNLOADS_DIR, savePersistentHistory);
+    // Run photo download job asynchronously and honor permanent library placement if configured
+    downloadPhotoJob(jobState, targetFmt, DOWNLOADS_DIR, (completedPhotoJob) => {
+      if (completedPhotoJob?.filePath) {
+        const placement = moveToPermanentLibrary(
+          completedPhotoJob.filePath,
+          completedPhotoJob.fileName || path.basename(completedPhotoJob.filePath)
+        );
+        completedPhotoJob.filePath = placement.filePath;
+        completedPhotoJob.isPermanent = placement.isPermanent;
+      }
+      savePersistentHistory(completedPhotoJob);
+    });
 
     return jobState;
   }
 
-  const ytDlp = getYtDlpPath();
-  const ffmpeg = getFfmpegPath();
-
-  // Output filename template
   const outputTemplate = path.join(DOWNLOADS_DIR, `${jobId}.%(ext)s`);
-
   const cookiePath = getCookiePath();
   const ffmpegLocation = getFfmpegLocation();
 
   const {
-    args,
     targetFormat,
     targetQuality,
     isVideo,
@@ -1733,9 +2220,14 @@ function startConversion({
     outputTemplate,
     cookiePath,
     ffmpegLocation,
-    turbo
+    turbo,
+    trimStart,
+    trimEnd,
+    normalizeAudio: Boolean(normalizeAudio),
+    sponsorBlock: Boolean(sponsorBlock)
   });
 
+  const shouldQueue = getActiveJobCount() >= MAX_CONCURRENT_CONVERSIONS;
   const jobState = {
     id: jobId,
     url,
@@ -1746,44 +2238,32 @@ function startConversion({
     downloader: activeAria2 ? 'aria2c' : 'builtin',
     parallelStreams: turbo ? 16 : 1,
     fragmentInfo: null,
-    status: 'starting', // starting, downloading, converting, completed, failed
+    status: shouldQueue ? 'queued' : 'starting',
+    queuePosition: null,
     progress: 0,
-    speed: '0 KiB/s',
-    eta: '--:--',
+    speed: shouldQueue ? 'Queued' : '0 KiB/s',
+    eta: shouldQueue ? 'Waiting slot' : '--:--',
     totalSize: 'Calculating...',
-    title: '',
-    artist: '',
-    thumbnail: '',
+    title: title || '',
+    artist: artist || '',
+    thumbnail: thumbnail || '',
     duration: typeof duration === 'number' && duration > 0 ? duration : 0,
     filePath: null,
     fileName: null,
     error: null,
-    createdAt: Date.now()
+    createdAt: Date.now(),
+    _queuedOptions: { format, quality, turbo, trimStart, trimEnd, normalizeAudio: Boolean(normalizeAudio), sponsorBlock: Boolean(sponsorBlock) }
   };
 
   jobs.set(jobId, jobState);
 
-  console.log(`[converter] Starting job ${jobId} (Turbo: ${Boolean(turbo)}, downloader: ${activeAria2 ? 'aria2c' : 'builtin'}): ${url} (${targetFormat}, ${targetQuality})`);
-
-  // Ensure binDir is in PATH so yt-dlp can locate local aria2c or ffmpeg
-  const binDir = getBinDir();
-  const env = { ...process.env };
-  const envPathKey = Object.keys(env).find(k => k.toLowerCase() === 'path') || (process.platform === 'win32' ? 'Path' : 'PATH');
-  const currentPath = env[envPathKey] || '';
-  if (binDir && !currentPath.includes(binDir)) {
-    const updatedPath = `${binDir}${path.delimiter}${currentPath}`;
-    for (const key of Object.keys(env)) {
-      if (key.toLowerCase() === 'path') {
-        env[key] = updatedPath;
-      }
-    }
-    env[envPathKey] = updatedPath;
+  if (shouldQueue) {
+    jobQueue.push(jobId);
+    updateQueuePositions();
+    console.log(`[converter] Queued job ${jobId} at position #${jobState.queuePosition}: ${url} (${targetFormat}, ${targetQuality})`);
+  } else {
+    spawnQueuedConversion(jobState);
   }
-
-  const child = spawn(ytDlp, args, { env });
-  jobState.process = child;
-
-  attachProcessListeners(jobState, child, targetFormat);
 
   return jobState;
 }
@@ -1794,8 +2274,8 @@ function startConversion({
 function getJob(jobId) {
   const job = jobs.get(jobId);
   if (!job) return null;
-  // Return shallow copy without raw process object
-  const { process, ...clean } = job;
+  // Return shallow copy without internal child/queue handles
+  const { process, _queuedOptions, ...clean } = job;
   return clean;
 }
 
@@ -1806,7 +2286,7 @@ function getHistory() {
   const list = [];
   for (const [id, job] of jobs.entries()) {
     if (job.status === 'completed') {
-      const { process, ...clean } = job;
+      const { process, _queuedOptions, ...clean } = job;
       clean.isAvailable = clean.filePath ? fs.existsSync(clean.filePath) : false;
       list.push(clean);
     }
@@ -1815,23 +2295,37 @@ function getHistory() {
 }
 
 /**
- * Cancel an active conversion job
+ * Cancel an active or queued conversion job
  */
 function cancelConversion(jobId) {
   const job = jobs.get(jobId);
   if (!job) return false;
+
+  if (job.status === 'queued') {
+    job.status = 'cancelled';
+    job.error = 'Conversion was cancelled by user.';
+    job.queuePosition = null;
+    delete job._queuedOptions;
+    const idx = jobQueue.indexOf(jobId);
+    if (idx !== -1) jobQueue.splice(idx, 1);
+    updateQueuePositions();
+    console.log(`[converter] Queued job ${jobId} cancelled.`);
+    return true;
+  }
+
   if (job.process && job.status !== 'completed' && job.status !== 'failed') {
     job.status = 'cancelled';
     job.error = 'Conversion was cancelled by user.';
-    const pid = job.process.pid;
+    const pid = Number(job.process.pid);
     try {
-      if (process.platform === 'win32' && pid) {
-        require('child_process').execSync(`taskkill /pid ${pid} /T /F`, { stdio: 'ignore' });
-      } else {
+      if (process.platform === 'win32' && Number.isInteger(pid) && pid > 0) {
+        execFileSync('taskkill', ['/pid', String(pid), '/T', '/F'], { stdio: 'ignore' });
+      } else if (job.process && typeof job.process.kill === 'function') {
         job.process.kill('SIGTERM');
       }
     } catch {}
     console.log(`[converter] Job ${jobId} cancelled.`);
+    setImmediate(processQueue);
 
     // Clean up partial downloads on cancellation
     setTimeout(() => {
@@ -1869,6 +2363,8 @@ function getActiveJobCount() {
 
 module.exports = {
   getVideoInfo,
+  getPlaylistInfo,
+  analyzePlaylistUrl,
   formatYtDlpError,
   isPhotoSupportedUrl,
   resolvePhotoMetadata,
@@ -1882,6 +2378,17 @@ module.exports = {
   classifyMediaContent,
   getTailoredDownloadOptions,
   getActiveJobCount,
+  getQueueLength,
+  processQueue,
+  MAX_CONCURRENT_CONVERSIONS,
+  MAX_QUEUE_SIZE,
+  getServerSettings,
+  updateServerSettings,
+  getCookiesStatus,
+  saveCookiesContent,
+  deleteCookies,
+  sanitizeTimestamp,
+  DEFAULT_LIBRARY_DIR,
   normalizeUrl,
   DOWNLOADS_DIR,
   isAria2Available,

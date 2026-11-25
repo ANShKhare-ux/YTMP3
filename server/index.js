@@ -2,9 +2,30 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
+const dns = require('dns');
+const net = require('net');
+const { Readable } = require('stream');
 const crypto = require('crypto');
-const { verifyBinaries, updateYtDlp } = require('./binManager');
-const { getVideoInfo, startConversion, cancelConversion, getJob, getHistory, getActiveJobCount, normalizeUrl, DOWNLOADS_DIR } = require('./converter');
+const { verifyBinaries, updateYtDlp, installAria2 } = require('./binManager');
+const {
+  getVideoInfo,
+  startConversion,
+  cancelConversion,
+  getJob,
+  getHistory,
+  getActiveJobCount,
+  getQueueLength,
+  MAX_CONCURRENT_CONVERSIONS,
+  MAX_QUEUE_SIZE,
+  getServerSettings,
+  updateServerSettings,
+  getCookiesStatus,
+  saveCookiesContent,
+  deleteCookies,
+  setAria2Available,
+  normalizeUrl,
+  DOWNLOADS_DIR
+} = require('./converter');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -40,12 +61,12 @@ app.use(cors({
     }
     return callback(null, false);
   },
-  methods: ['GET', 'POST', 'OPTIONS'],
+  methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Range']
 }));
 
 // Request body size limit
-app.use(express.json({ limit: '256kb' }));
+app.use(express.json({ limit: '512kb' }));
 
 let systemStatus = {
   ready: false,
@@ -59,7 +80,12 @@ let systemStatus = {
 app.get('/api/status', (req, res) => {
   res.json({
     success: true,
-    status: systemStatus
+    status: {
+      ...systemStatus,
+      activeJobs: getActiveJobCount(),
+      queuedJobs: getQueueLength(),
+      maxConcurrency: MAX_CONCURRENT_CONVERSIONS
+    }
   });
 });
 
@@ -72,7 +98,7 @@ app.post('/api/info', async (req, res) => {
     });
   }
 
-  const { url } = req.body || {};
+  const { url, playlist = false } = req.body || {};
   if (!url || typeof url !== 'string' || !url.trim()) {
     return res.status(400).json({ success: false, error: 'Media URL is required' });
   }
@@ -85,7 +111,7 @@ app.post('/api/info', async (req, res) => {
   }
 
   try {
-    const info = await getVideoInfo(cleanUrl);
+    const info = await getVideoInfo(cleanUrl, { playlist: Boolean(playlist) });
     res.json({ success: true, data: info });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message || 'Failed to fetch media information' });
@@ -112,7 +138,11 @@ app.post('/api/convert', (req, res) => {
     turbo = true,
     isPhoto = false,
     photos = [],
-    slideIndex = null
+    slideIndex = null,
+    trimStart = '',
+    trimEnd = '',
+    normalizeAudio = false,
+    sponsorBlock = false
   } = req.body || {};
 
   if (!url) {
@@ -126,12 +156,11 @@ app.post('/api/convert', (req, res) => {
     return res.status(400).json({ success: false, error: err.message || 'Invalid media URL' });
   }
 
-  // Concurrency limit
-  const MAX_CONCURRENT_CONVERSIONS = 3;
-  if (getActiveJobCount() >= MAX_CONCURRENT_CONVERSIONS) {
+  // Queue overflow protection (FIFO queue seamlessly accepts jobs when workers are busy)
+  if (getQueueLength() >= MAX_QUEUE_SIZE) {
     return res.status(429).json({
       success: false,
-      error: 'Server is currently processing maximum concurrent conversions (3). Please wait for active conversions to complete.'
+      error: `Conversion queue is full (${MAX_QUEUE_SIZE} pending jobs). Please wait for active jobs to complete.`
     });
   }
 
@@ -150,7 +179,11 @@ app.post('/api/convert', (req, res) => {
       slideIndex: slideIndex ? Number(slideIndex) : null,
       title,
       artist,
-      thumbnail
+      thumbnail,
+      trimStart,
+      trimEnd,
+      normalizeAudio: Boolean(normalizeAudio),
+      sponsorBlock: Boolean(sponsorBlock)
     });
     if (title) job.title = title;
     if (artist) job.artist = artist;
@@ -160,11 +193,103 @@ app.post('/api/convert', (req, res) => {
     res.json({
       success: true,
       jobId,
-      message: 'Conversion started'
+      status: job.status,
+      queued: job.status === 'queued',
+      queuePosition: job.queuePosition || null,
+      message: job.status === 'queued'
+        ? `Added to queue (position #${job.queuePosition})`
+        : 'Conversion started'
     });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
+});
+
+// Batch playlist / multi-track queue endpoint
+app.post('/api/convert-batch', (req, res) => {
+  if (!systemStatus.ready) {
+    return res.status(503).json({
+      success: false,
+      error: 'Media engine is initializing components (yt-dlp / FFmpeg). Please try again shortly.'
+    });
+  }
+
+  const {
+    items,
+    format = 'mp3',
+    quality = '320k',
+    turbo = true,
+    trimStart = '',
+    trimEnd = '',
+    normalizeAudio = false,
+    sponsorBlock = false
+  } = req.body || {};
+
+  if (!Array.isArray(items) || items.length === 0) {
+    return res.status(400).json({ success: false, error: 'At least one track item is required for batch conversion.' });
+  }
+
+  if (items.length > 50) {
+    return res.status(400).json({ success: false, error: 'Batch requests are capped at 50 items per submission.' });
+  }
+
+  if (getQueueLength() + items.length > MAX_QUEUE_SIZE) {
+    return res.status(429).json({
+      success: false,
+      error: `Queue capacity (${MAX_QUEUE_SIZE}) exceeded. Please wait for active batch items to finish.`
+    });
+  }
+
+  const normalizedItems = [];
+  try {
+    for (const item of items) {
+      if (!item || !item.url) {
+        return res.status(400).json({ success: false, error: 'Every batch track must include a valid URL.' });
+      }
+      normalizedItems.push({
+        ...item,
+        cleanUrl: normalizeUrl(item.url)
+      });
+    }
+  } catch (err) {
+    return res.status(400).json({ success: false, error: err.message || 'Invalid track URL in batch.' });
+  }
+
+  const createdJobs = normalizedItems.map((item) => {
+    const jobId = crypto.randomUUID();
+    const job = startConversion({
+      url: item.cleanUrl,
+      format,
+      quality,
+      jobId,
+      duration: Number(item.duration) > 0 ? Number(item.duration) : 0,
+      turbo,
+      title: item.title || '',
+      artist: item.uploader || item.artist || '',
+      thumbnail: item.thumbnail || '',
+      trimStart,
+      trimEnd,
+      normalizeAudio: Boolean(normalizeAudio),
+      sponsorBlock: Boolean(sponsorBlock)
+    });
+    return {
+      jobId: job.id,
+      status: job.status,
+      queuePosition: job.queuePosition || null,
+      title: job.title,
+      artist: job.artist,
+      thumbnail: job.thumbnail,
+      format: job.format,
+      quality: job.quality,
+      url: job.url
+    };
+  });
+
+  res.json({
+    success: true,
+    count: createdJobs.length,
+    jobs: createdJobs
+  });
 });
 
 // Cancel Conversion Job
@@ -178,11 +303,27 @@ app.post('/api/cancel/:jobId', (req, res) => {
 });
 
 // Self-update yt-dlp binary
-app.post('/api/binaries/update', async (req, res) => {
+app.post('/api/binaries/update', requireLocalRequest, async (req, res) => {
   try {
     const result = await updateYtDlp();
     if (result.success && result.version) {
       systemStatus.ytDlpVersion = result.version;
+    }
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Provision aria2c multi-connection downloader binary on Windows
+app.post('/api/binaries/install-aria2', requireLocalRequest, async (req, res) => {
+  try {
+    const result = await installAria2();
+    if (result.success) {
+      systemStatus.aria2 = true;
+      systemStatus.aria2Version = result.version || 'aria2c';
+      systemStatus.downloader = 'aria2c';
+      setAria2Available(true);
     }
     res.json(result);
   } catch (err) {
@@ -251,6 +392,63 @@ app.get('/api/job/:jobId', (req, res) => {
   res.json({ success: true, job });
 });
 
+function isAuthorizedMediaPath(resolvedPath) {
+  const isWin = process.platform === 'win32';
+  const normalize = (p) => (isWin ? path.resolve(p).toLowerCase() : path.resolve(p));
+  const target = normalize(resolvedPath);
+  const authorizedRoots = [DOWNLOADS_DIR];
+  const settings = getServerSettings();
+  if (settings && settings.libraryDir) {
+    authorizedRoots.push(settings.libraryDir);
+  }
+  return authorizedRoots.some((root) => {
+    const prefix = normalize(root) + path.sep;
+    return target.startsWith(prefix);
+  });
+}
+
+function requireLocalRequest(req, res, next) {
+  const remote = (req.ip || req.socket?.remoteAddress || '').toLowerCase();
+  const isLocal = remote === '127.0.0.1' || remote === '::1' || remote === '::ffff:127.0.0.1';
+  if (!isLocal) {
+    return res.status(403).json({ success: false, error: 'Settings management is restricted to localhost requests.' });
+  }
+  return next();
+}
+
+// Library output mode settings (temporary 2h cache vs permanent user library)
+app.get('/api/settings/library', requireLocalRequest, (req, res) => {
+  res.json({ success: true, settings: getServerSettings() });
+});
+
+app.post('/api/settings/library', requireLocalRequest, (req, res) => {
+  try {
+    const updated = updateServerSettings(req.body || {});
+    res.json({ success: true, settings: updated });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message || 'Invalid library setting.' });
+  }
+});
+
+// Localhost-only Cookies & Bot-Bypass Manager (never returns raw secret tokens)
+app.get('/api/settings/cookies', requireLocalRequest, (req, res) => {
+  res.json({ success: true, cookies: getCookiesStatus() });
+});
+
+app.post('/api/settings/cookies', requireLocalRequest, (req, res) => {
+  try {
+    const status = saveCookiesContent(req.body?.content);
+    res.json({ success: true, cookies: status });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message || 'Failed to save cookies file.' });
+  }
+});
+
+app.delete('/api/settings/cookies', requireLocalRequest, (req, res) => {
+  const status = deleteCookies();
+  res.json({ success: true, cookies: status });
+});
+
 // Stream audio for in-browser playback
 app.get('/api/stream/:jobId', (req, res) => {
   const { jobId } = req.params;
@@ -260,13 +458,9 @@ app.get('/api/stream/:jobId', (req, res) => {
     return res.status(404).send('Audio file not found or still processing.');
   }
 
-  // Path traversal prevention: verify file is within downloads directory
+  // Path traversal prevention: verify file is within authorized downloads or permanent library directory
   const resolvedPath = path.resolve(job.filePath);
-  const resolvedDownloads = path.resolve(DOWNLOADS_DIR);
-  const isWin = process.platform === 'win32';
-  const pathToCheck = isWin ? resolvedPath.toLowerCase() : resolvedPath;
-  const downloadsToCheck = isWin ? (resolvedDownloads + path.sep).toLowerCase() : (resolvedDownloads + path.sep);
-  if (!pathToCheck.startsWith(downloadsToCheck)) {
+  if (!isAuthorizedMediaPath(resolvedPath)) {
     return res.status(403).send('Access denied: file path is outside authorized downloads directory.');
   }
 
@@ -334,6 +528,8 @@ app.get('/api/stream/:jobId', (req, res) => {
       'Accept-Ranges': 'bytes',
       'Content-Length': chunksize,
       'Content-Type': contentType,
+      'Access-Control-Expose-Headers': 'Content-Range, Content-Length, Accept-Ranges',
+      'Cross-Origin-Resource-Policy': 'cross-origin'
     };
     res.writeHead(206, head);
     file.pipe(res);
@@ -341,7 +537,9 @@ app.get('/api/stream/:jobId', (req, res) => {
     const head = {
       'Content-Length': fileSize,
       'Content-Type': contentType,
-      'Accept-Ranges': 'bytes'
+      'Accept-Ranges': 'bytes',
+      'Access-Control-Expose-Headers': 'Content-Range, Content-Length, Accept-Ranges',
+      'Cross-Origin-Resource-Policy': 'cross-origin'
     };
     res.writeHead(200, head);
     const file = fs.createReadStream(filePath);
@@ -365,13 +563,9 @@ app.get('/api/download/:jobId', (req, res) => {
     return res.status(404).send('File not found or still processing.');
   }
 
-  // Path traversal prevention: verify file is within downloads directory
+  // Path traversal prevention: verify file is within authorized downloads or permanent library directory
   const resolvedPath = path.resolve(job.filePath);
-  const resolvedDownloads = path.resolve(DOWNLOADS_DIR);
-  const isWin = process.platform === 'win32';
-  const pathToCheck = isWin ? resolvedPath.toLowerCase() : resolvedPath;
-  const downloadsToCheck = isWin ? (resolvedDownloads + path.sep).toLowerCase() : (resolvedDownloads + path.sep);
-  if (!pathToCheck.startsWith(downloadsToCheck)) {
+  if (!isAuthorizedMediaPath(resolvedPath)) {
     return res.status(403).send('Access denied: file path is outside authorized downloads directory.');
   }
 
@@ -389,22 +583,134 @@ app.get('/api/download/:jobId', (req, res) => {
   });
 });
 
-// Direct photo proxy download (enables instant 1-click download of any carousel slide)
-app.get('/api/photo-download', async (req, res) => {
-  const { url, filename } = req.query;
-  if (!url || typeof url !== 'string' || !url.startsWith('https://')) {
-    return res.status(400).json({ success: false, error: 'Valid HTTPS photo URL is required' });
+const MAX_PHOTO_BYTES = 25 * 1024 * 1024; // 25 MB strict limit for photo proxy
+
+function isPrivateOrReservedIp(ip) {
+  if (!ip || typeof ip !== 'string') return true;
+  let normalized = ip.toLowerCase().trim();
+  if (normalized.startsWith('::ffff:')) {
+    normalized = normalized.slice(7);
   }
 
-  try {
-    const upstreamRes = await fetch(url, {
+  const family = net.isIP(normalized);
+  if (family === 4) {
+    const parts = normalized.split('.').map(Number);
+    if (parts.length !== 4 || parts.some((n) => !Number.isInteger(n) || n < 0 || n > 255)) return true;
+    const [a, b] = parts;
+    return (
+      a === 0 ||
+      a === 10 ||
+      a === 127 ||
+      (a === 100 && b >= 64 && b <= 127) ||
+      (a === 169 && b === 254) ||
+      (a === 172 && b >= 16 && b <= 31) ||
+      (a === 192 && b === 168)
+    );
+  }
+  if (family === 6) {
+    return (
+      normalized === '::' ||
+      normalized === '::1' ||
+      normalized.startsWith('fc') ||
+      normalized.startsWith('fd') ||
+      normalized.startsWith('fe8') ||
+      normalized.startsWith('fe9') ||
+      normalized.startsWith('fea') ||
+      normalized.startsWith('feb')
+    );
+  }
+  return true;
+}
+
+async function validateSafeHttpsPhotoUrl(rawUrl) {
+  const cleanUrl = normalizeUrl(rawUrl);
+  const parsed = new URL(cleanUrl);
+  if (parsed.protocol !== 'https:') {
+    throw new Error('Only HTTPS photo URLs are permitted.');
+  }
+
+  const hostname = parsed.hostname.replace(/^\[|\]$/g, '');
+  if (net.isIP(hostname)) {
+    if (isPrivateOrReservedIp(hostname)) {
+      throw new Error('Access to private or internal IP addresses is strictly prohibited.');
+    }
+    return cleanUrl;
+  }
+
+  const records = await dns.promises.lookup(hostname, { all: true });
+  if (!Array.isArray(records) || records.length === 0) {
+    throw new Error('Unable to resolve remote image host.');
+  }
+  if (records.some((rec) => isPrivateOrReservedIp(rec.address))) {
+    throw new Error('Image host resolved to a restricted internal network address.');
+  }
+  return cleanUrl;
+}
+
+async function fetchSafePhotoResponse(initialUrl, signal) {
+  let currentUrl = await validateSafeHttpsPhotoUrl(initialUrl);
+  const MAX_REDIRECTS = 5;
+
+  for (let hop = 0; hop <= MAX_REDIRECTS; hop += 1) {
+    const res = await fetch(currentUrl, {
+      redirect: 'manual',
+      signal,
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
       }
     });
 
+    if (res.status >= 300 && res.status < 400 && res.headers.get('location')) {
+      try { await res.body?.cancel(); } catch {}
+      const nextUrl = new URL(res.headers.get('location'), currentUrl).href;
+      currentUrl = await validateSafeHttpsPhotoUrl(nextUrl);
+      continue;
+    }
+
+    return res;
+  }
+
+  throw new Error('Too many redirects while fetching photo.');
+}
+
+// Direct photo proxy download (enables instant 1-click download of any carousel slide)
+app.get('/api/photo-download', async (req, res) => {
+  const { url, filename } = req.query;
+  if (!url || typeof url !== 'string' || !url.trim()) {
+    return res.status(400).json({ success: false, error: 'Valid HTTPS photo URL is required' });
+  }
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 30000);
+  const clearPhotoTimer = () => clearTimeout(timeout);
+  req.on('close', () => {
+    clearPhotoTimer();
+    controller.abort();
+  });
+  res.once('finish', clearPhotoTimer);
+  res.once('close', clearPhotoTimer);
+
+  try {
+    const upstreamRes = await fetchSafePhotoResponse(url.trim(), controller.signal);
+
     if (!upstreamRes.ok) {
+      clearPhotoTimer();
+      try { await upstreamRes.body?.cancel(); } catch {}
       return res.status(upstreamRes.status).json({ success: false, error: `Upstream error (${upstreamRes.status})` });
+    }
+
+    const rawContentType = (upstreamRes.headers.get('content-type') || '').split(';')[0].trim().toLowerCase();
+    if (!rawContentType.startsWith('image/')) {
+      clearPhotoTimer();
+      try { await upstreamRes.body?.cancel(); } catch {}
+      return res.status(415).json({ success: false, error: 'Upstream URL did not return a valid image content type.' });
+    }
+
+    const contentLengthHeader = Number(upstreamRes.headers.get('content-length') || 0);
+    if (Number.isFinite(contentLengthHeader) && contentLengthHeader > MAX_PHOTO_BYTES) {
+      clearPhotoTimer();
+      try { await upstreamRes.body?.cancel(); } catch {}
+      return res.status(413).json({ success: false, error: 'Remote image exceeds 25 MB maximum size limit.' });
     }
 
     const safeName = path.basename(filename || 'photo.jpg')
@@ -413,15 +719,44 @@ app.get('/api/photo-download', async (req, res) => {
     const asciiName = safeName.replace(/[^\x20-\x7E]/g, '_').replace(/["\r\n]/g, '_');
     const utf8Encoded = encodeURIComponent(safeName);
 
-    const contentType = upstreamRes.headers.get('content-type') || 'image/jpeg';
-    res.setHeader('Content-Type', contentType);
+    res.setHeader('Content-Type', rawContentType);
     res.setHeader('Content-Disposition', `attachment; filename="${asciiName}"; filename*=UTF-8''${utf8Encoded}`);
     res.setHeader('Cache-Control', 'public, max-age=86400');
 
-    const arrayBuffer = await upstreamRes.arrayBuffer();
-    return res.send(Buffer.from(arrayBuffer));
+    if (!upstreamRes.body) {
+      clearPhotoTimer();
+      return res.status(502).json({ success: false, error: 'Empty image stream received from upstream.' });
+    }
+
+    const nodeStream = Readable.fromWeb(upstreamRes.body);
+    let receivedBytes = 0;
+
+    nodeStream.on('data', (chunk) => {
+      receivedBytes += chunk.length;
+      if (receivedBytes > MAX_PHOTO_BYTES) {
+        clearPhotoTimer();
+        nodeStream.destroy(new Error('Image stream exceeded 25 MB size limit.'));
+        controller.abort();
+      }
+    });
+
+    nodeStream.on('error', (streamErr) => {
+      clearPhotoTimer();
+      if (!res.headersSent) {
+        res.status(413).json({ success: false, error: streamErr.message || 'Image transfer aborted.' });
+      } else {
+        res.destroy();
+      }
+    });
+
+    nodeStream.pipe(res);
   } catch (err) {
-    return res.status(500).json({ success: false, error: err.message || 'Failed to download photo' });
+    clearPhotoTimer();
+    if (!res.headersSent) {
+      const msg = err.message || 'Failed to download photo';
+      const isPolicyErr = /prohibited|authorized|https|valid link|restricted/i.test(msg);
+      return res.status(isPolicyErr ? 400 : 500).json({ success: false, error: msg });
+    }
   }
 });
 
@@ -485,26 +820,54 @@ function setSystemStatus(newStatus) {
   systemStatus = { ...systemStatus, ...newStatus };
 }
 
-// Initialize server
-async function startServer() {
-  return new Promise((resolve) => {
-    const server = app.listen(PORT, async () => {
-      console.log(`[server] Server listening on http://localhost:${PORT}`);
-      console.log(`[server] Status: ${systemStatus.ready ? 'Ready' : 'Bootstrapping Binaries'}`);
+// Initialize server with dynamic free-port fallback when preferred port is busy
+async function startServer(portOverride) {
+  const initialPort = Number(portOverride ?? PORT) || 3001;
 
-      try {
-        const binStatus = await verifyBinaries();
-        systemStatus = {
-          ready: Boolean(binStatus.ytDlp && binStatus.ffmpeg),
-          ...binStatus
-        };
-        console.log(`[server] Status: ${systemStatus.ready ? 'Ready' : 'Binaries Pending'}`);
-      } catch (err) {
-        console.error('[server] Error bootstrapping binaries:', err.message);
-      }
-      resolve(server);
+  const listenOnAvailablePort = (startPort, maxAttempts = 20) => {
+    return new Promise((resolve, reject) => {
+      let attempt = 0;
+
+      const tryPort = (candidatePort) => {
+        const server = app.listen(candidatePort, () => {
+          resolve(server);
+        });
+
+        server.once('error', (err) => {
+          if (err && err.code === 'EADDRINUSE' && attempt < maxAttempts) {
+            attempt += 1;
+            const nextPort = attempt < maxAttempts ? candidatePort + 1 : 0;
+            console.warn(`[server] Port ${candidatePort} in use, trying ${nextPort === 0 ? 'ephemeral port' : nextPort}...`);
+            tryPort(nextPort);
+          } else {
+            reject(err);
+          }
+        });
+      };
+
+      tryPort(initialPort);
     });
-  });
+  };
+
+  const server = await listenOnAvailablePort(initialPort);
+  const actualPort = server.address()?.port || initialPort;
+  systemStatus.port = actualPort;
+  console.log(`[server] Server listening on http://localhost:${actualPort}`);
+  console.log(`[server] Status: ${systemStatus.ready ? 'Ready' : 'Bootstrapping Binaries'}`);
+
+  try {
+    const binStatus = await verifyBinaries();
+    systemStatus = {
+      ready: Boolean(binStatus.ytDlp && binStatus.ffmpeg),
+      port: actualPort,
+      ...binStatus
+    };
+    console.log(`[server] Status: ${systemStatus.ready ? 'Ready' : 'Binaries Pending'}`);
+  } catch (err) {
+    console.error('[server] Error bootstrapping binaries:', err.message);
+  }
+
+  return server;
 }
 
 if (require.main === module) {

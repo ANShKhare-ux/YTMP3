@@ -31,42 +31,32 @@ import {
 import FaqAccordion from './ui/FaqAccordion';
 import HalftoneWordmarkFooter from './ui/halftone-wordmark-footer';
 import DownloadSuccessModal, { triggerZipDownload, triggerExeDownload, triggerMacZipDownload, triggerApkDownload } from './DownloadSuccessModal';
+import { PACKAGE_SPECS } from '../utils/packageSpecs';
+import { demoAudioSynth } from '../utils/demoAudioSynth';
 import { gsap } from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { ScrollToPlugin } from 'gsap/ScrollToPlugin';
-import { TextPlugin } from 'gsap/TextPlugin';
 import { CustomEase } from 'gsap/CustomEase';
-import { Observer } from 'gsap/Observer';
 import { Draggable } from 'gsap/Draggable';
 import { InertiaPlugin } from 'gsap/InertiaPlugin';
 import { Flip } from 'gsap/Flip';
 import { SplitText } from 'gsap/SplitText';
 import { ScrambleTextPlugin } from 'gsap/ScrambleTextPlugin';
 import { DrawSVGPlugin } from 'gsap/DrawSVGPlugin';
-import { CustomBounce } from 'gsap/CustomBounce';
 import { CustomWiggle } from 'gsap/CustomWiggle';
-import { MotionPathPlugin } from 'gsap/MotionPathPlugin';
-import { EasePack } from 'gsap/EasePack';
 
 if (typeof window !== 'undefined') {
   gsap.registerPlugin(
     useGSAP,
     ScrollTrigger,
-    ScrollToPlugin,
-    TextPlugin,
     CustomEase,
-    Observer,
     Draggable,
     InertiaPlugin,
     Flip,
     SplitText,
     ScrambleTextPlugin,
     DrawSVGPlugin,
-    CustomBounce,
-    CustomWiggle,
-    MotionPathPlugin,
-    EasePack
+    CustomWiggle
   );
 }
 
@@ -287,6 +277,8 @@ export default function LandingPage({
   const [isPlayingDemo, setIsPlayingDemo] = useState(false);
   const [demoProgress, setDemoProgress] = useState(32);
   const [isMuted, setIsMuted] = useState(false);
+  const [showcaseMode, setShowcaseMode] = useState('audio');
+  const [selectedCarouselSlide, setSelectedCarouselSlide] = useState(0);
   const [openFaqIndex, setOpenFaqIndex] = useState(0);
   const progressTimerRef = useRef(null);
 
@@ -297,7 +289,7 @@ export default function LandingPage({
   const knobRef = useRef(null);
   const trackRef = useRef(null);
 
-  // Simulated playback timer for the demo preview widget
+  // Simulated playback timer & Web Audio synth lifecycle for the demo preview widget
   useEffect(() => {
     if (isPlayingDemo) {
       progressTimerRef.current = setInterval(() => {
@@ -308,11 +300,18 @@ export default function LandingPage({
       }, 500);
     } else {
       if (progressTimerRef.current) clearInterval(progressTimerRef.current);
+      demoAudioSynth.stop();
     }
     return () => {
       if (progressTimerRef.current) clearInterval(progressTimerRef.current);
     };
   }, [isPlayingDemo]);
+
+  useEffect(() => {
+    demoAudioSynth.setMuted(isMuted);
+  }, [isMuted]);
+
+  useEffect(() => () => demoAudioSynth.dispose(), []);
 
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -385,9 +384,6 @@ export default function LandingPage({
     // 1. Animation easing curves
     CustomEase.create("appleSpring", "M0,0 C0.16,1 0.3,1 1,1");
     CustomEase.create("punchSpring", "M0,0 C0.18,0.85 0.32,1.15 1,1");
-    CustomEase.create("smoothGlide", "M0,0 C0.25,0.1 0.25,1 1,1");
-    CustomEase.create("backSnap", "M0,0 C0.34,1.56 0.64,1 1,1");
-    CustomBounce.create("btnBounce", { strength: 0.5, squash: 2 });
     CustomWiggle.create("waveformWiggle", { wiggles: 8, type: "random" });
 
     // 2. SplitText on hero title
@@ -894,12 +890,19 @@ export default function LandingPage({
   };
 
   const handleTogglePlayDemo = () => {
-    setIsPlayingDemo((prev) => !prev);
+    const next = !isPlayingDemo;
+    if (next) {
+      demoAudioSynth.start(selectedDemoTrack, isMuted);
+    } else {
+      demoAudioSynth.stop();
+    }
+    setIsPlayingDemo(next);
   };
 
   const handleSelectTrack = (track) => {
     const trackContainer = document.querySelector('.cursor-demo-tracks');
     const state = trackContainer ? Flip.getState('.cursor-track-row') : null;
+    demoAudioSynth.start(track, isMuted);
     setSelectedDemoTrack(track);
     setDemoProgress(0);
     setIsPlayingDemo(true);
@@ -978,7 +981,7 @@ export default function LandingPage({
 
         <div className="cursor-nav-container">
           <a
-            href="#"
+            href="/"
             className="cursor-nav-brand"
             onClick={(e) => {
               e.preventDefault();
@@ -1345,19 +1348,192 @@ export default function LandingPage({
             </div>
 
             {/* In-app workspace preview */}
-            <div className="cursor-window-content">
+            <div className="cursor-window-content" data-showcase-mode={showcaseMode}>
               {/* Internal header bar */}
               <div className="cursor-preview-top-strip">
                 <div className="cursor-preview-status">
                   <span className="cursor-accent-indicator" />
-                  <span>Real-time audio extraction &amp; frequency analyzer</span>
+                  <span>
+                    {showcaseMode === 'carousel'
+                      ? 'Multi-slide Instagram carousels, Reddit galleries & X photos'
+                      : showcaseMode === 'android'
+                      ? 'Android 8.0+ Share Sheet -> 1-tap on-device extraction'
+                      : 'Real-time audio extraction & frequency analyzer'}
+                  </span>
                 </div>
-                <div className="cursor-preview-tags">
-                  <span className="cursor-spec-tag active">320 KBPS MP3</span>
-                  <span className="cursor-spec-tag">FLAC 24-BIT</span>
-                  <span className="cursor-spec-tag">1080P MP4</span>
+                <div className="cursor-showcase-controls">
+                  <div className="cursor-showcase-tabs" role="tablist" aria-label="SonicWave showcase modes">
+                    <button
+                      type="button"
+                      role="tab"
+                      aria-selected={showcaseMode === 'audio'}
+                      className={`cursor-showcase-tab ${showcaseMode === 'audio' ? 'active' : ''}`}
+                      onClick={() => setShowcaseMode('audio')}
+                    >
+                      Studio Audio
+                    </button>
+                    <button
+                      type="button"
+                      role="tab"
+                      aria-selected={showcaseMode === 'carousel'}
+                      className={`cursor-showcase-tab ${showcaseMode === 'carousel' ? 'active' : ''}`}
+                      onClick={() => setShowcaseMode('carousel')}
+                    >
+                      Carousel &amp; Photos
+                    </button>
+                    <button
+                      type="button"
+                      role="tab"
+                      aria-selected={showcaseMode === 'android'}
+                      className={`cursor-showcase-tab ${showcaseMode === 'android' ? 'active' : ''}`}
+                      onClick={() => setShowcaseMode('android')}
+                    >
+                      Android App
+                    </button>
+                  </div>
+                  <div className="cursor-preview-tags">
+                    {showcaseMode === 'carousel' ? (
+                      <>
+                        <span className="cursor-spec-tag active">ORIGINAL JPG/PNG</span>
+                        <span className="cursor-spec-tag">BATCH ZIP</span>
+                        <span className="cursor-spec-tag">1080P HD</span>
+                      </>
+                    ) : showcaseMode === 'android' ? (
+                      <>
+                        <span className="cursor-spec-tag active">ARM64 APK</span>
+                        <span className="cursor-spec-tag">SHARE SHEET</span>
+                        <span className="cursor-spec-tag">{PACKAGE_SPECS.androidApk.sizeLabel}</span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="cursor-spec-tag active">320 KBPS MP3</span>
+                        <span className="cursor-spec-tag">FLAC 24-BIT</span>
+                        <span className="cursor-spec-tag">1080P MP4</span>
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
+
+              {showcaseMode === 'carousel' && (
+                <div className="cursor-showcase-panel" role="tabpanel" aria-label="Carousel and photo extraction preview">
+                  <div className="cursor-carousel-grid">
+                    <div className="cursor-carousel-sidebar">
+                      <div className="cursor-micro-label">Detected Gallery Items (4 Slides)</div>
+                      {[
+                        { idx: 0, label: 'Slide 01 • Studio Session.jpg', res: '1080 × 1350 • 1.8 MB' },
+                        { idx: 1, label: 'Slide 02 • Gear Chain.jpg', res: '1080 × 1350 • 2.1 MB' },
+                        { idx: 2, label: 'Slide 03 • Mastering Rack.png', res: '1440 × 1440 • 3.4 MB' },
+                        { idx: 3, label: 'Slide 04 • Reel Clip.mp4', res: '1080 × 1920 • 60 FPS' }
+                      ].map((slide) => (
+                        <button
+                          key={slide.idx}
+                          type="button"
+                          className={`cursor-track-row ${selectedCarouselSlide === slide.idx ? 'active' : ''}`}
+                          onClick={() => setSelectedCarouselSlide(slide.idx)}
+                        >
+                          <div className="cursor-track-icon">
+                            <span style={{ fontSize: 11, fontFamily: 'var(--cursor-font-mono)' }}>0{slide.idx + 1}</span>
+                          </div>
+                          <div className="cursor-track-details">
+                            <span className="cursor-track-title">{slide.label}</span>
+                            <span className="cursor-track-artist">{slide.res}</span>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                    <div className="cursor-visualizer-surface">
+                      <div className="cursor-vis-head">
+                        <div>
+                          <div className="cursor-vis-title">
+                            {[
+                              'Instagram Carousel • Slide 01',
+                              'Instagram Carousel • Slide 02',
+                              'Reddit / X High-Res Photo • Slide 03',
+                              'Instagram Reel HD Clip • Slide 04'
+                            ][selectedCarouselSlide]}
+                          </div>
+                          <div className="cursor-vis-sub">
+                            Zero watermark • EXIF preserved • One-click individual save or full gallery ZIP archive
+                          </div>
+                        </div>
+                        <span className="cursor-vis-badge">BATCH ZIP READY</span>
+                      </div>
+                      <div className="cursor-carousel-stage">
+                        {[0, 1, 2, 3].map((idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => setSelectedCarouselSlide(idx)}
+                            className={`cursor-carousel-card ${selectedCarouselSlide === idx ? 'active' : ''}`}
+                          >
+                            <span className="cursor-carousel-card-num">0{idx + 1}</span>
+                            <span className="cursor-carousel-card-kind">
+                              {idx === 3 ? '1080p MP4' : 'Original Photo'}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                      <div className="cursor-controls-row">
+                        <span className="cursor-mono-time">instagram.com/p/C9xSonicWave • 4 items extracted</span>
+                        <span className="cursor-spec-tag active">Save All (.zip)</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {showcaseMode === 'android' && (
+                <div className="cursor-showcase-panel" role="tabpanel" aria-label="Android Share Sheet extraction preview">
+                  <div className="cursor-android-grid">
+                    <div className="cursor-visualizer-surface">
+                      <div className="cursor-vis-head">
+                        <div>
+                          <div className="cursor-vis-title">On-Device Android Share Sheet Pipeline</div>
+                          <div className="cursor-vis-sub">
+                            Tap Share in YouTube, Instagram, X, or TikTok &rarr; pick SonicWave &rarr; saved offline to Music/Downloads
+                          </div>
+                        </div>
+                        <span className="cursor-vis-badge">ANDROID 8.0–15</span>
+                      </div>
+                      <div className="cursor-android-steps">
+                        <div className="cursor-android-step">
+                          <span className="cursor-spec-tag active">Step 1</span>
+                          <span>Share any link directly to SonicWave from native social apps</span>
+                        </div>
+                        <div className="cursor-android-step">
+                          <span className="cursor-spec-tag active">Step 2</span>
+                          <span>Embedded FFmpeg + yt-dlp extracts 320k MP3, M4A, or 1080p MP4 locally</span>
+                        </div>
+                        <div className="cursor-android-step">
+                          <span className="cursor-spec-tag active">Step 3</span>
+                          <span>Plays offline with built-in background audio &amp; media notification controls</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="cursor-visualizer-surface cursor-mobile-sheet-mock">
+                      <div className="cursor-micro-label">Android Share Intent</div>
+                      <div className="cursor-mobile-sheet-card">
+                        <div className="cursor-track-title">SonicWave Converter</div>
+                        <div className="cursor-track-artist">URL detected &bull; Ready to extract</div>
+                        <div className="cursor-mobile-format-pills">
+                          <span className="cursor-spec-tag active">MP3 320k</span>
+                          <span className="cursor-spec-tag">MP4 1080p</span>
+                          <span className="cursor-spec-tag">Photos ZIP</span>
+                        </div>
+                      </div>
+                      <a
+                        href="/SonicWave.apk"
+                        download="SonicWave.apk"
+                        className="cursor-btn-primary"
+                        style={{ justifyContent: 'center', marginTop: 'auto' }}
+                      >
+                        Download Signed APK ({PACKAGE_SPECS.androidApk.sizeLabel})
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Player Grid */}
               <div className="cursor-demo-grid">
@@ -1656,7 +1832,7 @@ export default function LandingPage({
                     <FolderArchive size={13} className="cursor-snippet-icon" aria-hidden="true" />
                     <code>{setupTab === 'android' ? 'SonicWave.apk : On-Device' : setupTab === 'mac' ? 'SonicWave-v1.0.0-macOS.zip' : 'SonicWave-v1.0.0-Windows.zip'}</code>
                   </div>
-                  <span className="cursor-snippet-tag">{setupTab === 'android' ? 'Standalone' : setupTab === 'mac' ? '2.7 MB' : '1.3 MB'}</span>
+                  <span className="cursor-snippet-tag">{setupTab === 'android' ? `${PACKAGE_SPECS.androidApk.sizeLabel} APK` : setupTab === 'mac' ? PACKAGE_SPECS.macZip.sizeLabel : PACKAGE_SPECS.windowsZip.sizeLabel}</span>
                 </div>
               </div>
 
@@ -1997,7 +2173,7 @@ export default function LandingPage({
             <span className="cursor-eyebrow">QUESTIONS &amp; ANSWERS</span>
             <h2 className="cursor-display-lg">Frequently asked questions.</h2>
             <p className="cursor-subhead">
-              Everything you need to know about SonicWave for Windows and macOS.
+              Everything you need to know about SonicWave for Windows, Android, and macOS.
             </p>
           </div>
 

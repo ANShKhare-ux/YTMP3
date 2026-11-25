@@ -79,6 +79,9 @@ export default function ContactSupport({ onNavigate }) {
 
   const [openGuide, setOpenGuide] = useState('updater');
   const [copied, setCopied] = useState(false);
+  const [copiedInquiry, setCopiedInquiry] = useState(false);
+  const [formError, setFormError] = useState('');
+  const [popupBlocked, setPopupBlocked] = useState(false);
   const [formState, setFormState] = useState({ name: '', email: '', category: 'General Inquiry', message: '' });
   const [isSubmitted, setIsSubmitted] = useState(false);
 
@@ -92,13 +95,61 @@ export default function ContactSupport({ onNavigate }) {
     setTimeout(() => setCopied(false), 2500);
   };
 
+  const getInquiryPayload = () => {
+    const cleanName = formState.name.trim() || 'User';
+    const cleanEmail = formState.email.trim();
+    const cleanMessage = formState.message.trim();
+    const rawSubject = `[SonicWave ${formState.category}] from ${cleanName}`;
+    const rawBody = `Sender Name: ${cleanName}\nSender Email: ${cleanEmail || 'Not provided'}\nCategory: ${formState.category}\n\nMessage:\n${cleanMessage}`;
+    const subject = encodeURIComponent(rawSubject);
+    const body = encodeURIComponent(rawBody);
+    return {
+      formattedText: `To: preetiansh16@gmail.com\nSubject: ${rawSubject}\n\n${rawBody}`,
+      gmailUrl: `https://mail.google.com/mail/?view=cm&fs=1&to=preetiansh16@gmail.com&su=${subject}&body=${body}`,
+      mailtoUrl: `mailto:preetiansh16@gmail.com?subject=${subject}&body=${body}`
+    };
+  };
+
+  const validateInquiryForm = () => {
+    if (!formState.name.trim()) return 'Please enter your name before sending.';
+    if (!formState.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formState.email.trim())) {
+      return 'Please enter a valid email address so we can reply.';
+    }
+    if (formState.message.trim().length < 10) {
+      return 'Please enter at least 10 characters describing your inquiry.';
+    }
+    return '';
+  };
+
+  const handleCopyInquiry = async () => {
+    const err = validateInquiryForm();
+    if (err && !isSubmitted) {
+      setFormError(err);
+      return;
+    }
+    setFormError('');
+    const { formattedText } = getInquiryPayload();
+    try {
+      await navigator.clipboard.writeText(formattedText);
+      setCopiedInquiry(true);
+      setTimeout(() => setCopiedInquiry(false), 2200);
+    } catch {
+      setFormError('Clipboard access was blocked. Use "Open Default Mail App" or copy preetiansh16@gmail.com above.');
+    }
+  };
+
   const handleSubmitForm = (e) => {
     e.preventDefault();
+    const err = validateInquiryForm();
+    if (err) {
+      setFormError(err);
+      return;
+    }
+    setFormError('');
     setIsSubmitted(true);
-    const subject = encodeURIComponent(`[SonicWave ${formState.category}] from ${formState.name || 'User'}`);
-    const body = encodeURIComponent(`Sender Name: ${formState.name}\nSender Email: ${formState.email}\nCategory: ${formState.category}\n\nMessage:\n${formState.message}`);
-    const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=preetiansh16@gmail.com&su=${subject}&body=${body}`;
-    window.open(gmailUrl, '_blank', 'noopener,noreferrer');
+    const { gmailUrl } = getInquiryPayload();
+    const opened = window.open(gmailUrl, '_blank', 'noopener,noreferrer');
+    setPopupBlocked(!opened);
   };
 
   return (
@@ -265,11 +316,18 @@ export default function ContactSupport({ onNavigate }) {
               <CheckCircle2 size={18} /> Thank You for Your Message
             </h4>
             <p className="legal-callout-text" style={{ marginTop: '0.5rem' }}>
-              Your inquiry has been formulated. If your email composer did not open automatically, choose an option below:
+              {popupBlocked
+                ? 'Your browser blocked the Gmail popup tab. Copy your formatted inquiry or use a fallback option below:'
+                : 'Your inquiry has been formatted. If your email composer did not open automatically, choose an option below:'}
             </p>
+            {formError && (
+              <p role="alert" style={{ color: '#ff8a8a', fontSize: '0.85rem', marginTop: '0.5rem' }}>
+                {formError}
+              </p>
+            )}
             <div style={{ marginTop: '1rem', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
               <a
-                href={`https://mail.google.com/mail/?view=cm&fs=1&to=preetiansh16@gmail.com&su=${encodeURIComponent(`[SonicWave ${formState.category}] from ${formState.name || 'User'}`)}&body=${encodeURIComponent(`Sender Name: ${formState.name}\nSender Email: ${formState.email}\nCategory: ${formState.category}\n\nMessage:\n${formState.message}`)}`}
+                href={getInquiryPayload().gmailUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="cursor-button-primary legal-channel-btn"
@@ -278,7 +336,7 @@ export default function ContactSupport({ onNavigate }) {
                 <Mail size={13} /> Open in Gmail (Web) <ExternalLink size={12} />
               </a>
               <a
-                href={`mailto:preetiansh16@gmail.com?subject=${encodeURIComponent(`[SonicWave ${formState.category}] from ${formState.name || 'User'}`)}&body=${encodeURIComponent(`Sender Name: ${formState.name}\nSender Email: ${formState.email}\nCategory: ${formState.category}\n\nMessage:\n${formState.message}`)}`}
+                href={getInquiryPayload().mailtoUrl}
                 className="cursor-button-secondary legal-channel-btn"
                 style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
               >
@@ -286,7 +344,18 @@ export default function ContactSupport({ onNavigate }) {
               </a>
               <button
                 type="button"
-                onClick={() => setIsSubmitted(false)}
+                onClick={handleCopyInquiry}
+                className="cursor-button-secondary legal-channel-btn"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}
+              >
+                {copiedInquiry ? 'Copied Inquiry!' : 'Copy Formatted Inquiry'}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsSubmitted(false);
+                  setPopupBlocked(false);
+                }}
                 className="cursor-button-secondary legal-channel-btn"
                 style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}
               >
@@ -295,7 +364,7 @@ export default function ContactSupport({ onNavigate }) {
             </div>
           </div>
         ) : (
-          <form onSubmit={handleSubmitForm} style={{ background: '#121316', border: '1px solid #23252a', borderRadius: '12px', padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <form onSubmit={handleSubmitForm} noValidate style={{ background: '#121316', border: '1px solid #23252a', borderRadius: '12px', padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
               <div>
                 <label style={{ display: 'block', fontSize: '0.85rem', color: '#9fa6b2', marginBottom: '6px' }} htmlFor="contact-name">Your Name</label>
@@ -353,13 +422,46 @@ export default function ContactSupport({ onNavigate }) {
               />
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            {formError && (
+              <div
+                role="alert"
+                style={{
+                  padding: '10px 14px',
+                  borderRadius: '8px',
+                  border: '1px solid rgba(255, 107, 107, 0.4)',
+                  background: 'rgba(255, 107, 107, 0.08)',
+                  color: '#ff9b9b',
+                  fontSize: '0.85rem'
+                }}
+              >
+                {formError}
+              </div>
+            )}
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  onClick={handleCopyInquiry}
+                  className="cursor-button-secondary legal-channel-btn"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}
+                >
+                  {copiedInquiry ? 'Copied Inquiry!' : 'Copy Formatted Inquiry'}
+                </button>
+                <a
+                  href={getInquiryPayload().mailtoUrl}
+                  className="cursor-button-secondary legal-channel-btn"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                >
+                  <Mail size={13} /> Default Mail App
+                </a>
+              </div>
               <button
                 type="submit"
                 className="cursor-button-primary"
                 style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 20px', fontSize: '0.9rem' }}
               >
-                <Send size={14} /> Send Inquiry
+                <Send size={14} /> Send via Gmail
               </button>
             </div>
           </form>
