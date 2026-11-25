@@ -171,8 +171,8 @@ test('workspace - download success dialogbox component and trigger integration',
   assert.ok(modalSrc.includes('export function triggerZipDownload'), 'must export triggerZipDownload helper');
   assert.ok(modalSrc.includes('export default function DownloadSuccessModal'), 'must export DownloadSuccessModal component');
   assert.ok(modalSrc.includes('Download Started!'), 'modal must contain Download Started header');
-  assert.ok(modalSrc.includes('Extract the ZIP'), 'modal must include Step 1 extraction guide');
-  assert.ok(modalSrc.includes('start.bat'), 'modal must include Step 2 start.bat launcher guide');
+  assert.ok(!modalSrc.includes('Quick Setup Guide'), 'modal must omit removed Quick Setup Guide section');
+  assert.ok(!modalSrc.includes('Quick Android Setup Guide'), 'modal must omit removed Quick Android Setup Guide section');
   assert.ok(modalSrc.includes('Windows Defender'), 'modal must provide SmartScreen guidance');
 
   // Verify LandingPage.jsx integration

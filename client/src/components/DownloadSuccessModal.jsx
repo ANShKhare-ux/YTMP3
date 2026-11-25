@@ -3,15 +3,13 @@ import confetti from 'canvas-confetti';
 import {
   CheckCircle2,
   Download,
-  FolderArchive,
-  Terminal,
   HelpCircle,
   ShieldCheck,
   X,
-  Sparkles,
   ArrowRight
 } from 'lucide-react';
 import { resolveReleaseAssetUrl } from '../utils/releaseAssets';
+import { PACKAGE_SPECS } from '../utils/packageSpecs';
 
 /**
  * Shared programmatic binary download helper supporting optional CDN mirrors
@@ -180,12 +178,12 @@ export default function DownloadSuccessModal({
               </h2>
               <p className="cursor-success-subtitle">
                 {isApk
-                  ? 'SonicWave for Android (.apk) is downloading. Follow these 3 simple steps to install and convert media on your phone:'
+                  ? 'SonicWave for Android (.apk) is downloading directly to your device.'
                   : isMac
-                  ? 'SonicWave for macOS is downloading. Follow these 3 simple steps to start converting media in seconds:'
+                  ? 'SonicWave for macOS (.zip) is downloading to your Downloads folder.'
                   : isExe
-                  ? 'SonicWave Custom Installer is downloading. Follow these 3 simple steps to install the desktop studio:'
-                  : 'SonicWave is downloading. Follow these 3 simple steps to start converting media in seconds:'}
+                  ? 'SonicWave Custom Installer (.exe) is downloading to your Downloads folder.'
+                  : 'SonicWave Portable ZIP (.zip) is downloading to your Downloads folder.'}
               </p>
             </div>
           </div>
@@ -211,21 +209,21 @@ export default function DownloadSuccessModal({
               <div className="cursor-success-file-info">
                 <span className="cursor-success-filename">
                   {isApk
-                    ? 'SonicWave.apk'
+                    ? PACKAGE_SPECS.androidApk.filename
                     : isMac
-                    ? 'SonicWave-v1.0.0-macOS.zip'
+                    ? PACKAGE_SPECS.macZip.filename
                     : isExe
-                    ? 'SonicWave-Custom-Installer.exe'
-                    : 'SonicWave-v1.0.0-Windows.zip'}
+                    ? PACKAGE_SPECS.windowsExe.filename
+                    : PACKAGE_SPECS.windowsZip.filename}
                 </span>
                 <span className="cursor-success-filemeta">
                   {isApk
-                    ? '73.0 MB \u2022 Android 8.0+ \u2022 ARM64 (v8a) \u2022 Embedded Engine'
+                    ? `${PACKAGE_SPECS.androidApk.sizeLabel} \u2022 ${PACKAGE_SPECS.androidApk.subtitle}`
                     : isMac
-                    ? '1.49 MB \u2022 macOS 12+ (Sonoma/Ventura/Monterey) \u2022 M1-M4 & Intel'
+                    ? `${PACKAGE_SPECS.macZip.sizeLabel} \u2022 ${PACKAGE_SPECS.macZip.subtitle}`
                     : isExe
-                    ? '1.56 MB \u2022 Windows 10 & 11 \u2022 Native Standalone Desktop Window (.exe)'
-                    : '1.49 MB \u2022 Windows 10 & 11 \u2022 Web Portable Package in Browser (.zip)'}
+                    ? `${PACKAGE_SPECS.windowsExe.sizeLabel} \u2022 ${PACKAGE_SPECS.windowsExe.subtitle}`
+                    : `${PACKAGE_SPECS.windowsZip.sizeLabel} \u2022 ${PACKAGE_SPECS.windowsZip.subtitle}`}
                 </span>
               </div>
             </div>
@@ -234,169 +232,6 @@ export default function DownloadSuccessModal({
               <span>Downloading</span>
             </div>
           </div>
-
-          {/* Setup Steps (Android APK vs macOS vs Windows Custom GUI Installer vs Portable ZIP) */}
-          {isApk ? (
-            <div className="cursor-success-steps-box">
-              <h3 className="cursor-success-steps-heading">
-                Quick Android Setup Guide:
-              </h3>
-              <div className="cursor-success-steps-list">
-                <div className="cursor-success-step-item">
-                  <div className="cursor-success-step-num">1</div>
-                  <div className="cursor-success-step-content">
-                    <div className="cursor-success-step-title-row">
-                      <Download size={14} className="cursor-step-icon" />
-                      <strong>Download SonicWave.apk</strong>
-                    </div>
-                    <p>Once downloaded, tap the notification or locate <code>SonicWave.apk</code> in your phone&apos;s Files/Downloads folder.</p>
-                  </div>
-                </div>
-
-                <div className="cursor-success-step-item">
-                  <div className="cursor-success-step-num">2</div>
-                  <div className="cursor-success-step-content">
-                    <div className="cursor-success-step-title-row">
-                      <ShieldCheck size={14} className="cursor-step-icon" />
-                      <strong>Allow Sideloading</strong>
-                    </div>
-                    <p>If prompted by Android, tap <em>Settings</em> and enable <strong>&quot;Allow from this source&quot;</strong> to permit installing the APK.</p>
-                  </div>
-                </div>
-
-                <div className="cursor-success-step-item">
-                  <div className="cursor-success-step-num">3</div>
-                  <div className="cursor-success-step-content">
-                    <div className="cursor-success-step-title-row">
-                      <Sparkles size={14} className="cursor-step-icon" />
-                      <strong>Tap Install &amp; Launch</strong>
-                    </div>
-                    <p>Open SonicWave! Paste any media link or tap <strong>Share</strong> directly from the YouTube or Instagram app to convert with zero PC needed.</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ) : isMac ? (
-            <div className="cursor-success-steps-box">
-              <h3 className="cursor-success-steps-heading">
-                Quick Setup Guide (macOS):
-              </h3>
-              <div className="cursor-success-steps-list">
-                <div className="cursor-success-step-item">
-                  <div className="cursor-success-step-num">1</div>
-                  <div className="cursor-success-step-content">
-                    <div className="cursor-success-step-title-row">
-                      <FolderArchive size={14} className="cursor-step-icon" />
-                      <strong>Extract the ZIP</strong>
-                    </div>
-                    <p>Double-click <code>SonicWave-v1.0.0-macOS.zip</code> in your Downloads folder to unarchive the application.</p>
-                  </div>
-                </div>
-
-                <div className="cursor-success-step-item">
-                  <div className="cursor-success-step-num">2</div>
-                  <div className="cursor-success-step-content">
-                    <div className="cursor-success-step-title-row">
-                      <Terminal size={14} className="cursor-step-icon" />
-                      <strong>Run <code>start.sh</code></strong>
-                    </div>
-                    <p>Open Terminal in the extracted folder and execute: <code>chmod +x start.sh &amp;&amp; ./start.sh</code></p>
-                  </div>
-                </div>
-
-                <div className="cursor-success-step-item">
-                  <div className="cursor-success-step-num">3</div>
-                  <div className="cursor-success-step-content">
-                    <div className="cursor-success-step-title-row">
-                      <Sparkles size={14} className="cursor-step-icon" />
-                      <strong>Convert &amp; Enjoy</strong>
-                    </div>
-                    <p>Your browser opens to <code>localhost:5173</code>. Paste any link for high-speed 320 kbps MP3 or 1080p MP4 conversions!</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ) : isExe ? (
-            <div className="cursor-success-steps-box">
-              <h3 className="cursor-success-steps-heading">
-                Quick Setup Guide:
-              </h3>
-              <div className="cursor-success-steps-list">
-                <div className="cursor-success-step-item">
-                  <div className="cursor-success-step-num">1</div>
-                  <div className="cursor-success-step-content">
-                    <div className="cursor-success-step-title-row">
-                      <Terminal size={14} className="cursor-step-icon" />
-                      <strong>Run the Installer</strong>
-                    </div>
-                    <p>Double-click <code>SonicWave-Custom-Installer.exe</code> in your Downloads folder to launch the custom setup.</p>
-                  </div>
-                </div>
-
-                <div className="cursor-success-step-item">
-                  <div className="cursor-success-step-num">2</div>
-                  <div className="cursor-success-step-content">
-                    <div className="cursor-success-step-title-row">
-                      <FolderArchive size={14} className="cursor-step-icon" />
-                      <strong>Choose Preferences</strong>
-                    </div>
-                    <p>Select your installation path and toggle Desktop or Start Menu shortcuts in the frameless installer UI.</p>
-                  </div>
-                </div>
-
-                <div className="cursor-success-step-item">
-                  <div className="cursor-success-step-num">3</div>
-                  <div className="cursor-success-step-content">
-                    <div className="cursor-success-step-title-row">
-                      <Sparkles size={14} className="cursor-step-icon" />
-                      <strong>Install &amp; Launch</strong>
-                    </div>
-                    <p>Click <strong>Install SonicWave</strong> to finish setup and launch your standalone desktop studio window!</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="cursor-success-steps-box">
-              <h3 className="cursor-success-steps-heading">
-                Quick Setup Guide:
-              </h3>
-              <div className="cursor-success-steps-list">
-                <div className="cursor-success-step-item">
-                  <div className="cursor-success-step-num">1</div>
-                  <div className="cursor-success-step-content">
-                    <div className="cursor-success-step-title-row">
-                      <FolderArchive size={14} className="cursor-step-icon" />
-                      <strong>Extract the ZIP</strong>
-                    </div>
-                    <p>Right-click <code>SonicWave-v1.0.0-Windows.zip</code> in your Downloads folder and select <strong>Extract All...</strong> to any directory.</p>
-                  </div>
-                </div>
-
-                <div className="cursor-success-step-item">
-                  <div className="cursor-success-step-num">2</div>
-                  <div className="cursor-success-step-content">
-                    <div className="cursor-success-step-title-row">
-                      <Terminal size={14} className="cursor-step-icon" />
-                      <strong>Double-Click <code>start.bat</code></strong>
-                    </div>
-                    <p>The launcher verifies your environment, auto-provisions <code>yt-dlp.exe</code> &amp; <code>ffmpeg.exe</code>, and launches the server.</p>
-                  </div>
-                </div>
-
-                <div className="cursor-success-step-item">
-                  <div className="cursor-success-step-num">3</div>
-                  <div className="cursor-success-step-content">
-                    <div className="cursor-success-step-title-row">
-                      <Sparkles size={14} className="cursor-step-icon" />
-                      <strong>Convert &amp; Enjoy</strong>
-                    </div>
-                    <p>Your browser opens to <code>localhost:5173</code>. Paste any link for high-speed 320 kbps MP3 or 1080p MP4 conversions!</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* Alternative download switch row */}
           <div style={{ marginTop: '12px', fontSize: '13px', color: '#94a3b8', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)' }}>
