@@ -14,12 +14,14 @@ launcher/*.exe
 server/bin/
 server/downloads/
 server/data/
+ads/
 *.mp3
 !sonicwave-intro/assets/**
 *.mp4
 !client/public/sonicwave-intro.mp4
 *.webm
 *.m4a
+video/
 
 # Environment variables & Local configurations
 .env
